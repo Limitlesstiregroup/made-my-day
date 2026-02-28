@@ -1,0 +1,355 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { URL } = require('url');
+
+const PORT = Number(process.env.PORT || 4300);
+const DATA_DIR = path.join(__dirname, 'data');
+const STORE_FILE = path.join(DATA_DIR, 'stories.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+function ensureStore() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(STORE_FILE)) {
+    fs.writeFileSync(STORE_FILE, JSON.stringify({ stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [] }, null, 2));
+  }
+}
+
+function loadStore() {
+  ensureStore();
+  const store = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
+  if (!Array.isArray(store.stories)) store.stories = [];
+  if (!Array.isArray(store.comments)) store.comments = [];
+  if (!Array.isArray(store.hallOfFame)) store.hallOfFame = [];
+  if (!Array.isArray(store.giftCards)) store.giftCards = [];
+  if (!Object.prototype.hasOwnProperty.call(store, 'pendingWinner')) store.pendingWinner = null;
+  return store;
+}
+
+function saveStore(store) {
+  fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
+}
+
+function json(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data, null, 2));
+}
+
+function id(prefix) {
+  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendFile(res, filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const types = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8'
+  };
+  const contentType = types[ext] || 'application/octet-stream';
+  if (!fs.existsSync(filePath)) {
+    res.writeHead(404);
+    return res.end('Not found');
+  }
+  res.writeHead(200, { 'Content-Type': contentType });
+  fs.createReadStream(filePath).pipe(res);
+}
+
+function storyScore(story, store) {
+  const commentCount = store.comments.filter((c) => c.storyId === story.id).length;
+  return (story.likes || 0) + (story.shares || 0) + commentCount;
+}
+
+function storyView(story, store) {
+  const comments = store.comments.filter((c) => c.storyId === story.id);
+  return { ...story, comments, commentCount: comments.length, score: storyScore(story, store) };
+}
+
+function startOfWeekMonday(d) {
+  const date = new Date(d);
+  const day = date.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setUTCDate(date.getUTCDate() + diff);
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}
+
+function weekKeyFromDate(d) {
+  const monday = startOfWeekMonday(d);
+  return monday.toISOString().slice(0, 10);
+}
+
+function computeWeeklyWinner(store, now = new Date()) {
+  const thisWeekMonday = startOfWeekMonday(now);
+  const lastWeekStart = new Date(thisWeekMonday.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const lastWeekEnd = new Date(thisWeekMonday.getTime() - 1);
+  const weekKey = weekKeyFromDate(lastWeekStart);
+
+  const candidates = store.stories.filter((s) => {
+    const created = new Date(s.createdAt);
+    return created >= lastWeekStart && created <= lastWeekEnd;
+  });
+
+  if (!candidates.length) return null;
+
+  const ranked = candidates
+    .map((s) => ({ storyId: s.id, score: storyScore(s, store), createdAt: s.createdAt }))
+    .sort((a, b) => b.score - a.score || new Date(a.createdAt) - new Date(b.createdAt));
+
+  return { weekKey, ...ranked[0], computedAt: now.toISOString() };
+}
+
+function runWeeklyWinnerAutomation() {
+  const store = loadStore();
+  const now = new Date();
+  const day = now.getUTCDay(); // 0 Sunday, 1 Monday
+  const hour = now.getUTCHours();
+
+  // Sunday night: compute winner for the week that just ended.
+  if (day === 0 && hour >= 23) {
+    const winner = computeWeeklyWinner(store, now);
+    if (winner && (!store.pendingWinner || store.pendingWinner.weekKey !== winner.weekKey)) {
+      store.pendingWinner = winner;
+      saveStore(store);
+    }
+  }
+
+  // Monday 6:00 UTC: publish winner to hall of fame + gift card queue.
+  if (day === 1 && hour >= 6 && store.pendingWinner) {
+    const alreadyPublished = store.hallOfFame.some((h) => h.weekKey === store.pendingWinner.weekKey);
+    if (!alreadyPublished) {
+      const story = store.stories.find((s) => s.id === store.pendingWinner.storyId);
+      if (story) {
+        const entry = {
+          id: id('hof'),
+          weekKey: store.pendingWinner.weekKey,
+          storyId: story.id,
+          author: story.author || 'Anonymous',
+          text: story.text,
+          score: store.pendingWinner.score,
+          publishedAt: now.toISOString(),
+          prize: '$20 gift card',
+          status: 'published'
+        };
+        store.hallOfFame.unshift(entry);
+        store.giftCards.unshift({
+          id: id('gift'),
+          hallOfFameId: entry.id,
+          storyId: story.id,
+          amount: 20,
+          currency: 'USD',
+          status: 'pending',
+          createdAt: now.toISOString()
+        });
+      }
+    }
+    store.pendingWinner = null;
+    saveStore(store);
+  }
+}
+
+async function ingestPositiveStories() {
+  const url = 'https://www.reddit.com/r/MadeMeSmile/top.json?limit=60&t=day';
+  const response = await fetch(url, { headers: { 'User-Agent': 'made-my-day-bot/1.0' } });
+  if (!response.ok) throw new Error(`source fetch failed: ${response.status}`);
+  const data = await response.json();
+  const posts = data?.data?.children?.map((c) => c.data) || [];
+
+  const store = loadStore();
+  const existingLinks = new Set(store.stories.map((s) => s.sourceUrl).filter(Boolean));
+  const existingTitles = new Set(store.stories.map((s) => s.text.trim().toLowerCase()));
+
+  const candidates = posts
+    .filter((p) => !p.over_18)
+    .map((p) => {
+      const title = (p.title || '').trim();
+      const body = (p.selftext || '').trim();
+      const combined = body ? `${title}\n\n${body}` : title;
+      return {
+        text: combined,
+        sourceUrl: `https://reddit.com${p.permalink}`,
+        sourceName: 'reddit/r/MadeMeSmile',
+        score: p.score || 0
+      };
+    })
+    .filter((p) => p.text.length >= 40)
+    .map((p) => ({ ...p, text: p.text.slice(0, 2500) }))
+    .filter((p) => !existingLinks.has(p.sourceUrl) && !existingTitles.has(p.text.toLowerCase()))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20);
+
+  if (!candidates.length) return { added: 0 };
+
+  // 5 per hour at random times inside the hour window.
+  const selected = candidates.slice(0, 5);
+  const now = Date.now();
+  const hourEnd = new Date();
+  hourEnd.setMinutes(59, 59, 999);
+  const windowMs = Math.max(5 * 60 * 1000, hourEnd.getTime() - now);
+
+  const offsets = selected
+    .map(() => Math.floor(Math.random() * windowMs))
+    .sort((a, b) => a - b);
+
+  selected.forEach((item, index) => {
+    const publishAt = new Date(now + offsets[index]).toISOString();
+    store.stories.unshift({
+      id: id('story'),
+      text: item.text,
+      author: 'Community highlight',
+      createdAt: publishAt,
+      likes: 0,
+      shares: 0,
+      sourceUrl: item.sourceUrl,
+      sourceName: item.sourceName,
+      autoImported: true
+    });
+  });
+
+  saveStore(store);
+  return { added: selected.length };
+}
+
+// run once on boot + every hour
+setTimeout(() => ingestPositiveStories().catch(() => null), 1500);
+setInterval(() => ingestPositiveStories().catch(() => null), 60 * 60 * 1000);
+
+// winner automation checks every minute
+setTimeout(() => runWeeklyWinnerAutomation(), 2000);
+setInterval(() => runWeeklyWinnerAutomation(), 60 * 1000);
+
+const server = http.createServer(async (req, res) => {
+  const u = new URL(req.url, `http://${req.headers.host}`);
+
+  if (u.pathname.startsWith('/api/')) {
+    const store = loadStore();
+
+    if (req.method === 'GET' && u.pathname === '/api/health') {
+      return json(res, 200, { ok: true, service: 'made-my-day', stories: store.stories.length });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/stories') {
+      const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000);
+      const stories = store.stories
+        .slice()
+        .sort((a, b) => {
+          if (activeHall?.storyId === a.id) return -1;
+          if (activeHall?.storyId === b.id) return 1;
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        })
+        .map((s) => storyView(s, store));
+      return json(res, 200, { stories, activeHallOfFameStoryId: activeHall?.storyId || null });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/hall-of-fame') {
+      return json(res, 200, { hallOfFame: store.hallOfFame, pendingWinner: store.pendingWinner });
+    }
+
+    if (req.method === 'POST' && u.pathname === '/api/stories') {
+      const body = await readBody(req).catch(() => null);
+      if (!body?.text || String(body.text).trim().length < 40) {
+        return json(res, 400, { error: 'Story must be at least 40 characters.' });
+      }
+      const story = {
+        id: id('story'),
+        text: String(body.text).trim().slice(0, 5000),
+        author: body.author ? String(body.author).trim().slice(0, 60) : 'Anonymous',
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        shares: 0,
+        sourceUrl: null,
+        sourceName: null,
+        autoImported: false
+      };
+      store.stories.unshift(story);
+      saveStore(store);
+      return json(res, 201, { story: storyView(story, store) });
+    }
+
+    if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/like$/)) {
+      const storyId = u.pathname.split('/')[3];
+      const story = store.stories.find((s) => s.id === storyId);
+      if (!story) return json(res, 404, { error: 'Story not found' });
+      story.likes += 1;
+      saveStore(store);
+      return json(res, 200, { likes: story.likes });
+    }
+
+    if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/share$/)) {
+      const storyId = u.pathname.split('/')[3];
+      const story = store.stories.find((s) => s.id === storyId);
+      if (!story) return json(res, 404, { error: 'Story not found' });
+      story.shares += 1;
+      saveStore(store);
+      return json(res, 200, { shares: story.shares });
+    }
+
+    if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/comments$/)) {
+      const storyId = u.pathname.split('/')[3];
+      const story = store.stories.find((s) => s.id === storyId);
+      if (!story) return json(res, 404, { error: 'Story not found' });
+      const body = await readBody(req).catch(() => null);
+      if (!body?.text || String(body.text).trim().length < 2) {
+        return json(res, 400, { error: 'Comment is too short.' });
+      }
+      const comment = {
+        id: id('com'),
+        storyId,
+        text: String(body.text).trim().slice(0, 300),
+        author: body.author ? String(body.author).trim().slice(0, 60) : 'Anonymous',
+        createdAt: new Date().toISOString()
+      };
+      store.comments.push(comment);
+      saveStore(store);
+      return json(res, 201, { comment });
+    }
+
+    if (req.method === 'POST' && u.pathname === '/api/import/run') {
+      const result = await ingestPositiveStories().catch((error) => ({ added: 0, error: error.message }));
+      return json(res, 200, result);
+    }
+
+    if (req.method === 'POST' && u.pathname === '/api/hall-of-fame/run') {
+      runWeeklyWinnerAutomation();
+      const refreshed = loadStore();
+      return json(res, 200, {
+        ok: true,
+        pendingWinner: refreshed.pendingWinner,
+        latestWinner: refreshed.hallOfFame[0] || null,
+        giftCardQueue: refreshed.giftCards.slice(0, 5)
+      });
+    }
+
+    return json(res, 404, { error: 'not found' });
+  }
+
+  if (u.pathname === '/' || u.pathname === '/index.html') {
+    return sendFile(res, path.join(PUBLIC_DIR, 'index.html'));
+  }
+  if (u.pathname === '/app.js') return sendFile(res, path.join(PUBLIC_DIR, 'app.js'));
+  if (u.pathname === '/styles.css') return sendFile(res, path.join(PUBLIC_DIR, 'styles.css'));
+
+  res.writeHead(404);
+  res.end('Not found');
+});
+
+server.listen(PORT, () => {
+  console.log(`made-my-day running on http://localhost:${PORT}`);
+});

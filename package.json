@@ -1,0 +1,14 @@
+{
+  "name": "made-my-day",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Made My Day - anonymous positive stories platform",
+  "main": "server.js",
+  "scripts": {
+    "build": "node scripts/build-check.js",
+    "test": "node scripts/smoke-test.js",
+    "lint": "node scripts/lint-check.js",
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}

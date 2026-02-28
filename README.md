@@ -1,0 +1,32 @@
+# Made My Day
+
+Anonymous same-day positive story platform.
+
+## Features
+- No account required
+- Post same-day stories
+- Like, share, comment
+- React UI
+- Auto-imports 5 real positive stories/hour at random times from public sources
+- Weekly Hall of Fame winner (likes + shares + comments)
+- Sunday-night score calculation + Monday 6 AM publish
+- Winner story pinned to top for 1 week
+- $20 gift card queue entry auto-created for each weekly winner
+
+## Run
+```bash
+cd made-my-day
+npm run dev
+```
+Open `http://localhost:4300`.
+
+## API
+- `GET /api/health`
+- `GET /api/stories`
+- `POST /api/stories`
+- `POST /api/stories/:id/like`
+- `POST /api/stories/:id/share`
+- `POST /api/stories/:id/comments`
+- `POST /api/import/run` (manual trigger)
+- `GET /api/hall-of-fame`
+- `POST /api/hall-of-fame/run` (manual winner automation trigger)
