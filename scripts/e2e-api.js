@@ -41,9 +41,16 @@ async function run() {
   try {
     await waitForServer();
 
-    const healthDetails = await fetch(`${BASE}/api/health/details`);
+    const unauthorizedHealthDetails = await fetch(`${BASE}/api/health/details`);
+    if (unauthorizedHealthDetails.status !== 401) {
+      throw new Error(`expected 401 for health details without admin token, got ${unauthorizedHealthDetails.status}`);
+    }
+
+    const healthDetails = await fetch(`${BASE}/api/health/details`, {
+      headers: { Authorization: 'Bearer admin_token_live_primary_1234' }
+    });
     if (healthDetails.status !== 200) {
-      throw new Error(`expected 200 for health details, got ${healthDetails.status}`);
+      throw new Error(`expected 200 for health details with admin token, got ${healthDetails.status}`);
     }
     const healthDetailsJson = await healthDetails.json();
     if (!healthDetailsJson?.operations?.totals || typeof healthDetailsJson.operations.totals.stories !== 'number') {

@@ -30,6 +30,7 @@ npm run release:check
 ```bash
 curl -s http://localhost:4300/api/health | jq
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4300/api/health/ready
+curl -s -H "Authorization: Bearer $MADE_MY_DAY_ADMIN_TOKEN" http://localhost:4300/api/health/details | jq
 ```
 
 `/api/health/ready` returns:

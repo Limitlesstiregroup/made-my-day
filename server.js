@@ -649,6 +649,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/health/details') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       const readiness = getReadinessStatus();
       return json(res, 200, {
         ok: true,
