@@ -15,6 +15,7 @@ const MAX_STORIES = Number(process.env.MAX_STORIES || 5000);
 const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
 const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
+const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
 const mutationLog = new Map();
 
 function hasStrongAdminToken() {
@@ -152,9 +153,11 @@ function id(prefix) {
 }
 
 function getRequestIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    return forwarded.split(',')[0].trim();
+  if (TRUST_PROXY) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string' && forwarded.trim()) {
+      return forwarded.split(',')[0].trim();
+    }
   }
   return req.socket?.remoteAddress || 'unknown';
 }
