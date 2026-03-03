@@ -63,6 +63,11 @@ function evaluateReadiness(env = process.env) {
   const maxAuthorChars = parseIntOrDefault(env.MAX_AUTHOR_CHARS, 60);
   if (maxAuthorChars < 10) issues.push('MAX_AUTHOR_CHARS must be >= 10');
 
+  const trustProxyRaw = String(env.TRUST_PROXY || '').trim().toLowerCase();
+  if (trustProxyRaw && trustProxyRaw !== 'true' && trustProxyRaw !== 'false') {
+    issues.push('TRUST_PROXY must be either true or false when set');
+  }
+
   return issues;
 }
 

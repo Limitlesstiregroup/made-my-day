@@ -68,13 +68,52 @@ function hasStrongAdminToken() {
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
 }
 
-function getReadinessStatus() {
+function parseIntOrDefault(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
+}
+
+function getConfigIssues() {
+  const issues = [];
+
   const configuredToken = getConfiguredAdminToken();
-  const ready = !configuredToken || hasStrongAdminToken();
+  if (configuredToken && !hasStrongAdminToken()) {
+    issues.push('adminToken');
+  }
+
+  const importTimeout = parseIntOrDefault(process.env.IMPORT_TIMEOUT_MS, 10000);
+  if (importTimeout < 1000 || importTimeout > 60000) {
+    issues.push('importTimeout');
+  }
+
+  const maxStoryChars = parseIntOrDefault(process.env.MAX_STORY_CHARS, 5000);
+  if (maxStoryChars < 200) issues.push('maxStoryChars');
+
+  const maxCommentChars = parseIntOrDefault(process.env.MAX_COMMENT_CHARS, 300);
+  if (maxCommentChars < 20) issues.push('maxCommentChars');
+
+  const maxAuthorChars = parseIntOrDefault(process.env.MAX_AUTHOR_CHARS, 60);
+  if (maxAuthorChars < 10) issues.push('maxAuthorChars');
+
+  const trustProxyRaw = String(process.env.TRUST_PROXY || '').trim().toLowerCase();
+  if (trustProxyRaw && trustProxyRaw !== 'true' && trustProxyRaw !== 'false') {
+    issues.push('trustProxy');
+  }
+
+  return issues;
+}
+
+function getReadinessStatus() {
+  const issues = getConfigIssues();
   return {
-    ready,
+    ready: issues.length === 0,
     checks: {
-      adminToken: configuredToken ? (hasStrongAdminToken() ? 'pass' : 'fail') : 'preview'
+      adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
+      importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
+      maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
+      maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
+      maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
+      trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass'
     }
   };
 }
