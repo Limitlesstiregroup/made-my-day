@@ -5,6 +5,7 @@ Anonymous same-day positive story platform.
 ## Features
 - No account required
 - Post same-day stories
+- API mutation rate-limit + request-size guardrails for abuse hardening
 - Like, share, comment
 - React UI
 - Auto-imports 5 real positive stories/hour at random times from public sources

@@ -7,6 +7,10 @@ const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(DATA_DIR, 'stories.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 16 * 1024);
+const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
+const mutationLog = new Map();
 
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -39,10 +43,40 @@ function id(prefix) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function getRequestIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function isRateLimited(req) {
+  if (req.method !== 'POST') return false;
+  const ip = getRequestIp(req);
+  const now = Date.now();
+  const existing = mutationLog.get(ip) || [];
+  const fresh = existing.filter((ts) => now - ts <= RATE_LIMIT_WINDOW_MS);
+  fresh.push(now);
+  mutationLog.set(ip, fresh);
+  return fresh.length > RATE_LIMIT_MAX_MUTATIONS;
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk) => (body += chunk));
+    let totalBytes = 0;
+    req.on('data', (chunk) => {
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
+        error.code = 'BODY_TOO_LARGE';
+        reject(error);
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
     req.on('end', () => {
       if (!body) return resolve({});
       try {
@@ -239,6 +273,10 @@ const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host}`);
 
   if (u.pathname.startsWith('/api/')) {
+    if (isRateLimited(req)) {
+      return json(res, 429, { error: 'Rate limit exceeded. Please wait and try again.' });
+    }
+
     const store = loadStore();
 
     if (req.method === 'GET' && u.pathname === '/api/health') {
@@ -263,7 +301,15 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname === '/api/stories') {
-      const body = await readBody(req).catch(() => null);
+      const body = await readBody(req).catch((error) => {
+        if (error?.code === 'BODY_TOO_LARGE') {
+          json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
+          return null;
+        }
+        json(res, 400, { error: 'Invalid JSON body.' });
+        return null;
+      });
+      if (!body) return;
       if (!body?.text || String(body.text).trim().length < 40) {
         return json(res, 400, { error: 'Story must be at least 40 characters.' });
       }
@@ -305,7 +351,15 @@ const server = http.createServer(async (req, res) => {
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
-      const body = await readBody(req).catch(() => null);
+      const body = await readBody(req).catch((error) => {
+        if (error?.code === 'BODY_TOO_LARGE') {
+          json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
+          return null;
+        }
+        json(res, 400, { error: 'Invalid JSON body.' });
+        return null;
+      });
+      if (!body) return;
       if (!body?.text || String(body.text).trim().length < 2) {
         return json(res, 400, { error: 'Comment is too short.' });
       }
