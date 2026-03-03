@@ -167,6 +167,11 @@ function json(res, status, data) {
   res.end(JSON.stringify(data, null, 2));
 }
 
+function hasJsonContentType(req) {
+  const value = String(req.headers['content-type'] || '').toLowerCase();
+  return value.startsWith('application/json');
+}
+
 function stableStringify(value) {
   if (Array.isArray(value)) {
     return `[${value.map((item) => stableStringify(item)).join(',')}]`;
@@ -529,6 +534,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname === '/api/stories') {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       const body = await readBody(req).catch((error) => {
         if (error?.code === 'BODY_TOO_LARGE') {
           json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
@@ -586,6 +594,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/comments$/)) {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });

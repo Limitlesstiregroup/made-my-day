@@ -6,6 +6,7 @@ Anonymous same-day positive story platform.
 - No account required
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
+- JSON API hardening: story/comment write endpoints require `Content-Type: application/json` (invalid media type returns HTTP 415)
 - Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
