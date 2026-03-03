@@ -49,6 +49,17 @@ function hasStrongAdminToken() {
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
 }
 
+function getReadinessStatus() {
+  const configuredToken = getConfiguredAdminToken();
+  const ready = !configuredToken || hasStrongAdminToken();
+  return {
+    ready,
+    checks: {
+      adminToken: configuredToken ? (hasStrongAdminToken() ? 'pass' : 'fail') : 'preview'
+    }
+  };
+}
+
 function secureTokenEquals(incomingToken, configuredToken) {
   const incomingBuffer = Buffer.from(String(incomingToken));
   const configuredBuffer = Buffer.from(String(configuredToken));
@@ -471,6 +482,15 @@ const server = http.createServer(async (req, res) => {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
           lastRun: lastImportRun
         }
+      });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/health/ready') {
+      const readiness = getReadinessStatus();
+      return json(res, readiness.ready ? 200 : 503, {
+        ok: readiness.ready,
+        service: 'made-my-day',
+        checks: readiness.checks
       });
     }
 

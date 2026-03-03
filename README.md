@@ -31,6 +31,7 @@ Open `http://localhost:4300`.
 
 ## API
 - `GET /api/health`
+- `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
 - `GET /api/stories`
 - `POST /api/stories`
 - `POST /api/stories/:id/like`
