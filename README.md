@@ -5,7 +5,8 @@ Anonymous same-day positive story platform.
 ## Features
 - No account required
 - Post same-day stories
-- API mutation rate-limit + request-size guardrails for abuse hardening
+- API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
+- Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Like, share, comment
 - React UI

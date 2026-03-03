@@ -56,8 +56,16 @@ function saveStore(store) {
   fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
 }
 
+function securityHeaders() {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer'
+  };
+}
+
 function json(res, status, data) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...securityHeaders() });
   res.end(JSON.stringify(data, null, 2));
 }
 
@@ -88,18 +96,22 @@ function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
     let totalBytes = 0;
+    let tooLarge = false;
     req.on('data', (chunk) => {
       totalBytes += chunk.length;
       if (totalBytes > MAX_BODY_BYTES) {
-        const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
-        error.code = 'BODY_TOO_LARGE';
-        reject(error);
-        req.destroy();
+        tooLarge = true;
         return;
       }
       body += chunk;
     });
     req.on('end', () => {
+      if (tooLarge) {
+        const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
+        error.code = 'BODY_TOO_LARGE';
+        reject(error);
+        return;
+      }
       if (!body) return resolve({});
       try {
         resolve(JSON.parse(body));
@@ -124,7 +136,7 @@ function sendFile(res, filePath) {
     res.writeHead(404);
     return res.end('Not found');
   }
-  res.writeHead(200, { 'Content-Type': contentType });
+  res.writeHead(200, { 'Content-Type': contentType, ...securityHeaders() });
   fs.createReadStream(filePath).pipe(res);
 }
 
