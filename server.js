@@ -8,7 +8,16 @@ const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(DATA_DIR, 'stories.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 16 * 1024);
+function clampMaxBodyBytes(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 16 * 1024;
+  const normalized = Math.floor(parsed);
+  if (normalized < 1024) return 1024;
+  if (normalized > 256 * 1024) return 256 * 1024;
+  return normalized;
+}
+
+const MAX_BODY_BYTES = clampMaxBodyBytes(process.env.MAX_BODY_BYTES);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
 const MAX_STORIES = Number(process.env.MAX_STORIES || 5000);
@@ -86,6 +95,11 @@ function getConfigIssues() {
     issues.push('importTimeout');
   }
 
+  const maxBodyBytesRaw = parseIntOrDefault(process.env.MAX_BODY_BYTES, 16 * 1024);
+  if (maxBodyBytesRaw < 1024 || maxBodyBytesRaw > 256 * 1024) {
+    issues.push('maxBodyBytes');
+  }
+
   const maxStoryChars = parseIntOrDefault(process.env.MAX_STORY_CHARS, 5000);
   if (maxStoryChars < 200) issues.push('maxStoryChars');
 
@@ -110,6 +124,7 @@ function getReadinessStatus() {
     checks: {
       adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
+      maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
       maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
@@ -556,6 +571,7 @@ const server = http.createServer(async (req, res) => {
         },
         imports: {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
+          maxBodyBytes: MAX_BODY_BYTES,
           lastRun: lastImportRun
         }
       });

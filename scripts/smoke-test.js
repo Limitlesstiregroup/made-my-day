@@ -35,6 +35,12 @@ try {
     placeholderIssues.includes('MADE_MY_DAY admin tokens must not be placeholder values'),
     'placeholder previous token should fail release readiness'
   );
+
+  const maxBodyIssue = evaluateReadiness({ MAX_BODY_BYTES: '512' });
+  assert.ok(
+    maxBodyIssue.includes('MAX_BODY_BYTES must be between 1024 and 262144'),
+    'release readiness should reject too-small MAX_BODY_BYTES'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);

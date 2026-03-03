@@ -54,6 +54,11 @@ function evaluateReadiness(env = process.env) {
     issues.push('IMPORT_TIMEOUT_MS must be between 1000 and 60000');
   }
 
+  const maxBodyBytes = parseIntOrDefault(env.MAX_BODY_BYTES, 16 * 1024);
+  if (maxBodyBytes < 1024 || maxBodyBytes > 256 * 1024) {
+    issues.push('MAX_BODY_BYTES must be between 1024 and 262144');
+  }
+
   const maxStoryChars = parseIntOrDefault(env.MAX_STORY_CHARS, 5000);
   if (maxStoryChars < 200) issues.push('MAX_STORY_CHARS must be >= 200');
 
