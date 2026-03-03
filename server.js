@@ -20,6 +20,15 @@ const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
 const IMPORT_TIMEOUT_MS = Number(process.env.IMPORT_TIMEOUT_MS || 10000);
 const SAFE_IMPORT_TIMEOUT_MS = Number.isFinite(IMPORT_TIMEOUT_MS) && IMPORT_TIMEOUT_MS >= 1000 ? Math.min(IMPORT_TIMEOUT_MS, 60000) : 10000;
+const MAX_STORY_CHARS = Number.isFinite(Number(process.env.MAX_STORY_CHARS)) && Number(process.env.MAX_STORY_CHARS) >= 200
+  ? Math.floor(Number(process.env.MAX_STORY_CHARS))
+  : 5000;
+const MAX_COMMENT_CHARS = Number.isFinite(Number(process.env.MAX_COMMENT_CHARS)) && Number(process.env.MAX_COMMENT_CHARS) >= 20
+  ? Math.floor(Number(process.env.MAX_COMMENT_CHARS))
+  : 300;
+const MAX_AUTHOR_CHARS = Number.isFinite(Number(process.env.MAX_AUTHOR_CHARS)) && Number(process.env.MAX_AUTHOR_CHARS) >= 10
+  ? Math.floor(Number(process.env.MAX_AUTHOR_CHARS))
+  : 60;
 const mutationLog = new Map();
 let lastImportRun = null;
 
@@ -125,6 +134,14 @@ function trimToLimit(items, limit) {
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function sanitizeUserText(value, maxChars) {
+  const cleaned = String(value || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned.slice(0, maxChars);
 }
 
 function saveStore(store) {
@@ -521,10 +538,10 @@ const server = http.createServer(async (req, res) => {
         return null;
       });
       if (!body) return;
-      if (!body?.text || String(body.text).trim().length < 40) {
+      const incomingText = sanitizeUserText(body?.text, MAX_STORY_CHARS);
+      if (!incomingText || incomingText.length < 40) {
         return json(res, 400, { error: 'Story must be at least 40 characters.' });
       }
-      const incomingText = String(body.text).trim().slice(0, 5000);
       const duplicate = store.stories.some((s) => {
         if (!s?.createdAt) return false;
         const ageMs = Date.now() - new Date(s.createdAt).getTime();
@@ -537,7 +554,7 @@ const server = http.createServer(async (req, res) => {
       const story = {
         id: id('story'),
         text: incomingText,
-        author: body.author ? String(body.author).trim().slice(0, 60) : 'Anonymous',
+        author: body.author ? sanitizeUserText(body.author, MAX_AUTHOR_CHARS) : 'Anonymous',
         createdAt: new Date().toISOString(),
         likes: 0,
         shares: 0,
@@ -581,14 +598,15 @@ const server = http.createServer(async (req, res) => {
         return null;
       });
       if (!body) return;
-      if (!body?.text || String(body.text).trim().length < 2) {
+      const commentText = sanitizeUserText(body?.text, MAX_COMMENT_CHARS);
+      if (!commentText || commentText.length < 2) {
         return json(res, 400, { error: 'Comment is too short.' });
       }
       const comment = {
         id: id('com'),
         storyId,
-        text: String(body.text).trim().slice(0, 300),
-        author: body.author ? String(body.author).trim().slice(0, 60) : 'Anonymous',
+        text: commentText,
+        author: body.author ? sanitizeUserText(body.author, MAX_AUTHOR_CHARS) : 'Anonymous',
         createdAt: new Date().toISOString()
       };
       store.comments.push(comment);

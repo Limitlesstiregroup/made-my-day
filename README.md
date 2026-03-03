@@ -35,6 +35,9 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
+- `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
+- `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
+- `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
 
 ## API
 - `GET /api/health`
