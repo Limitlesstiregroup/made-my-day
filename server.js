@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
@@ -16,13 +17,27 @@ const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const mutationLog = new Map();
 
+function hasStrongAdminToken() {
+  const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
+  return configuredToken.length >= 16;
+}
+
+function secureTokenEquals(incomingToken, configuredToken) {
+  const incomingBuffer = Buffer.from(String(incomingToken));
+  const configuredBuffer = Buffer.from(String(configuredToken));
+  if (incomingBuffer.length !== configuredBuffer.length) return false;
+  return crypto.timingSafeEqual(incomingBuffer, configuredBuffer);
+}
+
 function hasAdminAuth(req) {
-  const configuredToken = process.env.MADE_MY_DAY_ADMIN_TOKEN;
+  const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
   if (!configuredToken) return true; // preview mode
+  if (!hasStrongAdminToken()) return false;
   const header = req.headers.authorization || '';
   if (!header.startsWith('Bearer ')) return false;
   const incoming = header.slice('Bearer '.length).trim();
-  return incoming.length > 0 && incoming === configuredToken;
+  if (incoming.length === 0 || incoming.length > 1024) return false;
+  return secureTokenEquals(incoming, configuredToken);
 }
 
 function ensureStore() {
@@ -323,7 +338,16 @@ const server = http.createServer(async (req, res) => {
     const store = loadStore();
 
     if (req.method === 'GET' && u.pathname === '/api/health') {
-      return json(res, 200, { ok: true, service: 'made-my-day', stories: store.stories.length });
+      const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
+      return json(res, 200, {
+        ok: true,
+        service: 'made-my-day',
+        stories: store.stories.length,
+        adminAuth: {
+          mode: configuredToken ? 'enabled' : 'preview',
+          strongToken: configuredToken ? hasStrongAdminToken() : true
+        }
+      });
     }
 
     if (req.method === 'GET' && u.pathname === '/api/stories') {
