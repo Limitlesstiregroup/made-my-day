@@ -20,9 +20,30 @@ const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
 const mutationLog = new Map();
 
+function readSecretFile(filePath) {
+  if (!filePath || String(filePath).trim() === '') return '';
+  try {
+    return fs.readFileSync(String(filePath), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
+function looksLikePlaceholderSecret(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'].some((token) => normalized.includes(token));
+}
+
+function getConfiguredAdminToken() {
+  const direct = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
+  if (direct) return direct;
+  return readSecretFile(process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE);
+}
+
 function hasStrongAdminToken() {
-  const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
-  return configuredToken.length >= 16;
+  const configuredToken = getConfiguredAdminToken();
+  return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
 }
 
 function secureTokenEquals(incomingToken, configuredToken) {
@@ -33,7 +54,7 @@ function secureTokenEquals(incomingToken, configuredToken) {
 }
 
 function hasAdminAuth(req) {
-  const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
+  const configuredToken = getConfiguredAdminToken();
   if (!configuredToken) return true; // preview mode
   if (!hasStrongAdminToken()) return false;
   const header = req.headers.authorization || '';
@@ -405,14 +426,15 @@ const server = http.createServer(async (req, res) => {
     const store = loadStore();
 
     if (req.method === 'GET' && u.pathname === '/api/health') {
-      const configuredToken = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
+      const configuredToken = getConfiguredAdminToken();
       return json(res, 200, {
         ok: true,
         service: 'made-my-day',
         stories: store.stories.length,
         adminAuth: {
           mode: configuredToken ? 'enabled' : 'preview',
-          strongToken: configuredToken ? hasStrongAdminToken() : true
+          strongToken: configuredToken ? hasStrongAdminToken() : true,
+          source: String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim() ? 'env' : (process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE ? 'file' : 'none')
         }
       });
     }
