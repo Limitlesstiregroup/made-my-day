@@ -6,6 +6,7 @@ Anonymous same-day positive story platform.
 - No account required
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
+- Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN` is set
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Like, share, comment

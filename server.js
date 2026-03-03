@@ -16,6 +16,15 @@ const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const mutationLog = new Map();
 
+function hasAdminAuth(req) {
+  const configuredToken = process.env.MADE_MY_DAY_ADMIN_TOKEN;
+  if (!configuredToken) return true; // preview mode
+  const header = req.headers.authorization || '';
+  if (!header.startsWith('Bearer ')) return false;
+  const incoming = header.slice('Bearer '.length).trim();
+  return incoming.length > 0 && incoming === configuredToken;
+}
+
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(STORE_FILE)) {
@@ -420,11 +429,13 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       const result = await ingestPositiveStories().catch((error) => ({ added: 0, error: error.message }));
       return json(res, 200, result);
     }
 
     if (req.method === 'POST' && u.pathname === '/api/hall-of-fame/run') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       runWeeklyWinnerAutomation();
       const refreshed = loadStore();
       return json(res, 200, {
