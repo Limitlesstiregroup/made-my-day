@@ -174,8 +174,10 @@ function securityHeaders() {
   };
 }
 
-function json(res, status, data) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...securityHeaders() });
+function json(res, status, data, { noStore = true } = {}) {
+  const headers = { 'Content-Type': 'application/json; charset=utf-8', ...securityHeaders() };
+  if (noStore) headers['Cache-Control'] = 'no-store';
+  res.writeHead(status, headers);
   res.end(JSON.stringify(data, null, 2));
 }
 
