@@ -26,7 +26,9 @@ async function run() {
   const server = spawn(process.execPath, ['server.js'], {
     env: {
       ...process.env,
-      PORT: String(PORT)
+      PORT: String(PORT),
+      MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+      MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'admin_token_live_previous_5678'
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -83,6 +85,27 @@ async function run() {
     });
     if (goodComment.status !== 201) {
       throw new Error(`expected 201 for comment create, got ${goodComment.status}`);
+    }
+
+    const unauthorizedImportRun = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    if (unauthorizedImportRun.status !== 401) {
+      throw new Error(`expected 401 for missing admin token, got ${unauthorizedImportRun.status}`);
+    }
+
+    const authorizedWithPreviousToken = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin_token_live_previous_5678'
+      },
+      body: JSON.stringify({})
+    });
+    if (authorizedWithPreviousToken.status !== 200) {
+      throw new Error(`expected 200 for previous admin token during rotation, got ${authorizedWithPreviousToken.status}`);
     }
 
     console.log('made-my-day e2e api test passed');

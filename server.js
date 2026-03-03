@@ -53,6 +53,16 @@ function getConfiguredAdminToken() {
   return readSecretFile(process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE);
 }
 
+function getAdminTokenCandidates() {
+  const values = [
+    String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim(),
+    readSecretFile(process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE),
+    String(process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS || '').trim(),
+    readSecretFile(process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE)
+  ].filter(Boolean);
+  return [...new Set(values)];
+}
+
 function hasStrongAdminToken() {
   const configuredToken = getConfiguredAdminToken();
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
@@ -84,7 +94,9 @@ function hasAdminAuth(req) {
   if (!header.startsWith('Bearer ')) return false;
   const incoming = header.slice('Bearer '.length).trim();
   if (incoming.length === 0 || incoming.length > 1024) return false;
-  return secureTokenEquals(incoming, configuredToken);
+  const candidates = getAdminTokenCandidates().filter((token) => token.length >= 16 && !looksLikePlaceholderSecret(token));
+  if (candidates.length === 0) return false;
+  return candidates.some((token) => secureTokenEquals(incoming, token));
 }
 
 function ensureStore() {
@@ -498,7 +510,8 @@ const server = http.createServer(async (req, res) => {
         adminAuth: {
           mode: configuredToken ? 'enabled' : 'preview',
           strongToken: configuredToken ? hasStrongAdminToken() : true,
-          source: String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim() ? 'env' : (process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE ? 'file' : 'none')
+          source: String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim() ? 'env' : (process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE ? 'file' : 'none'),
+          rotationFallbackEnabled: Boolean(String(process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS || '').trim() || process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE)
         },
         imports: {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
