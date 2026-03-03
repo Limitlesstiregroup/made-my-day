@@ -6,6 +6,7 @@ Anonymous same-day positive story platform.
 - No account required
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening
+- Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Like, share, comment
 - React UI
 - Auto-imports 5 real positive stories/hour at random times from public sources

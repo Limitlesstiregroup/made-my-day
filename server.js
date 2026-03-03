@@ -10,6 +10,10 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 16 * 1024);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
+const MAX_STORIES = Number(process.env.MAX_STORIES || 5000);
+const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
+const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
+const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const mutationLog = new Map();
 
 function ensureStore() {
@@ -30,7 +34,25 @@ function loadStore() {
   return store;
 }
 
+function clampLimit(value, fallback) {
+  return Number.isFinite(value) && value >= 100 ? Math.floor(value) : fallback;
+}
+
+function trimToLimit(items, limit) {
+  if (!Array.isArray(items)) return [];
+  if (items.length <= limit) return items;
+  return items.slice(0, limit);
+}
+
+function normalizeText(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 function saveStore(store) {
+  store.stories = trimToLimit(store.stories, clampLimit(MAX_STORIES, 5000));
+  store.comments = trimToLimit(store.comments, clampLimit(MAX_COMMENTS, 20000));
+  store.hallOfFame = trimToLimit(store.hallOfFame, clampLimit(MAX_HALL_OF_FAME, 520));
+  store.giftCards = trimToLimit(store.giftCards, clampLimit(MAX_GIFT_CARDS, 520));
   fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
 }
 
@@ -313,9 +335,19 @@ const server = http.createServer(async (req, res) => {
       if (!body?.text || String(body.text).trim().length < 40) {
         return json(res, 400, { error: 'Story must be at least 40 characters.' });
       }
+      const incomingText = String(body.text).trim().slice(0, 5000);
+      const duplicate = store.stories.some((s) => {
+        if (!s?.createdAt) return false;
+        const ageMs = Date.now() - new Date(s.createdAt).getTime();
+        if (!Number.isFinite(ageMs) || ageMs > 7 * 24 * 60 * 60 * 1000) return false;
+        return normalizeText(s.text) === normalizeText(incomingText);
+      });
+      if (duplicate) {
+        return json(res, 409, { error: 'A very similar story was already posted recently.' });
+      }
       const story = {
         id: id('story'),
-        text: String(body.text).trim().slice(0, 5000),
+        text: incomingText,
         author: body.author ? String(body.author).trim().slice(0, 60) : 'Anonymous',
         createdAt: new Date().toISOString(),
         likes: 0,
