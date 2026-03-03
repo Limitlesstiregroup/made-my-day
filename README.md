@@ -26,6 +26,13 @@ npm run dev
 ```
 Open `http://localhost:4300`.
 
+## Container Deployment
+```bash
+docker build -t made-my-day:latest .
+docker run --rm -p 4300:4300 made-my-day:latest
+```
+Detailed runbook: `docs/DEPLOYMENT.md`
+
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 
