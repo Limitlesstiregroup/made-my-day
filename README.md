@@ -27,6 +27,11 @@ npm run dev
 ```
 Open `http://localhost:4300`.
 
+Release readiness check:
+```bash
+npm run release:check
+```
+
 ## Container Deployment
 ```bash
 docker build -t made-my-day:latest .

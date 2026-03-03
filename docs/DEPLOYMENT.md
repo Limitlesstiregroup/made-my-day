@@ -19,6 +19,12 @@ Optional runtime settings:
 - `TRUST_PROXY=true` when running behind a trusted reverse proxy
 - `MADE_MY_DAY_ADMIN_TOKEN_FILE` to load admin token from a mounted secret file
 
+## Release Readiness
+
+```bash
+npm run release:check
+```
+
 ## Verify
 
 ```bash

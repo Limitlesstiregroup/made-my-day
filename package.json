@@ -9,6 +9,7 @@
     "test": "node scripts/smoke-test.js && node scripts/e2e-api.js",
     "lint": "node scripts/lint-check.js",
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "release:check": "node scripts/release-readiness.js"
   }
 }
