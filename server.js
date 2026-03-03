@@ -112,6 +112,41 @@ function json(res, status, data) {
   res.end(JSON.stringify(data, null, 2));
 }
 
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  }
+
+  if (value && typeof value === 'object') {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function weakEtagForPayload(payload) {
+  const hash = crypto.createHash('sha1').update(stableStringify(payload)).digest('hex');
+  return `W/"${hash}"`;
+}
+
+function jsonCached(req, res, status, data) {
+  const etag = weakEtagForPayload(data);
+  if (String(req.headers['if-none-match'] || '').trim() === etag) {
+    res.writeHead(304, { ETag: etag, ...securityHeaders() });
+    res.end();
+    return;
+  }
+
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'private, max-age=0, must-revalidate',
+    ETag: etag,
+    ...securityHeaders()
+  });
+  res.end(JSON.stringify(data, null, 2));
+}
+
 function id(prefix) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -379,11 +414,11 @@ const server = http.createServer(async (req, res) => {
           return new Date(b.createdAt) - new Date(a.createdAt);
         })
         .map((s) => storyView(s, store));
-      return json(res, 200, { stories, activeHallOfFameStoryId: activeHall?.storyId || null });
+      return jsonCached(req, res, 200, { stories, activeHallOfFameStoryId: activeHall?.storyId || null });
     }
 
     if (req.method === 'GET' && u.pathname === '/api/hall-of-fame') {
-      return json(res, 200, { hallOfFame: store.hallOfFame, pendingWinner: store.pendingWinner });
+      return jsonCached(req, res, 200, { hallOfFame: store.hallOfFame, pendingWinner: store.pendingWinner });
     }
 
     if (req.method === 'POST' && u.pathname === '/api/stories') {

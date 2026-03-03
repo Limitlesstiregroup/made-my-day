@@ -10,6 +10,7 @@ Anonymous same-day positive story platform.
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Like, share, comment
+- Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - React UI
 - Auto-imports 5 real positive stories/hour at random times from public sources
 - Weekly Hall of Fame winner (likes + shares + comments)
