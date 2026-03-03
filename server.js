@@ -43,13 +43,30 @@ function hasAdminAuth(req) {
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(STORE_FILE)) {
-    fs.writeFileSync(STORE_FILE, JSON.stringify({ stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [] }, null, 2));
+    fs.writeFileSync(STORE_FILE, JSON.stringify(emptyStore(), null, 2));
   }
+}
+
+function emptyStore() {
+  return { stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [] };
 }
 
 function loadStore() {
   ensureStore();
-  const store = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
+  let store;
+  try {
+    store = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
+  } catch {
+    // Recover from partial/corrupted writes and keep a forensics snapshot.
+    const badCopy = `${STORE_FILE}.corrupt-${Date.now()}`;
+    try {
+      fs.copyFileSync(STORE_FILE, badCopy);
+    } catch {
+      // Ignore backup failures; continue with a safe empty store.
+    }
+    store = emptyStore();
+    fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
+  }
   if (!Array.isArray(store.stories)) store.stories = [];
   if (!Array.isArray(store.comments)) store.comments = [];
   if (!Array.isArray(store.hallOfFame)) store.hallOfFame = [];
@@ -77,7 +94,9 @@ function saveStore(store) {
   store.comments = trimToLimit(store.comments, clampLimit(MAX_COMMENTS, 20000));
   store.hallOfFame = trimToLimit(store.hallOfFame, clampLimit(MAX_HALL_OF_FAME, 520));
   store.giftCards = trimToLimit(store.giftCards, clampLimit(MAX_GIFT_CARDS, 520));
-  fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
+  const tmpFile = `${STORE_FILE}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2));
+  fs.renameSync(tmpFile, STORE_FILE);
 }
 
 function securityHeaders() {
