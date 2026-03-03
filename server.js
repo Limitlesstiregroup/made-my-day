@@ -243,7 +243,9 @@ function securityHeaders() {
   return {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'no-referrer'
+    'Referrer-Policy': 'no-referrer',
+    'X-Permitted-Cross-Domain-Policies': 'none',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()'
   };
 }
 
