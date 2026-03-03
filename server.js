@@ -133,6 +133,39 @@ function getReadinessStatus() {
   };
 }
 
+function getOperationalSnapshot(store) {
+  const importedStories = store.stories.filter((s) => s.autoImported).length;
+  const manualStories = store.stories.length - importedStories;
+  const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000) || null;
+  const latestStory = store.stories[0] || null;
+
+  return {
+    totals: {
+      stories: store.stories.length,
+      comments: store.comments.length,
+      hallOfFame: store.hallOfFame.length,
+      giftCards: store.giftCards.length
+    },
+    ingestion: {
+      importedStories,
+      manualStories,
+      lastRun: lastImportRun
+    },
+    winnerAutomation: {
+      pendingWinner: store.pendingWinner,
+      activeHallOfFameStoryId: activeHall ? activeHall.storyId : null,
+      latestHallOfFameEntry: store.hallOfFame[0] || null
+    },
+    latestStory: latestStory
+      ? {
+          id: latestStory.id,
+          createdAt: latestStory.createdAt,
+          autoImported: Boolean(latestStory.autoImported)
+        }
+      : null
+  };
+}
+
 function secureTokenEquals(incomingToken, configuredToken) {
   const incomingBuffer = Buffer.from(String(incomingToken));
   const configuredBuffer = Buffer.from(String(configuredToken));
@@ -612,6 +645,16 @@ const server = http.createServer(async (req, res) => {
         ok: readiness.ready,
         service: 'made-my-day',
         checks: readiness.checks
+      });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/health/details') {
+      const readiness = getReadinessStatus();
+      return json(res, 200, {
+        ok: true,
+        service: 'made-my-day',
+        readiness,
+        operations: getOperationalSnapshot(store)
       });
     }
 

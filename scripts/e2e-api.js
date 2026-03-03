@@ -41,6 +41,15 @@ async function run() {
   try {
     await waitForServer();
 
+    const healthDetails = await fetch(`${BASE}/api/health/details`);
+    if (healthDetails.status !== 200) {
+      throw new Error(`expected 200 for health details, got ${healthDetails.status}`);
+    }
+    const healthDetailsJson = await healthDetails.json();
+    if (!healthDetailsJson?.operations?.totals || typeof healthDetailsJson.operations.totals.stories !== 'number') {
+      throw new Error('health details missing operational totals');
+    }
+
     const badContentType = await fetch(`${BASE}/api/stories`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },

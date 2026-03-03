@@ -11,6 +11,7 @@ Anonymous same-day positive story platform.
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`)
+- Operational health details endpoint for runbook triage (`GET /api/health/details`)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
@@ -49,6 +50,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 ## API
 - `GET /api/health`
 - `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
+- `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks)
 - `GET /api/stories`
 - `POST /api/stories`
 - `POST /api/stories/:id/like`
