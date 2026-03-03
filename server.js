@@ -16,6 +16,8 @@ const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
 const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
+const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
+const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
 const mutationLog = new Map();
 
 function hasStrongAdminToken() {
@@ -166,11 +168,18 @@ function isRateLimited(req) {
   if (req.method !== 'POST') return false;
   const ip = getRequestIp(req);
   const now = Date.now();
-  const existing = mutationLog.get(ip) || [];
-  const fresh = existing.filter((ts) => now - ts <= RATE_LIMIT_WINDOW_MS);
-  fresh.push(now);
-  mutationLog.set(ip, fresh);
-  return fresh.length > RATE_LIMIT_MAX_MUTATIONS;
+  const freshForIp = (mutationLog.get(ip) || []).filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
+  freshForIp.push(now);
+  mutationLog.set(ip, freshForIp);
+
+  // prune stale keys to avoid unbounded memory growth under spray traffic
+  for (const [key, timestamps] of mutationLog.entries()) {
+    const live = timestamps.filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
+    if (live.length === 0) mutationLog.delete(key);
+    else if (live.length !== timestamps.length) mutationLog.set(key, live);
+  }
+
+  return freshForIp.length > SAFE_RATE_LIMIT_MAX_MUTATIONS;
 }
 
 function readBody(req) {
@@ -182,6 +191,7 @@ function readBody(req) {
       totalBytes += chunk.length;
       if (totalBytes > MAX_BODY_BYTES) {
         tooLarge = true;
+        req.destroy();
         return;
       }
       body += chunk;
