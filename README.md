@@ -13,7 +13,7 @@ Anonymous same-day positive story platform.
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - React UI
-- Auto-imports 5 real positive stories/hour at random times from public sources
+- Auto-imports 5 real positive stories/hour at random times from public sources (bounded by configurable fetch timeout)
 - Weekly Hall of Fame winner (likes + shares + comments)
 - Sunday-night score calculation + Monday 6 AM publish
 - Winner story pinned to top for 1 week
@@ -25,6 +25,9 @@ cd made-my-day
 npm run dev
 ```
 Open `http://localhost:4300`.
+
+## Configuration
+- `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 
 ## API
 - `GET /api/health`

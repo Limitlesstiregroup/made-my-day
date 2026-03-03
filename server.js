@@ -18,7 +18,10 @@ const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
 const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
+const IMPORT_TIMEOUT_MS = Number(process.env.IMPORT_TIMEOUT_MS || 10000);
+const SAFE_IMPORT_TIMEOUT_MS = Number.isFinite(IMPORT_TIMEOUT_MS) && IMPORT_TIMEOUT_MS >= 1000 ? Math.min(IMPORT_TIMEOUT_MS, 60000) : 10000;
 const mutationLog = new Map();
+let lastImportRun = null;
 
 function readSecretFile(filePath) {
   if (!filePath || String(filePath).trim() === '') return '';
@@ -347,7 +350,10 @@ function runWeeklyWinnerAutomation() {
 
 async function ingestPositiveStories() {
   const url = 'https://www.reddit.com/r/MadeMeSmile/top.json?limit=60&t=day';
-  const response = await fetch(url, { headers: { 'User-Agent': 'made-my-day-bot/1.0' } });
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'made-my-day-bot/1.0' },
+    signal: AbortSignal.timeout(SAFE_IMPORT_TIMEOUT_MS)
+  });
   if (!response.ok) throw new Error(`source fetch failed: ${response.status}`);
   const data = await response.json();
   const posts = data?.data?.children?.map((c) => c.data) || [];
@@ -375,7 +381,7 @@ async function ingestPositiveStories() {
     .sort((a, b) => b.score - a.score)
     .slice(0, 20);
 
-  if (!candidates.length) return { added: 0 };
+  if (!candidates.length) return { added: 0, source: 'reddit/r/MadeMeSmile' };
 
   // 5 per hour at random times inside the hour window.
   const selected = candidates.slice(0, 5);
@@ -404,12 +410,37 @@ async function ingestPositiveStories() {
   });
 
   saveStore(store);
-  return { added: selected.length };
+  return { added: selected.length, source: 'reddit/r/MadeMeSmile' };
+}
+
+async function runIngestJob() {
+  const startedAt = new Date().toISOString();
+  try {
+    const result = await ingestPositiveStories();
+    lastImportRun = {
+      ok: true,
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      added: result.added || 0,
+      source: result.source || 'reddit/r/MadeMeSmile'
+    };
+    return result;
+  } catch (error) {
+    lastImportRun = {
+      ok: false,
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      added: 0,
+      error: error?.name === 'TimeoutError' ? `source fetch timed out after ${SAFE_IMPORT_TIMEOUT_MS}ms` : String(error?.message || error),
+      source: 'reddit/r/MadeMeSmile'
+    };
+    throw error;
+  }
 }
 
 // run once on boot + every hour
-setTimeout(() => ingestPositiveStories().catch(() => null), 1500);
-setInterval(() => ingestPositiveStories().catch(() => null), 60 * 60 * 1000);
+setTimeout(() => runIngestJob().catch(() => null), 1500);
+setInterval(() => runIngestJob().catch(() => null), 60 * 60 * 1000);
 
 // winner automation checks every minute
 setTimeout(() => runWeeklyWinnerAutomation(), 2000);
@@ -435,6 +466,10 @@ const server = http.createServer(async (req, res) => {
           mode: configuredToken ? 'enabled' : 'preview',
           strongToken: configuredToken ? hasStrongAdminToken() : true,
           source: String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim() ? 'env' : (process.env.MADE_MY_DAY_ADMIN_TOKEN_FILE ? 'file' : 'none')
+        },
+        imports: {
+          timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
+          lastRun: lastImportRun
         }
       });
     }
@@ -543,7 +578,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
-      const result = await ingestPositiveStories().catch((error) => ({ added: 0, error: error.message }));
+      const result = await runIngestJob().catch((error) => ({ added: 0, error: error?.message || String(error) }));
       return json(res, 200, result);
     }
 
