@@ -210,6 +210,25 @@ function sanitizeUserText(value, maxChars) {
   return cleaned.slice(0, maxChars);
 }
 
+function sanitizeSourceUrl(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    return parsed.toString().slice(0, 2048);
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeSourceName(value) {
+  if (!value) return null;
+  const cleaned = sanitizeUserText(value, 120);
+  return cleaned || null;
+}
+
 function saveStore(store) {
   store.stories = trimToLimit(store.stories, clampLimit(MAX_STORIES, 5000));
   store.comments = trimToLimit(store.comments, clampLimit(MAX_COMMENTS, 20000));
@@ -363,7 +382,14 @@ function storyScore(story, store) {
 
 function storyView(story, store) {
   const comments = store.comments.filter((c) => c.storyId === story.id);
-  return { ...story, comments, commentCount: comments.length, score: storyScore(story, store) };
+  return {
+    ...story,
+    sourceUrl: sanitizeSourceUrl(story.sourceUrl),
+    sourceName: sanitizeSourceName(story.sourceName),
+    comments,
+    commentCount: comments.length,
+    score: storyScore(story, store)
+  };
 }
 
 function startOfWeekMonday(d) {
@@ -471,13 +497,14 @@ async function ingestPositiveStories() {
       const combined = body ? `${title}\n\n${body}` : title;
       return {
         text: combined,
-        sourceUrl: `https://reddit.com${p.permalink}`,
-        sourceName: 'reddit/r/MadeMeSmile',
+        sourceUrl: sanitizeSourceUrl(`https://reddit.com${p.permalink}`),
+        sourceName: sanitizeSourceName('reddit/r/MadeMeSmile'),
         score: p.score || 0
       };
     })
     .filter((p) => p.text.length >= 40)
     .map((p) => ({ ...p, text: p.text.slice(0, 2500) }))
+    .filter((p) => Boolean(p.sourceUrl))
     .filter((p) => !existingLinks.has(p.sourceUrl) && !existingTitles.has(p.text.toLowerCase()))
     .sort((a, b) => b.score - a.score)
     .slice(0, 20);
@@ -504,8 +531,8 @@ async function ingestPositiveStories() {
       createdAt: publishAt,
       likes: 0,
       shares: 0,
-      sourceUrl: item.sourceUrl,
-      sourceName: item.sourceName,
+      sourceUrl: sanitizeSourceUrl(item.sourceUrl),
+      sourceName: sanitizeSourceName(item.sourceName),
       autoImported: true
     });
   });
