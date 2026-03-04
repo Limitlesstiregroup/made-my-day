@@ -15,7 +15,7 @@ Anonymous same-day positive story platform.
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, `Content-Security-Policy`, `Strict-Transport-Security`)
 - Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
-- Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv`) and gift-card queue (`GET /api/admin/gift-cards.csv`) protected by admin bearer token
+- Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv?limit=&offset=`) and gift-card queue (`GET /api/admin/gift-cards.csv?limit=&offset=`) protected by admin bearer token
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)

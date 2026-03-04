@@ -98,6 +98,12 @@ function parseIntOrDefault(value, fallback) {
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
 }
 
+function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.floor(parsed)));
+}
+
 function getConfigIssues() {
   const issues = [];
 
@@ -898,16 +904,24 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame.csv') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
+      const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const rows = [['storyId', 'publishedAt', 'score', 'giftCardCode', 'notifiedAt']].concat(
-        store.hallOfFame.map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
+        store.hallOfFame
+          .slice(offset, offset + limit)
+          .map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
       );
       return csv(res, 200, rows);
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards.csv') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
+      const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const rows = [['storyId', 'code', 'status', 'amountUsd', 'queuedAt', 'issuedAt']].concat(
-        store.giftCards.map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
+        store.giftCards
+          .slice(offset, offset + limit)
+          .map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
       );
       return csv(res, 200, rows);
     }
