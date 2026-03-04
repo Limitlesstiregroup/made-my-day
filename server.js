@@ -389,8 +389,17 @@ function getRequestIp(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
-function isRateLimited(req) {
-  if (req.method !== 'POST') return false;
+function getRateLimitState(req) {
+  if (req.method !== 'POST') {
+    return {
+      enforced: false,
+      limited: false,
+      limit: SAFE_RATE_LIMIT_MAX_MUTATIONS,
+      remaining: SAFE_RATE_LIMIT_MAX_MUTATIONS,
+      resetSeconds: Math.ceil(SAFE_RATE_LIMIT_WINDOW_MS / 1000)
+    };
+  }
+
   const ip = getRequestIp(req);
   const now = Date.now();
   const freshForIp = (mutationLog.get(ip) || []).filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
@@ -404,7 +413,17 @@ function isRateLimited(req) {
     else if (live.length !== timestamps.length) mutationLog.set(key, live);
   }
 
-  return freshForIp.length > SAFE_RATE_LIMIT_MAX_MUTATIONS;
+  const oldestTimestamp = freshForIp[0] || now;
+  const elapsedMs = now - oldestTimestamp;
+  const resetSeconds = Math.max(1, Math.ceil((SAFE_RATE_LIMIT_WINDOW_MS - elapsedMs) / 1000));
+
+  return {
+    enforced: true,
+    limited: freshForIp.length > SAFE_RATE_LIMIT_MAX_MUTATIONS,
+    limit: SAFE_RATE_LIMIT_MAX_MUTATIONS,
+    remaining: Math.max(0, SAFE_RATE_LIMIT_MAX_MUTATIONS - freshForIp.length),
+    resetSeconds
+  };
 }
 
 function readBody(req) {
@@ -681,8 +700,18 @@ const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, `http://${req.headers.host || `localhost:${PORT}`}`);
 
   if (u.pathname.startsWith('/api/')) {
-    if (isRateLimited(req)) {
-      return json(res, 429, { error: 'Rate limit exceeded. Please wait and try again.' });
+    const rateLimit = getRateLimitState(req);
+    if (rateLimit.enforced) {
+      res.setHeader('RateLimit-Limit', String(rateLimit.limit));
+      res.setHeader('RateLimit-Remaining', String(rateLimit.remaining));
+      res.setHeader('RateLimit-Reset', String(rateLimit.resetSeconds));
+    }
+    if (rateLimit.limited) {
+      res.setHeader('Retry-After', String(rateLimit.resetSeconds));
+      return json(res, 429, {
+        error: 'Rate limit exceeded. Please wait and try again.',
+        retryAfterSeconds: rateLimit.resetSeconds
+      });
     }
 
     const store = loadStore();
