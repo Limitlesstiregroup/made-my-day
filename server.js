@@ -482,13 +482,19 @@ function securityHeaders() {
   };
 }
 
+function applyNoStoreHeaders(headers) {
+  headers['Cache-Control'] = 'no-store, private, max-age=0';
+  headers.Pragma = 'no-cache';
+  headers.Expires = '0';
+}
+
 function json(res, status, data, { noStore = true, headers: extraHeaders } = {}) {
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     ...securityHeaders(),
     ...(extraHeaders || {})
   };
-  if (noStore) headers['Cache-Control'] = 'no-store';
+  if (noStore) applyNoStoreHeaders(headers);
   res.writeHead(status, headers);
   res.end(JSON.stringify(data, null, 2));
 }
@@ -504,7 +510,7 @@ function csvValue(value) {
 
 function csv(res, status, rows, { noStore = true } = {}) {
   const headers = { 'Content-Type': 'text/csv; charset=utf-8', ...securityHeaders() };
-  if (noStore) headers['Cache-Control'] = 'no-store';
+  if (noStore) applyNoStoreHeaders(headers);
   res.writeHead(status, headers);
   res.end(rows.map((row) => row.map((value) => csvValue(value)).join(',')).join('\n'));
 }
