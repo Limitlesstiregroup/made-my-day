@@ -6,6 +6,13 @@ const { evaluateReadiness } = require('./release-readiness');
 
 try {
   const storiesPath = path.join(process.cwd(), 'data/stories.json');
+  if (!fs.existsSync(storiesPath)) {
+    fs.mkdirSync(path.dirname(storiesPath), { recursive: true });
+    fs.writeFileSync(
+      storiesPath,
+      JSON.stringify({ stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [], idempotencyKeys: [] }, null, 2)
+    );
+  }
   const raw = fs.readFileSync(storiesPath, 'utf8');
   const parsed = JSON.parse(raw);
   const stories = Array.isArray(parsed) ? parsed : parsed.stories;

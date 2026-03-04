@@ -7,7 +7,7 @@ const required = [
   'public/index.html',
   'public/app.js',
   'public/styles.css',
-  'data/stories.json',
+  'data/README.md',
 ];
 
 for (const rel of required) {
