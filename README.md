@@ -15,7 +15,7 @@ Anonymous same-day positive story platform.
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, `Content-Security-Policy`, `Strict-Transport-Security`)
 - Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
-- Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv?limit=&offset=`) and gift-card queue (`GET /api/admin/gift-cards.csv?limit=&offset=`) protected by admin bearer token
+- Admin exports for weekly operations handoff protected by admin bearer token: paginated JSON (`GET /api/admin/hall-of-fame?limit=&offset=`, `GET /api/admin/gift-cards?limit=&offset=`) plus CSV (`GET /api/admin/hall-of-fame.csv?limit=&offset=`, `GET /api/admin/gift-cards.csv?limit=&offset=`)
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Runtime persistence hardening: stories store writes (including first-boot and corruption recovery paths) use atomic temp-file swaps to reduce corruption risk during crashes/restarts
@@ -67,8 +67,10 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `GET /api/health`
 - `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
 - `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
-- `GET /api/admin/hall-of-fame.csv` (admin-only export)
-- `GET /api/admin/gift-cards.csv` (admin-only export)
+- `GET /api/admin/hall-of-fame` (admin-only paginated JSON export)
+- `GET /api/admin/hall-of-fame.csv` (admin-only CSV export)
+- `GET /api/admin/gift-cards` (admin-only paginated JSON export)
+- `GET /api/admin/gift-cards.csv` (admin-only CSV export)
 - `GET /api/stories` (`limit` default `100`, max `200`; `offset` default `0`)
 - `POST /api/stories`
 - `POST /api/stories/:id/like`

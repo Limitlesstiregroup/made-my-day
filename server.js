@@ -991,6 +991,42 @@ const server = http.createServer(async (req, res) => {
       return csv(res, 200, rows);
     }
 
+    if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
+      const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
+      const total = store.hallOfFame.length;
+      const records = store.hallOfFame.slice(offset, offset + limit);
+      return json(res, 200, {
+        records,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + records.length < total,
+          nextOffset: offset + records.length < total ? offset + records.length : null
+        }
+      });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
+      const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
+      const total = store.giftCards.length;
+      const records = store.giftCards.slice(offset, offset + limit);
+      return json(res, 200, {
+        records,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + records.length < total,
+          nextOffset: offset + records.length < total ? offset + records.length : null
+        }
+      });
+    }
+
     if (req.method === 'GET' && u.pathname === '/api/stories') {
       const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000);
       const limitRaw = Number(u.searchParams.get('limit') || 100);
