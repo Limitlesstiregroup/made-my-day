@@ -17,6 +17,7 @@ Anonymous same-day positive story platform.
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts)
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
+- Stories feed pagination (`GET /api/stories?limit=&offset=`) to cap payload size and improve GA polling stability
 - React UI
 - Auto-imports 5 real positive stories/hour at random times from public sources (bounded by configurable fetch timeout)
 - Weekly Hall of Fame winner (likes + shares + comments)
@@ -56,7 +57,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `GET /api/health`
 - `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
 - `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
-- `GET /api/stories`
+- `GET /api/stories` (`limit` default `100`, max `200`; `offset` default `0`)
 - `POST /api/stories`
 - `POST /api/stories/:id/like`
 - `POST /api/stories/:id/share`

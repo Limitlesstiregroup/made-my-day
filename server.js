@@ -758,15 +758,35 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && u.pathname === '/api/stories') {
       const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000);
-      const stories = store.stories
+      const limitRaw = Number(u.searchParams.get('limit') || 100);
+      const offsetRaw = Number(u.searchParams.get('offset') || 0);
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
+      const offset = Number.isFinite(offsetRaw) ? Math.max(0, Math.floor(offsetRaw)) : 0;
+
+      const orderedStories = store.stories
         .slice()
         .sort((a, b) => {
           if (activeHall?.storyId === a.id) return -1;
           if (activeHall?.storyId === b.id) return 1;
           return new Date(b.createdAt) - new Date(a.createdAt);
-        })
+        });
+
+      const totalStories = orderedStories.length;
+      const pagedStories = orderedStories
+        .slice(offset, offset + limit)
         .map((s) => storyView(s, store));
-      return jsonCached(req, res, 200, { stories, activeHallOfFameStoryId: activeHall?.storyId || null });
+
+      return jsonCached(req, res, 200, {
+        stories: pagedStories,
+        pagination: {
+          total: totalStories,
+          limit,
+          offset,
+          hasMore: offset + pagedStories.length < totalStories,
+          nextOffset: offset + pagedStories.length < totalStories ? offset + pagedStories.length : null
+        },
+        activeHallOfFameStoryId: activeHall?.storyId || null
+      });
     }
 
     if (req.method === 'GET' && u.pathname === '/api/hall-of-fame') {
