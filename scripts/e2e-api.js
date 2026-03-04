@@ -46,6 +46,9 @@ async function run() {
     if (unauthorizedHealthDetails.status !== 401) {
       throw new Error(`expected 401 for health details without admin token, got ${unauthorizedHealthDetails.status}`);
     }
+    if (unauthorizedHealthDetails.headers.get('vary') !== 'Authorization') {
+      throw new Error('expected Vary: Authorization on unauthorized health details');
+    }
 
     const healthDetails = await fetch(`${BASE}/api/health/details`, {
       headers: { Authorization: 'Bearer admin_token_live_primary_1234' }
@@ -71,6 +74,9 @@ async function run() {
     });
     if (authorizedHallCsv.status !== 200) {
       throw new Error(`expected 200 for hall-of-fame csv export, got ${authorizedHallCsv.status}`);
+    }
+    if (authorizedHallCsv.headers.get('vary') !== 'Authorization') {
+      throw new Error('expected Vary: Authorization on admin csv export');
     }
     const hallCsvText = await authorizedHallCsv.text();
     if (!hallCsvText.includes('storyId,publishedAt,score,giftCardCode,notifiedAt')) {

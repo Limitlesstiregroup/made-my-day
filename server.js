@@ -486,6 +486,7 @@ function applyNoStoreHeaders(headers) {
   headers['Cache-Control'] = 'no-store, private, max-age=0';
   headers.Pragma = 'no-cache';
   headers.Expires = '0';
+  headers.Vary = headers.Vary ? `${headers.Vary}, Authorization` : 'Authorization';
 }
 
 function json(res, status, data, { noStore = true, headers: extraHeaders } = {}) {
