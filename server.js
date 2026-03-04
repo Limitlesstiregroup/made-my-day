@@ -20,6 +20,7 @@ function clampMaxBodyBytes(value) {
 const MAX_BODY_BYTES = clampMaxBodyBytes(process.env.MAX_BODY_BYTES);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
+const RATE_LIMIT_MAX_KEYS = Number(process.env.RATE_LIMIT_MAX_KEYS || 10_000);
 const MAX_STORIES = Number(process.env.MAX_STORIES || 5000);
 const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
 const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
@@ -27,6 +28,9 @@ const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
 const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
+const SAFE_RATE_LIMIT_MAX_KEYS = Number.isFinite(RATE_LIMIT_MAX_KEYS) && RATE_LIMIT_MAX_KEYS >= 1000
+  ? Math.floor(Math.min(RATE_LIMIT_MAX_KEYS, 200000))
+  : 10_000;
 const IMPORT_TIMEOUT_MS = Number(process.env.IMPORT_TIMEOUT_MS || 10000);
 const SAFE_IMPORT_TIMEOUT_MS = Number.isFinite(IMPORT_TIMEOUT_MS) && IMPORT_TIMEOUT_MS >= 1000 ? Math.min(IMPORT_TIMEOUT_MS, 60000) : 10000;
 const MAX_STORY_CHARS = Number.isFinite(Number(process.env.MAX_STORY_CHARS)) && Number(process.env.MAX_STORY_CHARS) >= 200
@@ -45,6 +49,7 @@ const MAX_IDEMPOTENCY_KEYS = Number.isFinite(Number(process.env.MAX_IDEMPOTENCY_
   ? Math.floor(Number(process.env.MAX_IDEMPOTENCY_KEYS))
   : 5000;
 const mutationLog = new Map();
+const mutationLogOrder = [];
 const adminRunIdempotencyCache = new Map();
 const engagementIdempotencyCache = new Map();
 let lastImportRun = null;
@@ -501,15 +506,23 @@ function getRateLimitState(req) {
 
   const ip = getRequestIp(req);
   const now = Date.now();
+  const hadIp = mutationLog.has(ip);
   const freshForIp = (mutationLog.get(ip) || []).filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
   freshForIp.push(now);
   mutationLog.set(ip, freshForIp);
+  if (!hadIp) mutationLogOrder.push(ip);
 
   // prune stale keys to avoid unbounded memory growth under spray traffic
   for (const [key, timestamps] of mutationLog.entries()) {
     const live = timestamps.filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
     if (live.length === 0) mutationLog.delete(key);
     else if (live.length !== timestamps.length) mutationLog.set(key, live);
+  }
+
+  while (mutationLog.size > SAFE_RATE_LIMIT_MAX_KEYS && mutationLogOrder.length) {
+    const oldest = mutationLogOrder.shift();
+    if (!oldest) continue;
+    mutationLog.delete(oldest);
   }
 
   const oldestTimestamp = freshForIp[0] || now;
