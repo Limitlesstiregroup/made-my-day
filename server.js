@@ -577,7 +577,8 @@ function getRateLimitState(req) {
       limited: false,
       limit: SAFE_RATE_LIMIT_MAX_MUTATIONS,
       remaining: SAFE_RATE_LIMIT_MAX_MUTATIONS,
-      resetSeconds: Math.ceil(SAFE_RATE_LIMIT_WINDOW_MS / 1000)
+      resetSeconds: Math.ceil(SAFE_RATE_LIMIT_WINDOW_MS / 1000),
+      windowSeconds: Math.ceil(SAFE_RATE_LIMIT_WINDOW_MS / 1000)
     };
   }
 
@@ -611,7 +612,8 @@ function getRateLimitState(req) {
     limited: freshForIp.length > SAFE_RATE_LIMIT_MAX_MUTATIONS,
     limit: SAFE_RATE_LIMIT_MAX_MUTATIONS,
     remaining: Math.max(0, SAFE_RATE_LIMIT_MAX_MUTATIONS - freshForIp.length),
-    resetSeconds
+    resetSeconds,
+    windowSeconds: Math.ceil(SAFE_RATE_LIMIT_WINDOW_MS / 1000)
   };
 }
 
@@ -915,6 +917,7 @@ const server = http.createServer(async (req, res) => {
       res.setHeader('RateLimit-Limit', String(rateLimit.limit));
       res.setHeader('RateLimit-Remaining', String(rateLimit.remaining));
       res.setHeader('RateLimit-Reset', String(rateLimit.resetSeconds));
+      res.setHeader('RateLimit-Policy', `${rateLimit.limit};w=${rateLimit.windowSeconds}`);
       // Legacy compatibility for clients/proxies that still rely on pre-RFC header names.
       res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
       res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
