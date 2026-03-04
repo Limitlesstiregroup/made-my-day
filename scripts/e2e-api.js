@@ -286,6 +286,15 @@ async function run() {
       throw new Error(`expected 200 for hall-of-fame run, got ${goodHallRun.status}`);
     }
 
+    const hallFeed = await fetch(`${BASE}/api/hall-of-fame?limit=1&offset=0`);
+    if (hallFeed.status !== 200) {
+      throw new Error(`expected 200 for hall-of-fame feed, got ${hallFeed.status}`);
+    }
+    const hallFeedJson = await hallFeed.json();
+    if (!hallFeedJson?.pagination || hallFeedJson.pagination.limit !== 1 || hallFeedJson.pagination.offset !== 0) {
+      throw new Error('hall-of-fame feed should include pagination metadata');
+    }
+
     const hallIdempotencyKey = `hall-run-${uniqueSuffix}`;
     const hallRunFirst = await fetch(`${BASE}/api/hall-of-fame/run`, {
       method: 'POST',

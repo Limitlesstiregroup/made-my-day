@@ -999,7 +999,23 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/hall-of-fame') {
-      return jsonCached(req, res, 200, { hallOfFame: store.hallOfFame, pendingWinner: store.pendingWinner });
+      const limitRaw = Number(u.searchParams.get('limit') || 100);
+      const offsetRaw = Number(u.searchParams.get('offset') || 0);
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
+      const offset = Number.isFinite(offsetRaw) ? Math.max(0, Math.floor(offsetRaw)) : 0;
+      const total = store.hallOfFame.length;
+      const hallSlice = store.hallOfFame.slice(offset, offset + limit);
+      return jsonCached(req, res, 200, {
+        hallOfFame: hallSlice,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + hallSlice.length < total,
+          nextOffset: offset + hallSlice.length < total ? offset + hallSlice.length : null
+        },
+        pendingWinner: store.pendingWinner
+      });
     }
 
     if (req.method === 'POST' && u.pathname === '/api/stories') {

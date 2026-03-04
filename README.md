@@ -72,5 +72,5 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `POST /api/stories/:id/share`
 - `POST /api/stories/:id/comments`
 - `POST /api/import/run` (manual trigger)
-- `GET /api/hall-of-fame`
+- `GET /api/hall-of-fame` (`limit` default `100`, max `200`; `offset` default `0`)
 - `POST /api/hall-of-fame/run` (manual winner automation trigger)
