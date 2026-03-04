@@ -633,7 +633,11 @@ setTimeout(() => runWeeklyWinnerAutomationLocked().catch(() => null), 2000);
 setInterval(() => runWeeklyWinnerAutomationLocked().catch(() => null), 60 * 1000);
 
 const server = http.createServer(async (req, res) => {
-  const u = new URL(req.url, `http://${req.headers.host}`);
+  const requestId = `req_${crypto.randomUUID()}`;
+  res.setHeader('X-Request-Id', requestId);
+
+  try {
+    const u = new URL(req.url, `http://${req.headers.host || `localhost:${PORT}`}`);
 
   if (u.pathname.startsWith('/api/')) {
     if (isRateLimited(req)) {
@@ -828,6 +832,14 @@ const server = http.createServer(async (req, res) => {
 
   res.writeHead(404);
   res.end('Not found');
+  } catch (error) {
+    console.error(`[${requestId}] unhandled request error`, error);
+    if (!res.headersSent) {
+      json(res, 500, { error: 'internal server error', requestId });
+      return;
+    }
+    res.end();
+  }
 });
 
 const requestTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 30_000);
