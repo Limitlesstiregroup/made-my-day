@@ -1,6 +1,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
+const net = require('net');
 const path = require('path');
 const { URL } = require('url');
 
@@ -487,14 +488,26 @@ function id(prefix) {
   return `${prefix}_${value}`;
 }
 
+function normalizeIp(candidate) {
+  if (typeof candidate !== 'string') return null;
+  const trimmed = candidate.trim();
+  if (!trimmed || trimmed.length > 64) return null;
+  const unwrapped = trimmed.startsWith('[') && trimmed.endsWith(']')
+    ? trimmed.slice(1, -1)
+    : trimmed;
+  if (!unwrapped || net.isIP(unwrapped) === 0) return null;
+  return unwrapped.toLowerCase();
+}
+
 function getRequestIp(req) {
   if (TRUST_PROXY) {
     const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.trim()) {
-      return forwarded.split(',')[0].trim();
+    if (typeof forwarded === 'string' && forwarded.trim() && forwarded.length <= 512) {
+      const forwardedIp = normalizeIp(forwarded.split(',')[0]);
+      if (forwardedIp) return forwardedIp;
     }
   }
-  return req.socket?.remoteAddress || 'unknown';
+  return normalizeIp(req.socket?.remoteAddress) || 'unknown';
 }
 
 function getRateLimitState(req) {

@@ -7,7 +7,7 @@ Anonymous same-day positive story platform.
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
 - JSON API hardening: story mutations (`POST /api/stories`, `/api/stories/:id/like`, `/api/stories/:id/share`, `/api/stories/:id/comments`) and admin automation triggers (`POST /api/import/run`, `POST /api/hall-of-fame/run`) require `Content-Type: application/json` (invalid media type returns HTTP 415)
-- Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`
+- Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`, and only valid IPv4/IPv6 client values are accepted (malformed/oversized forwarded headers are ignored)
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
 - Automation concurrency hardening: import and hall-of-fame manual triggers return HTTP 409 when a run is already in progress to avoid duplicate writes
 - Optional idempotent automation retries via `Idempotency-Key` on `POST /api/import/run` and `POST /api/hall-of-fame/run` (returns prior successful response with `idempotent: true` during the idempotency window)
