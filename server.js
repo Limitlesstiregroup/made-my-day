@@ -1248,19 +1248,35 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const requestTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 30_000);
-const headersTimeoutMs = Number(process.env.HEADERS_TIMEOUT_MS || 15_000);
-const keepAliveTimeoutMs = Number(process.env.KEEP_ALIVE_TIMEOUT_MS || 5_000);
+function resolveServerTimeouts(env = process.env) {
+  const requestTimeoutRaw = Number(env.REQUEST_TIMEOUT_MS || 30_000);
+  const headersTimeoutRaw = Number(env.HEADERS_TIMEOUT_MS || 15_000);
+  const keepAliveTimeoutRaw = Number(env.KEEP_ALIVE_TIMEOUT_MS || 5_000);
 
-server.requestTimeout = Number.isFinite(requestTimeoutMs) && requestTimeoutMs >= 1_000
-  ? Math.floor(requestTimeoutMs)
-  : 30_000;
-server.headersTimeout = Number.isFinite(headersTimeoutMs) && headersTimeoutMs >= 1_000
-  ? Math.floor(headersTimeoutMs)
-  : 15_000;
-server.keepAliveTimeout = Number.isFinite(keepAliveTimeoutMs) && keepAliveTimeoutMs >= 1_000
-  ? Math.floor(keepAliveTimeoutMs)
-  : 5_000;
+  const requestTimeout = Number.isFinite(requestTimeoutRaw) && requestTimeoutRaw >= 1_000
+    ? Math.floor(requestTimeoutRaw)
+    : 30_000;
+  const headersTimeoutCandidate = Number.isFinite(headersTimeoutRaw) && headersTimeoutRaw >= 1_000
+    ? Math.floor(headersTimeoutRaw)
+    : 15_000;
+  const keepAliveTimeoutCandidate = Number.isFinite(keepAliveTimeoutRaw) && keepAliveTimeoutRaw >= 1_000
+    ? Math.floor(keepAliveTimeoutRaw)
+    : 5_000;
+
+  const headersTimeout = Math.min(headersTimeoutCandidate, requestTimeout);
+  const keepAliveTimeout = Math.min(keepAliveTimeoutCandidate, headersTimeout);
+
+  return {
+    requestTimeout,
+    headersTimeout,
+    keepAliveTimeout
+  };
+}
+
+const resolvedTimeouts = resolveServerTimeouts(process.env);
+server.requestTimeout = resolvedTimeouts.requestTimeout;
+server.headersTimeout = resolvedTimeouts.headersTimeout;
+server.keepAliveTimeout = resolvedTimeouts.keepAliveTimeout;
 
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
