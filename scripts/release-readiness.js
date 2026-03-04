@@ -21,12 +21,24 @@ function readSecretFile(filePath) {
   }
 }
 
-function getAdminTokenCandidates(env = process.env) {
-  const values = [
+function getConfiguredAdminToken(env = process.env) {
+  return [
     String(env.MADE_MY_DAY_ADMIN_TOKEN || '').trim(),
-    readSecretFile(env.MADE_MY_DAY_ADMIN_TOKEN_FILE),
+    readSecretFile(env.MADE_MY_DAY_ADMIN_TOKEN_FILE)
+  ].find(Boolean) || '';
+}
+
+function getPreviousAdminToken(env = process.env) {
+  return [
     String(env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS || '').trim(),
     readSecretFile(env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE)
+  ].find(Boolean) || '';
+}
+
+function getAdminTokenCandidates(env = process.env) {
+  const values = [
+    getConfiguredAdminToken(env),
+    getPreviousAdminToken(env)
   ].filter(Boolean);
   return [...new Set(values)];
 }
@@ -34,12 +46,18 @@ function getAdminTokenCandidates(env = process.env) {
 function evaluateReadiness(env = process.env) {
   const issues = [];
 
+  const configuredToken = getConfiguredAdminToken(env);
+  const previousToken = getPreviousAdminToken(env);
   const adminTokenCandidates = getAdminTokenCandidates(env);
   for (const token of adminTokenCandidates) {
     if (token.length < 16) {
       issues.push('MADE_MY_DAY admin tokens must be at least 16 characters when set (env or *_FILE)');
       break;
     }
+  }
+
+  if (configuredToken && previousToken && configuredToken === previousToken) {
+    issues.push('MADE_MY_DAY rotation fallback token must differ from primary admin token');
   }
 
   for (const token of adminTokenCandidates) {
@@ -117,6 +135,8 @@ module.exports = {
   placeholderSecret,
   parseIntOrDefault,
   readSecretFile,
+  getConfiguredAdminToken,
+  getPreviousAdminToken,
   getAdminTokenCandidates,
   evaluateReadiness
 };
