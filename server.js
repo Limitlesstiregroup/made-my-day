@@ -40,6 +40,8 @@ const MAX_AUTHOR_CHARS = Number.isFinite(Number(process.env.MAX_AUTHOR_CHARS)) &
   : 60;
 const mutationLog = new Map();
 let lastImportRun = null;
+let importRunPromise = null;
+let hallOfFameRunPromise = null;
 
 function readSecretFile(filePath) {
   if (!filePath || String(filePath).trim() === '') return '';
@@ -513,6 +515,16 @@ function runWeeklyWinnerAutomation() {
   }
 }
 
+function runWeeklyWinnerAutomationLocked() {
+  if (hallOfFameRunPromise) return hallOfFameRunPromise;
+  hallOfFameRunPromise = Promise.resolve()
+    .then(() => runWeeklyWinnerAutomation())
+    .finally(() => {
+      hallOfFameRunPromise = null;
+    });
+  return hallOfFameRunPromise;
+}
+
 async function ingestPositiveStories() {
   const url = 'https://www.reddit.com/r/MadeMeSmile/top.json?limit=60&t=day';
   const response = await fetch(url, {
@@ -580,28 +592,36 @@ async function ingestPositiveStories() {
 }
 
 async function runIngestJob() {
-  const startedAt = new Date().toISOString();
-  try {
-    const result = await ingestPositiveStories();
-    lastImportRun = {
-      ok: true,
-      startedAt,
-      finishedAt: new Date().toISOString(),
-      added: result.added || 0,
-      source: result.source || 'reddit/r/MadeMeSmile'
-    };
-    return result;
-  } catch (error) {
-    lastImportRun = {
-      ok: false,
-      startedAt,
-      finishedAt: new Date().toISOString(),
-      added: 0,
-      error: error?.name === 'TimeoutError' ? `source fetch timed out after ${SAFE_IMPORT_TIMEOUT_MS}ms` : String(error?.message || error),
-      source: 'reddit/r/MadeMeSmile'
-    };
-    throw error;
-  }
+  if (importRunPromise) return importRunPromise;
+
+  importRunPromise = (async () => {
+    const startedAt = new Date().toISOString();
+    try {
+      const result = await ingestPositiveStories();
+      lastImportRun = {
+        ok: true,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        added: result.added || 0,
+        source: result.source || 'reddit/r/MadeMeSmile'
+      };
+      return result;
+    } catch (error) {
+      lastImportRun = {
+        ok: false,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        added: 0,
+        error: error?.name === 'TimeoutError' ? `source fetch timed out after ${SAFE_IMPORT_TIMEOUT_MS}ms` : String(error?.message || error),
+        source: 'reddit/r/MadeMeSmile'
+      };
+      throw error;
+    } finally {
+      importRunPromise = null;
+    }
+  })();
+
+  return importRunPromise;
 }
 
 // run once on boot + every hour
@@ -609,8 +629,8 @@ setTimeout(() => runIngestJob().catch(() => null), 1500);
 setInterval(() => runIngestJob().catch(() => null), 60 * 60 * 1000);
 
 // winner automation checks every minute
-setTimeout(() => runWeeklyWinnerAutomation(), 2000);
-setInterval(() => runWeeklyWinnerAutomation(), 60 * 1000);
+setTimeout(() => runWeeklyWinnerAutomationLocked().catch(() => null), 2000);
+setInterval(() => runWeeklyWinnerAutomationLocked().catch(() => null), 60 * 1000);
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host}`);
@@ -773,13 +793,15 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (importRunPromise) return json(res, 409, { error: 'import run already in progress' });
       const result = await runIngestJob().catch((error) => ({ added: 0, error: error?.message || String(error) }));
       return json(res, 200, result);
     }
 
     if (req.method === 'POST' && u.pathname === '/api/hall-of-fame/run') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
-      runWeeklyWinnerAutomation();
+      if (hallOfFameRunPromise) return json(res, 409, { error: 'hall-of-fame run already in progress' });
+      await runWeeklyWinnerAutomationLocked();
       const refreshed = loadStore();
       return json(res, 200, {
         ok: true,

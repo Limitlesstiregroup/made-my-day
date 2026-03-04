@@ -9,6 +9,7 @@ Anonymous same-day positive story platform.
 - JSON API hardening: story/comment write endpoints require `Content-Type: application/json` (invalid media type returns HTTP 415)
 - Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
+- Automation concurrency hardening: import and hall-of-fame manual triggers return HTTP 409 when a run is already in progress to avoid duplicate writes
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`)
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
