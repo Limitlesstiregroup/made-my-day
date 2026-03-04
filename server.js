@@ -148,6 +148,29 @@ function getConfigIssues() {
     issues.push('trustProxy');
   }
 
+  const requestTimeoutRaw = parseIntOrDefault(process.env.REQUEST_TIMEOUT_MS, 30_000);
+  if (requestTimeoutRaw < 1_000 || requestTimeoutRaw > 120_000) {
+    issues.push('requestTimeout');
+  }
+
+  const headersTimeoutRaw = parseIntOrDefault(process.env.HEADERS_TIMEOUT_MS, 15_000);
+  if (headersTimeoutRaw < 1_000 || headersTimeoutRaw > 120_000) {
+    issues.push('headersTimeout');
+  }
+
+  const keepAliveTimeoutRaw = parseIntOrDefault(process.env.KEEP_ALIVE_TIMEOUT_MS, 5_000);
+  if (keepAliveTimeoutRaw < 1_000 || keepAliveTimeoutRaw > 120_000) {
+    issues.push('keepAliveTimeout');
+  }
+
+  if (!issues.includes('headersTimeout') && !issues.includes('requestTimeout') && headersTimeoutRaw > requestTimeoutRaw) {
+    issues.push('headersTimeoutOrder');
+  }
+
+  if (!issues.includes('keepAliveTimeout') && !issues.includes('headersTimeout') && keepAliveTimeoutRaw > headersTimeoutRaw) {
+    issues.push('keepAliveTimeoutOrder');
+  }
+
   return issues;
 }
 
@@ -163,7 +186,10 @@ function getReadinessStatus() {
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
       maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
-      trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass'
+      trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass',
+      requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
+      headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : (issues.includes('headersTimeoutOrder') ? 'fail' : 'pass'),
+      keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : (issues.includes('keepAliveTimeoutOrder') ? 'fail' : 'pass')
     }
   };
 }

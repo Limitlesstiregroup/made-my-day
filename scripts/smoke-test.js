@@ -41,6 +41,12 @@ try {
     maxBodyIssue.includes('MAX_BODY_BYTES must be between 1024 and 262144'),
     'release readiness should reject too-small MAX_BODY_BYTES'
   );
+
+  const timeoutOrderIssue = evaluateReadiness({ REQUEST_TIMEOUT_MS: '10000', HEADERS_TIMEOUT_MS: '15000' });
+  assert.ok(
+    timeoutOrderIssue.includes('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS'),
+    'release readiness should reject headers timeout values above request timeout'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);

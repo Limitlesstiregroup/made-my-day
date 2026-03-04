@@ -73,6 +73,29 @@ function evaluateReadiness(env = process.env) {
     issues.push('TRUST_PROXY must be either true or false when set');
   }
 
+  const requestTimeoutMs = parseIntOrDefault(env.REQUEST_TIMEOUT_MS, 30_000);
+  if (requestTimeoutMs < 1_000 || requestTimeoutMs > 120_000) {
+    issues.push('REQUEST_TIMEOUT_MS must be between 1000 and 120000');
+  }
+
+  const headersTimeoutMs = parseIntOrDefault(env.HEADERS_TIMEOUT_MS, 15_000);
+  if (headersTimeoutMs < 1_000 || headersTimeoutMs > 120_000) {
+    issues.push('HEADERS_TIMEOUT_MS must be between 1000 and 120000');
+  }
+
+  const keepAliveTimeoutMs = parseIntOrDefault(env.KEEP_ALIVE_TIMEOUT_MS, 5_000);
+  if (keepAliveTimeoutMs < 1_000 || keepAliveTimeoutMs > 120_000) {
+    issues.push('KEEP_ALIVE_TIMEOUT_MS must be between 1000 and 120000');
+  }
+
+  if (headersTimeoutMs > requestTimeoutMs) {
+    issues.push('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS');
+  }
+
+  if (keepAliveTimeoutMs > headersTimeoutMs) {
+    issues.push('KEEP_ALIVE_TIMEOUT_MS must be less than or equal to HEADERS_TIMEOUT_MS');
+  }
+
   return issues;
 }
 

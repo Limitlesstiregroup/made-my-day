@@ -54,7 +54,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
-- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`).
+- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS <= HEADERS_TIMEOUT_MS`).
 - `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_MUTATIONS` tune POST mutation throttling.
 - `RATE_LIMIT_MAX_KEYS` (default `10000`, min `1000`, max `200000`) caps in-memory rate-limit IP buckets to stay bounded under spray traffic.
 - `IDEMPOTENCY_TTL_MS` (default `86400000`, min `60000`) keeps idempotency keys valid for safe retry windows.
