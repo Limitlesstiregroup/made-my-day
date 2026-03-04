@@ -413,8 +413,12 @@ function securityHeaders() {
   };
 }
 
-function json(res, status, data, { noStore = true } = {}) {
-  const headers = { 'Content-Type': 'application/json; charset=utf-8', ...securityHeaders() };
+function json(res, status, data, { noStore = true, headers: extraHeaders } = {}) {
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...securityHeaders(),
+    ...(extraHeaders || {})
+  };
   if (noStore) headers['Cache-Control'] = 'no-store';
   res.writeHead(status, headers);
   res.end(JSON.stringify(data, null, 2));
@@ -1068,7 +1072,14 @@ const server = http.createServer(async (req, res) => {
       const idempotencyKey = getIdempotencyKey(req);
       const priorResult = getAdminRunIdempotent('import-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
-      if (importRunPromise) return json(res, 409, { error: 'import run already in progress' });
+      if (importRunPromise) {
+        return json(
+          res,
+          409,
+          { error: 'import run already in progress', retryAfterSeconds: 5 },
+          { headers: { 'Retry-After': '5' } }
+        );
+      }
       const result = await runIngestJob().catch((error) => ({ added: 0, error: error?.message || String(error) }));
       if (idempotencyKey) {
         const cacheable = { ...result, idempotent: false };
@@ -1086,7 +1097,14 @@ const server = http.createServer(async (req, res) => {
       const idempotencyKey = getIdempotencyKey(req);
       const priorResult = getAdminRunIdempotent('hall-of-fame-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
-      if (hallOfFameRunPromise) return json(res, 409, { error: 'hall-of-fame run already in progress' });
+      if (hallOfFameRunPromise) {
+        return json(
+          res,
+          409,
+          { error: 'hall-of-fame run already in progress', retryAfterSeconds: 5 },
+          { headers: { 'Retry-After': '5' } }
+        );
+      }
       await runWeeklyWinnerAutomationLocked();
       const refreshed = loadStore();
       const result = {
