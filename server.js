@@ -330,7 +330,10 @@ function jsonCached(req, res, status, data) {
 }
 
 function id(prefix) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+  const value = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID().replace(/-/g, '').slice(0, 16)
+    : crypto.randomBytes(8).toString('hex');
+  return `${prefix}_${value}`;
 }
 
 function getRequestIp(req) {
