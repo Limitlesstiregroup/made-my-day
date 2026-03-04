@@ -791,8 +791,19 @@ const importInterval = setInterval(() => runIngestJob().catch(() => null), 60 * 
 const winnerBootTimeout = setTimeout(() => runWeeklyWinnerAutomationLocked().catch(() => null), 2000);
 const winnerInterval = setInterval(() => runWeeklyWinnerAutomationLocked().catch(() => null), 60 * 1000);
 
+function getRequestId(req) {
+  const incoming = req.headers['x-request-id'];
+  if (typeof incoming === 'string') {
+    const trimmed = incoming.trim();
+    if (trimmed.length >= 8 && trimmed.length <= 128 && /^[a-zA-Z0-9:_\-.]+$/.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  return `req_${crypto.randomUUID()}`;
+}
+
 const server = http.createServer(async (req, res) => {
-  const requestId = `req_${crypto.randomUUID()}`;
+  const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
   try {

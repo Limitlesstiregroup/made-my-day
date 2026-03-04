@@ -13,6 +13,7 @@ Anonymous same-day positive story platform.
 - Optional idempotent automation retries via `Idempotency-Key` on `POST /api/import/run` and `POST /api/hall-of-fame/run` (returns prior successful response with `idempotent: true` during the idempotency window)
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, `Content-Security-Policy`, `Strict-Transport-Security`)
+- Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
 - Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv`) and gift-card queue (`GET /api/admin/gift-cards.csv`) protected by admin bearer token
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
