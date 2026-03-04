@@ -85,6 +85,42 @@ async function run() {
       throw new Error('create story response missing story id');
     }
 
+    const badLikeType = await fetch(`${BASE}/api/stories/${storyId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: '{}'
+    });
+    if (badLikeType.status !== 415) {
+      throw new Error(`expected 415 for invalid like content-type, got ${badLikeType.status}`);
+    }
+
+    const goodLike = await fetch(`${BASE}/api/stories/${storyId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    if (goodLike.status !== 200) {
+      throw new Error(`expected 200 for like mutation, got ${goodLike.status}`);
+    }
+
+    const badShareType = await fetch(`${BASE}/api/stories/${storyId}/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: '{}'
+    });
+    if (badShareType.status !== 415) {
+      throw new Error(`expected 415 for invalid share content-type, got ${badShareType.status}`);
+    }
+
+    const goodShare = await fetch(`${BASE}/api/stories/${storyId}/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    if (goodShare.status !== 200) {
+      throw new Error(`expected 200 for share mutation, got ${goodShare.status}`);
+    }
+
     const badCommentType = await fetch(`${BASE}/api/stories/${storyId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },

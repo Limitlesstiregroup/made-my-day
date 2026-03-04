@@ -742,6 +742,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/like$/)) {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
@@ -751,6 +754,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/share$/)) {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });

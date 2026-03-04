@@ -45,12 +45,20 @@ function App() {
   };
 
   const likeStory = async (id) => {
-    await fetch(`/api/stories/${id}/like`, { method: 'POST' });
+    await fetch(`/api/stories/${id}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
     loadStories();
   };
 
   const shareStory = async (story) => {
-    await fetch(`/api/stories/${story.id}/share`, { method: 'POST' });
+    await fetch(`/api/stories/${story.id}/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
     const shareText = `Made My Day story: ${story.text}`;
     if (navigator.share) {
       navigator.share({ title: 'Made My Day', text: shareText, url: window.location.href }).catch(() => null);

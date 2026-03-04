@@ -6,7 +6,7 @@ Anonymous same-day positive story platform.
 - No account required
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
-- JSON API hardening: story/comment write endpoints require `Content-Type: application/json` (invalid media type returns HTTP 415)
+- JSON API hardening: all story mutation endpoints (`POST /api/stories`, `/api/stories/:id/like`, `/api/stories/:id/share`, `/api/stories/:id/comments`) require `Content-Type: application/json` (invalid media type returns HTTP 415)
 - Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
 - Automation concurrency hardening: import and hall-of-fame manual triggers return HTTP 409 when a run is already in progress to avoid duplicate writes
