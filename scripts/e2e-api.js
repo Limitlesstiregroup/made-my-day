@@ -108,6 +108,25 @@ async function run() {
       throw new Error('idempotent retry did not return original story payload');
     }
 
+    const invalidIdempotencyKey = await fetch(`${BASE}/api/stories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Idempotency-Key': 'bad key with spaces'
+      },
+      body: JSON.stringify({
+        text: `Today I brought coffee to my neighbor and it made their morning brighter. ${uniqueSuffix}`,
+        author: 'smoke-test'
+      })
+    });
+    if (invalidIdempotencyKey.status !== 201) {
+      throw new Error(`expected 201 for create with invalid idempotency key treated as non-idempotent, got ${invalidIdempotencyKey.status}`);
+    }
+    const invalidIdempotencyJson = await invalidIdempotencyKey.json();
+    if (invalidIdempotencyJson?.story?.id === storyId) {
+      throw new Error('invalid idempotency key should not reuse prior story id');
+    }
+
     const badLikeType = await fetch(`${BASE}/api/stories/${storyId}/like`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },

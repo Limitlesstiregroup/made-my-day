@@ -275,8 +275,9 @@ function getIdempotencyKey(req) {
   const header = req.headers['idempotency-key'];
   if (typeof header !== 'string') return '';
   const key = header.trim();
-  if (!key) return '';
-  return key.slice(0, 128);
+  if (key.length < 8 || key.length > 128) return '';
+  if (!/^[a-zA-Z0-9:_\-.]+$/.test(key)) return '';
+  return key;
 }
 
 function findRecentIdempotentStory(store, idempotencyKey) {
