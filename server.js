@@ -38,6 +38,12 @@ const MAX_COMMENT_CHARS = Number.isFinite(Number(process.env.MAX_COMMENT_CHARS))
 const MAX_AUTHOR_CHARS = Number.isFinite(Number(process.env.MAX_AUTHOR_CHARS)) && Number(process.env.MAX_AUTHOR_CHARS) >= 10
   ? Math.floor(Number(process.env.MAX_AUTHOR_CHARS))
   : 60;
+const IDEMPOTENCY_TTL_MS = Number.isFinite(Number(process.env.IDEMPOTENCY_TTL_MS)) && Number(process.env.IDEMPOTENCY_TTL_MS) >= 60_000
+  ? Math.floor(Number(process.env.IDEMPOTENCY_TTL_MS))
+  : 24 * 60 * 60 * 1000;
+const MAX_IDEMPOTENCY_KEYS = Number.isFinite(Number(process.env.MAX_IDEMPOTENCY_KEYS)) && Number(process.env.MAX_IDEMPOTENCY_KEYS) >= 100
+  ? Math.floor(Number(process.env.MAX_IDEMPOTENCY_KEYS))
+  : 5000;
 const mutationLog = new Map();
 let lastImportRun = null;
 let importRunPromise = null;
@@ -196,7 +202,7 @@ function ensureStore() {
 }
 
 function emptyStore() {
-  return { stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [] };
+  return { stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [], idempotencyKeys: [] };
 }
 
 function loadStore() {
@@ -219,6 +225,7 @@ function loadStore() {
   if (!Array.isArray(store.comments)) store.comments = [];
   if (!Array.isArray(store.hallOfFame)) store.hallOfFame = [];
   if (!Array.isArray(store.giftCards)) store.giftCards = [];
+  if (!Array.isArray(store.idempotencyKeys)) store.idempotencyKeys = [];
   if (!Object.prototype.hasOwnProperty.call(store, 'pendingWinner')) store.pendingWinner = null;
   return store;
 }
@@ -264,11 +271,45 @@ function sanitizeSourceName(value) {
   return cleaned || null;
 }
 
+function getIdempotencyKey(req) {
+  const header = req.headers['idempotency-key'];
+  if (typeof header !== 'string') return '';
+  const key = header.trim();
+  if (!key) return '';
+  return key.slice(0, 128);
+}
+
+function findRecentIdempotentStory(store, idempotencyKey) {
+  if (!idempotencyKey || !Array.isArray(store.idempotencyKeys)) return null;
+  const now = Date.now();
+  const hit = store.idempotencyKeys.find((entry) => {
+    if (!entry || entry.key !== idempotencyKey || !entry.createdAt) return false;
+    const ageMs = now - new Date(entry.createdAt).getTime();
+    return Number.isFinite(ageMs) && ageMs <= IDEMPOTENCY_TTL_MS;
+  });
+  if (!hit?.storyId) return null;
+  return store.stories.find((story) => story.id === hit.storyId) || null;
+}
+
+function rememberIdempotentStory(store, idempotencyKey, storyId) {
+  if (!idempotencyKey || !storyId) return;
+  if (!Array.isArray(store.idempotencyKeys)) store.idempotencyKeys = [];
+  store.idempotencyKeys.unshift({ key: idempotencyKey, storyId, createdAt: new Date().toISOString() });
+}
+
 function saveStore(store) {
   store.stories = trimToLimit(store.stories, clampLimit(MAX_STORIES, 5000));
   store.comments = trimToLimit(store.comments, clampLimit(MAX_COMMENTS, 20000));
   store.hallOfFame = trimToLimit(store.hallOfFame, clampLimit(MAX_HALL_OF_FAME, 520));
   store.giftCards = trimToLimit(store.giftCards, clampLimit(MAX_GIFT_CARDS, 520));
+  store.idempotencyKeys = trimToLimit(
+    (Array.isArray(store.idempotencyKeys) ? store.idempotencyKeys : []).filter((entry) => {
+      if (!entry || !entry.createdAt) return false;
+      const ageMs = Date.now() - new Date(entry.createdAt).getTime();
+      return Number.isFinite(ageMs) && ageMs <= IDEMPOTENCY_TTL_MS;
+    }),
+    clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
+  );
   const tmpFile = `${STORE_FILE}.tmp`;
   fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2));
   fs.renameSync(tmpFile, STORE_FILE);
@@ -720,6 +761,11 @@ const server = http.createServer(async (req, res) => {
       if (!incomingText || incomingText.length < 40) {
         return json(res, 400, { error: 'Story must be at least 40 characters.' });
       }
+      const idempotencyKey = getIdempotencyKey(req);
+      const existingByIdempotency = findRecentIdempotentStory(store, idempotencyKey);
+      if (existingByIdempotency) {
+        return json(res, 200, { story: storyView(existingByIdempotency, store), idempotent: true });
+      }
       const duplicate = store.stories.some((s) => {
         if (!s?.createdAt) return false;
         const ageMs = Date.now() - new Date(s.createdAt).getTime();
@@ -741,6 +787,7 @@ const server = http.createServer(async (req, res) => {
         autoImported: false
       };
       store.stories.unshift(story);
+      rememberIdempotentStory(store, idempotencyKey, story.id);
       saveStore(store);
       return json(res, 201, { story: storyView(story, store) });
     }

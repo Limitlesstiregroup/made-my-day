@@ -14,6 +14,7 @@ Anonymous same-day positive story platform.
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`)
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
+- Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts)
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - React UI
@@ -48,6 +49,8 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
 - `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`).
+- `IDEMPOTENCY_TTL_MS` (default `86400000`, min `60000`) keeps idempotency keys valid for safe retry windows.
+- `MAX_IDEMPOTENCY_KEYS` (default `5000`, min `100`) bounds persisted idempotency key records.
 
 ## API
 - `GET /api/health`

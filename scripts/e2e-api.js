@@ -67,9 +67,13 @@ async function run() {
     }
 
     const uniqueSuffix = Date.now();
+    const idempotencyKey = `create-story-${uniqueSuffix}`;
     const createStory = await fetch(`${BASE}/api/stories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Idempotency-Key': idempotencyKey
+      },
       body: JSON.stringify({
         text: `Today I helped a stranger with their groceries and they smiled all the way home. ${uniqueSuffix}`,
         author: 'smoke-test'
@@ -83,6 +87,25 @@ async function run() {
     const storyId = created?.story?.id;
     if (!storyId) {
       throw new Error('create story response missing story id');
+    }
+
+    const idempotentRetry = await fetch(`${BASE}/api/stories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Idempotency-Key': idempotencyKey
+      },
+      body: JSON.stringify({
+        text: `Today I helped a stranger with their groceries and they smiled all the way home. ${uniqueSuffix}`,
+        author: 'smoke-test'
+      })
+    });
+    if (idempotentRetry.status !== 200) {
+      throw new Error(`expected 200 for idempotent retry, got ${idempotentRetry.status}`);
+    }
+    const idempotentRetryJson = await idempotentRetry.json();
+    if (idempotentRetryJson?.story?.id !== storyId || idempotentRetryJson?.idempotent !== true) {
+      throw new Error('idempotent retry did not return original story payload');
     }
 
     const badLikeType = await fetch(`${BASE}/api/stories/${storyId}/like`, {
