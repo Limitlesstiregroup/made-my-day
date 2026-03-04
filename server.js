@@ -1175,6 +1175,14 @@ const server = http.createServer(async (req, res) => {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      try {
+        await readBody(req);
+      } catch (error) {
+        if (error?.code === 'BODY_TOO_LARGE') {
+          return json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
+        }
+        return json(res, 400, { error: 'Invalid JSON body.' });
+      }
       const idempotencyKey = getIdempotencyKey(req);
       const priorResult = getAdminRunIdempotent('import-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
@@ -1200,6 +1208,14 @@ const server = http.createServer(async (req, res) => {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      try {
+        await readBody(req);
+      } catch (error) {
+        if (error?.code === 'BODY_TOO_LARGE') {
+          return json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
+        }
+        return json(res, 400, { error: 'Invalid JSON body.' });
+      }
       const idempotencyKey = getIdempotencyKey(req);
       const priorResult = getAdminRunIdempotent('hall-of-fame-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
