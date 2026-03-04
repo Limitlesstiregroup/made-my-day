@@ -337,10 +337,11 @@ function json(res, status, data, { noStore = true } = {}) {
 
 function csvValue(value) {
   const text = String(value ?? '');
-  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-    return `"${text.replace(/"/g, '""')}"`;
+  const formulaSafe = /^[=+\-@]/.test(text.trimStart()) ? `'${text}` : text;
+  if (formulaSafe.includes(',') || formulaSafe.includes('"') || formulaSafe.includes('\n')) {
+    return `"${formulaSafe.replace(/"/g, '""')}"`;
   }
-  return text;
+  return formulaSafe;
 }
 
 function csv(res, status, rows, { noStore = true } = {}) {
