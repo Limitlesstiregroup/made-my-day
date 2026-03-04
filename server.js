@@ -254,10 +254,18 @@ function hasAdminAuth(req) {
   return candidates.some((token) => secureTokenEquals(incoming, token));
 }
 
+function writeStoreFileAtomically(store) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const tmpSuffix = `${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const tmpFile = `${STORE_FILE}.${tmpSuffix}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2));
+  fs.renameSync(tmpFile, STORE_FILE);
+}
+
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(STORE_FILE)) {
-    fs.writeFileSync(STORE_FILE, JSON.stringify(emptyStore(), null, 2));
+    writeStoreFileAtomically(emptyStore());
   }
 }
 
@@ -279,7 +287,7 @@ function loadStore() {
       // Ignore backup failures; continue with a safe empty store.
     }
     store = emptyStore();
-    fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
+    writeStoreFileAtomically(store);
   }
   if (!Array.isArray(store.stories)) store.stories = [];
   if (!Array.isArray(store.comments)) store.comments = [];

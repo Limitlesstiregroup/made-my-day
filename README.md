@@ -18,6 +18,8 @@ Anonymous same-day positive story platform.
 - Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv?limit=&offset=`) and gift-card queue (`GET /api/admin/gift-cards.csv?limit=&offset=`) protected by admin bearer token
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
+- Runtime persistence hardening: stories store writes (including first-boot and corruption recovery paths) use atomic temp-file swaps to reduce corruption risk during crashes/restarts
+- Runtime log hygiene: local `*.log` files are ignored and no longer tracked to keep release branches clean between operator runs
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)
 - Optional idempotent engagement retries via `Idempotency-Key` on `POST /api/stories/:id/like`, `/api/stories/:id/share`, and `/api/stories/:id/comments` (returns prior result with `idempotent: true` when replayed inside the idempotency window)
 - Like, share, comment
