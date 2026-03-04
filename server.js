@@ -620,22 +620,28 @@ function readBody(req) {
     let body = '';
     let totalBytes = 0;
     let tooLarge = false;
+    let settled = false;
+
+    const failTooLarge = () => {
+      if (settled) return;
+      settled = true;
+      const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
+      error.code = 'BODY_TOO_LARGE';
+      reject(error);
+    };
+
     req.on('data', (chunk) => {
       totalBytes += chunk.length;
       if (totalBytes > MAX_BODY_BYTES) {
         tooLarge = true;
-        req.destroy();
+        failTooLarge();
         return;
       }
-      body += chunk;
+      if (!tooLarge) body += chunk;
     });
     req.on('end', () => {
-      if (tooLarge) {
-        const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
-        error.code = 'BODY_TOO_LARGE';
-        reject(error);
-        return;
-      }
+      if (settled || tooLarge) return;
+      settled = true;
       if (!body) return resolve({});
       try {
         resolve(JSON.parse(body));
@@ -643,7 +649,11 @@ function readBody(req) {
         reject(error);
       }
     });
-    req.on('error', reject);
+    req.on('error', (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    });
   });
 }
 
