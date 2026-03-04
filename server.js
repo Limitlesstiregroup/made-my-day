@@ -915,6 +915,10 @@ const server = http.createServer(async (req, res) => {
       res.setHeader('RateLimit-Limit', String(rateLimit.limit));
       res.setHeader('RateLimit-Remaining', String(rateLimit.remaining));
       res.setHeader('RateLimit-Reset', String(rateLimit.resetSeconds));
+      // Legacy compatibility for clients/proxies that still rely on pre-RFC header names.
+      res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
+      res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
+      res.setHeader('X-RateLimit-Reset', String(rateLimit.resetSeconds));
     }
     if (rateLimit.limited) {
       res.setHeader('Retry-After', String(rateLimit.resetSeconds));

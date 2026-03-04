@@ -14,6 +14,7 @@ Anonymous same-day positive story platform.
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover (rotation fallback token must differ from the primary token)
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, `Content-Security-Policy`, `Strict-Transport-Security`)
 - Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
+- Mutation rate-limit telemetry is emitted in both RFC 9333 (`RateLimit-*`) and legacy (`X-RateLimit-*`) headers for safer proxy/client interoperability during GA rollouts
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
 - Admin exports for weekly operations handoff protected by admin bearer token: paginated JSON (`GET /api/admin/hall-of-fame?limit=&offset=`, `GET /api/admin/gift-cards?limit=&offset=`) plus CSV (`GET /api/admin/hall-of-fame.csv?limit=&offset=`, `GET /api/admin/gift-cards.csv?limit=&offset=`)
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
