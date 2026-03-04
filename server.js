@@ -46,6 +46,7 @@ const MAX_IDEMPOTENCY_KEYS = Number.isFinite(Number(process.env.MAX_IDEMPOTENCY_
   : 5000;
 const mutationLog = new Map();
 const adminRunIdempotencyCache = new Map();
+const engagementIdempotencyCache = new Map();
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
@@ -315,6 +316,43 @@ function rememberAdminRunIdempotent(scope, idempotencyKey, result) {
     const oldest = adminRunIdempotencyCache.keys().next();
     if (oldest.done) break;
     adminRunIdempotencyCache.delete(oldest.value);
+  }
+}
+
+function getEngagementIdempotent(scope, idempotencyKey) {
+  if (!scope || !idempotencyKey) return null;
+  const cacheKey = `${scope}:${idempotencyKey}`;
+  const hit = engagementIdempotencyCache.get(cacheKey);
+  if (!hit || !Number.isFinite(hit.expiresAt) || hit.expiresAt <= Date.now()) {
+    engagementIdempotencyCache.delete(cacheKey);
+    return null;
+  }
+  return hit.result;
+}
+
+function rememberEngagementIdempotent(scope, idempotencyKey, result) {
+  if (!scope || !idempotencyKey || !result) return;
+  const now = Date.now();
+  const cacheKey = `${scope}:${idempotencyKey}`;
+  engagementIdempotencyCache.set(cacheKey, {
+    expiresAt: now + IDEMPOTENCY_TTL_MS,
+    result
+  });
+
+  const max = clampLimit(MAX_IDEMPOTENCY_KEYS, 5000);
+  if (engagementIdempotencyCache.size <= max) return;
+
+  for (const [key, value] of engagementIdempotencyCache.entries()) {
+    if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
+      engagementIdempotencyCache.delete(key);
+    }
+    if (engagementIdempotencyCache.size <= max) break;
+  }
+
+  while (engagementIdempotencyCache.size > max) {
+    const oldest = engagementIdempotencyCache.keys().next();
+    if (oldest.done) break;
+    engagementIdempotencyCache.delete(oldest.value);
   }
 }
 
@@ -925,9 +963,17 @@ const server = http.createServer(async (req, res) => {
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
+
+      const idempotencyKey = getIdempotencyKey(req);
+      const idempotentScope = `story-like:${storyId}`;
+      const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
+      if (prior) return json(res, 200, { ...prior, idempotent: true });
+
       story.likes += 1;
       saveStore(store);
-      return json(res, 200, { likes: story.likes });
+      const result = { likes: story.likes };
+      rememberEngagementIdempotent(idempotentScope, idempotencyKey, result);
+      return json(res, 200, result);
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/share$/)) {
@@ -937,9 +983,17 @@ const server = http.createServer(async (req, res) => {
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
+
+      const idempotencyKey = getIdempotencyKey(req);
+      const idempotentScope = `story-share:${storyId}`;
+      const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
+      if (prior) return json(res, 200, { ...prior, idempotent: true });
+
       story.shares += 1;
       saveStore(store);
-      return json(res, 200, { shares: story.shares });
+      const result = { shares: story.shares };
+      rememberEngagementIdempotent(idempotentScope, idempotencyKey, result);
+      return json(res, 200, result);
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/comments$/)) {
@@ -949,6 +1003,12 @@ const server = http.createServer(async (req, res) => {
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
+
+      const idempotencyKey = getIdempotencyKey(req);
+      const idempotentScope = `story-comment:${storyId}`;
+      const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
+      if (prior) return json(res, 200, { ...prior, idempotent: true });
+
       const body = await readBody(req).catch((error) => {
         if (error?.code === 'BODY_TOO_LARGE') {
           json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
@@ -971,7 +1031,9 @@ const server = http.createServer(async (req, res) => {
       };
       store.comments.push(comment);
       saveStore(store);
-      return json(res, 201, { comment });
+      const result = { comment };
+      rememberEngagementIdempotent(idempotentScope, idempotencyKey, result);
+      return json(res, 201, result);
     }
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {

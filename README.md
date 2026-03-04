@@ -18,6 +18,7 @@ Anonymous same-day positive story platform.
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)
+- Optional idempotent engagement retries via `Idempotency-Key` on `POST /api/stories/:id/like`, `/api/stories/:id/share`, and `/api/stories/:id/comments` (returns prior result with `idempotent: true` when replayed inside the idempotency window)
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - Stories feed pagination (`GET /api/stories?limit=&offset=`) to cap payload size and improve GA polling stability
