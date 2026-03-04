@@ -333,6 +333,21 @@ function json(res, status, data, { noStore = true } = {}) {
   res.end(JSON.stringify(data, null, 2));
 }
 
+function csvValue(value) {
+  const text = String(value ?? '');
+  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+function csv(res, status, rows, { noStore = true } = {}) {
+  const headers = { 'Content-Type': 'text/csv; charset=utf-8', ...securityHeaders() };
+  if (noStore) headers['Cache-Control'] = 'no-store';
+  res.writeHead(status, headers);
+  res.end(rows.map((row) => row.map((value) => csvValue(value)).join(',')).join('\n'));
+}
+
 function hasJsonContentType(req) {
   const value = String(req.headers['content-type'] || '').toLowerCase();
   return value.startsWith('application/json');
@@ -755,6 +770,22 @@ const server = http.createServer(async (req, res) => {
         readiness,
         operations: getOperationalSnapshot(store)
       });
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame.csv') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const rows = [['storyId', 'publishedAt', 'score', 'giftCardCode', 'notifiedAt']].concat(
+        store.hallOfFame.map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
+      );
+      return csv(res, 200, rows);
+    }
+
+    if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards.csv') {
+      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const rows = [['storyId', 'code', 'status', 'amountUsd', 'queuedAt', 'issuedAt']].concat(
+        store.giftCards.map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
+      );
+      return csv(res, 200, rows);
     }
 
     if (req.method === 'GET' && u.pathname === '/api/stories') {

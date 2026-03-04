@@ -13,6 +13,7 @@ Anonymous same-day positive story platform.
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`)
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
+- Admin CSV exports for weekly operations handoff: hall-of-fame history (`GET /api/admin/hall-of-fame.csv`) and gift-card queue (`GET /api/admin/gift-cards.csv`) protected by admin bearer token
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)
 - Like, share, comment
@@ -57,6 +58,8 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `GET /api/health`
 - `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
 - `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
+- `GET /api/admin/hall-of-fame.csv` (admin-only export)
+- `GET /api/admin/gift-cards.csv` (admin-only export)
 - `GET /api/stories` (`limit` default `100`, max `200`; `offset` default `0`)
 - `POST /api/stories`
 - `POST /api/stories/:id/like`

@@ -57,6 +57,22 @@ async function run() {
       throw new Error('health details missing operational totals');
     }
 
+    const unauthorizedGiftCardCsv = await fetch(`${BASE}/api/admin/gift-cards.csv`);
+    if (unauthorizedGiftCardCsv.status !== 401) {
+      throw new Error(`expected 401 for gift-card csv without admin token, got ${unauthorizedGiftCardCsv.status}`);
+    }
+
+    const authorizedHallCsv = await fetch(`${BASE}/api/admin/hall-of-fame.csv`, {
+      headers: { Authorization: 'Bearer admin_token_live_primary_1234' }
+    });
+    if (authorizedHallCsv.status !== 200) {
+      throw new Error(`expected 200 for hall-of-fame csv export, got ${authorizedHallCsv.status}`);
+    }
+    const hallCsvText = await authorizedHallCsv.text();
+    if (!hallCsvText.includes('storyId,publishedAt,score,giftCardCode,notifiedAt')) {
+      throw new Error('hall-of-fame csv export missing expected headers');
+    }
+
     const badContentType = await fetch(`${BASE}/api/stories`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
