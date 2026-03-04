@@ -88,6 +88,13 @@ function getAdminTokenCandidates() {
   return [...new Set(values)];
 }
 
+function getPreviousAdminToken() {
+  return [
+    String(process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS || '').trim(),
+    readSecretFile(process.env.MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE)
+  ].find(Boolean) || '';
+}
+
 function hasStrongAdminToken() {
   const configuredToken = getConfiguredAdminToken();
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
@@ -110,6 +117,11 @@ function getConfigIssues() {
   const configuredToken = getConfiguredAdminToken();
   if (configuredToken && !hasStrongAdminToken()) {
     issues.push('adminToken');
+  }
+
+  const previousToken = getPreviousAdminToken();
+  if (configuredToken && previousToken && configuredToken === previousToken) {
+    issues.push('adminTokenRotation');
   }
 
   const importTimeout = parseIntOrDefault(process.env.IMPORT_TIMEOUT_MS, 10000);
@@ -145,6 +157,7 @@ function getReadinessStatus() {
     ready: issues.length === 0,
     checks: {
       adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
+      adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',

@@ -11,7 +11,7 @@ Anonymous same-day positive story platform.
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
 - Automation concurrency hardening: import and hall-of-fame manual triggers return HTTP 409 when a run is already in progress to avoid duplicate writes
 - Optional idempotent automation retries via `Idempotency-Key` on `POST /api/import/run` and `POST /api/hall-of-fame/run` (returns prior successful response with `idempotent: true` during the idempotency window)
-- Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover
+- Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover (rotation fallback token must differ from the primary token)
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, `Content-Security-Policy`, `Strict-Transport-Security`)
 - Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
 - Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise)
