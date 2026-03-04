@@ -45,6 +45,7 @@ const MAX_IDEMPOTENCY_KEYS = Number.isFinite(Number(process.env.MAX_IDEMPOTENCY_
   ? Math.floor(Number(process.env.MAX_IDEMPOTENCY_KEYS))
   : 5000;
 const mutationLog = new Map();
+const adminRunIdempotencyCache = new Map();
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
@@ -278,6 +279,43 @@ function getIdempotencyKey(req) {
   if (key.length < 8 || key.length > 128) return '';
   if (!/^[a-zA-Z0-9:_\-.]+$/.test(key)) return '';
   return key;
+}
+
+function getAdminRunIdempotent(scope, idempotencyKey) {
+  if (!scope || !idempotencyKey) return null;
+  const cacheKey = `${scope}:${idempotencyKey}`;
+  const hit = adminRunIdempotencyCache.get(cacheKey);
+  if (!hit || !Number.isFinite(hit.expiresAt) || hit.expiresAt <= Date.now()) {
+    adminRunIdempotencyCache.delete(cacheKey);
+    return null;
+  }
+  return hit.result;
+}
+
+function rememberAdminRunIdempotent(scope, idempotencyKey, result) {
+  if (!scope || !idempotencyKey || !result) return;
+  const now = Date.now();
+  const cacheKey = `${scope}:${idempotencyKey}`;
+  adminRunIdempotencyCache.set(cacheKey, {
+    expiresAt: now + IDEMPOTENCY_TTL_MS,
+    result
+  });
+
+  const max = clampLimit(MAX_IDEMPOTENCY_KEYS, 5000);
+  if (adminRunIdempotencyCache.size <= max) return;
+
+  for (const [key, value] of adminRunIdempotencyCache.entries()) {
+    if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
+      adminRunIdempotencyCache.delete(key);
+    }
+    if (adminRunIdempotencyCache.size <= max) break;
+  }
+
+  while (adminRunIdempotencyCache.size > max) {
+    const oldest = adminRunIdempotencyCache.keys().next();
+    if (oldest.done) break;
+    adminRunIdempotencyCache.delete(oldest.value);
+  }
 }
 
 function findRecentIdempotentStory(store, idempotencyKey) {
@@ -937,8 +975,16 @@ const server = http.createServer(async (req, res) => {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const idempotencyKey = getIdempotencyKey(req);
+      const priorResult = getAdminRunIdempotent('import-run', idempotencyKey);
+      if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
       if (importRunPromise) return json(res, 409, { error: 'import run already in progress' });
       const result = await runIngestJob().catch((error) => ({ added: 0, error: error?.message || String(error) }));
+      if (idempotencyKey) {
+        const cacheable = { ...result, idempotent: false };
+        rememberAdminRunIdempotent('import-run', idempotencyKey, cacheable);
+        return json(res, 200, cacheable);
+      }
       return json(res, 200, result);
     }
 
@@ -947,15 +993,24 @@ const server = http.createServer(async (req, res) => {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      const idempotencyKey = getIdempotencyKey(req);
+      const priorResult = getAdminRunIdempotent('hall-of-fame-run', idempotencyKey);
+      if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
       if (hallOfFameRunPromise) return json(res, 409, { error: 'hall-of-fame run already in progress' });
       await runWeeklyWinnerAutomationLocked();
       const refreshed = loadStore();
-      return json(res, 200, {
+      const result = {
         ok: true,
         pendingWinner: refreshed.pendingWinner,
         latestWinner: refreshed.hallOfFame[0] || null,
         giftCardQueue: refreshed.giftCards.slice(0, 5)
-      });
+      };
+      if (idempotencyKey) {
+        const cacheable = { ...result, idempotent: false };
+        rememberAdminRunIdempotent('hall-of-fame-run', idempotencyKey, cacheable);
+        return json(res, 200, cacheable);
+      }
+      return json(res, 200, result);
     }
 
     return json(res, 404, { error: 'not found' });

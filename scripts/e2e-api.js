@@ -227,6 +227,41 @@ async function run() {
       throw new Error(`expected 200 for previous admin token during rotation, got ${authorizedWithPreviousToken.status}`);
     }
 
+    const importIdempotencyKey = `import-run-${uniqueSuffix}`;
+    const importRunFirst = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Idempotency-Key': importIdempotencyKey
+      },
+      body: JSON.stringify({})
+    });
+    if (importRunFirst.status !== 200) {
+      throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst.status}`);
+    }
+    const importRunFirstJson = await importRunFirst.json();
+    if (importRunFirstJson?.idempotent !== false) {
+      throw new Error('expected first idempotent import run to return idempotent=false');
+    }
+
+    const importRunRetry = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Idempotency-Key': importIdempotencyKey
+      },
+      body: JSON.stringify({})
+    });
+    if (importRunRetry.status !== 200) {
+      throw new Error(`expected 200 for idempotent import retry, got ${importRunRetry.status}`);
+    }
+    const importRunRetryJson = await importRunRetry.json();
+    if (importRunRetryJson?.idempotent !== true) {
+      throw new Error('expected idempotent import retry to return idempotent=true');
+    }
+
     const badHallType = await fetch(`${BASE}/api/hall-of-fame/run`, {
       method: 'POST',
       headers: {
@@ -249,6 +284,41 @@ async function run() {
     });
     if (goodHallRun.status !== 200) {
       throw new Error(`expected 200 for hall-of-fame run, got ${goodHallRun.status}`);
+    }
+
+    const hallIdempotencyKey = `hall-run-${uniqueSuffix}`;
+    const hallRunFirst = await fetch(`${BASE}/api/hall-of-fame/run`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': hallIdempotencyKey
+      },
+      body: JSON.stringify({})
+    });
+    if (hallRunFirst.status !== 200) {
+      throw new Error(`expected 200 for first hall-of-fame run with idempotency key, got ${hallRunFirst.status}`);
+    }
+    const hallRunFirstJson = await hallRunFirst.json();
+    if (hallRunFirstJson?.idempotent !== false) {
+      throw new Error('expected first idempotent hall-of-fame run to return idempotent=false');
+    }
+
+    const hallRunRetry = await fetch(`${BASE}/api/hall-of-fame/run`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': hallIdempotencyKey
+      },
+      body: JSON.stringify({})
+    });
+    if (hallRunRetry.status !== 200) {
+      throw new Error(`expected 200 for hall-of-fame idempotent retry, got ${hallRunRetry.status}`);
+    }
+    const hallRunRetryJson = await hallRunRetry.json();
+    if (hallRunRetryJson?.idempotent !== true) {
+      throw new Error('expected hall-of-fame idempotent retry to return idempotent=true');
     }
 
     console.log('made-my-day e2e api test passed');
