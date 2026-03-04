@@ -364,7 +364,9 @@ function securityHeaders() {
     'X-Permitted-Cross-Domain-Policies': 'none',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Resource-Policy': 'same-origin'
+    'Cross-Origin-Resource-Policy': 'same-origin',
+    'Content-Security-Policy': "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
   };
 }
 
