@@ -349,7 +349,9 @@ function saveStore(store) {
     }),
     clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
   );
-  const tmpFile = `${STORE_FILE}.tmp`;
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const tmpSuffix = `${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const tmpFile = `${STORE_FILE}.${tmpSuffix}.tmp`;
   fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2));
   fs.renameSync(tmpFile, STORE_FILE);
 }
