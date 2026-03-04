@@ -139,6 +139,15 @@ async function run() {
       throw new Error(`expected 201 for comment create, got ${goodComment.status}`);
     }
 
+    const badImportType = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: '{}'
+    });
+    if (badImportType.status !== 415) {
+      throw new Error(`expected 415 for invalid import content-type, got ${badImportType.status}`);
+    }
+
     const unauthorizedImportRun = await fetch(`${BASE}/api/import/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -158,6 +167,30 @@ async function run() {
     });
     if (authorizedWithPreviousToken.status !== 200) {
       throw new Error(`expected 200 for previous admin token during rotation, got ${authorizedWithPreviousToken.status}`);
+    }
+
+    const badHallType = await fetch(`${BASE}/api/hall-of-fame/run`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Content-Type': 'text/plain'
+      },
+      body: '{}'
+    });
+    if (badHallType.status !== 415) {
+      throw new Error(`expected 415 for invalid hall-of-fame content-type, got ${badHallType.status}`);
+    }
+
+    const goodHallRun = await fetch(`${BASE}/api/hall-of-fame/run`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    if (goodHallRun.status !== 200) {
+      throw new Error(`expected 200 for hall-of-fame run, got ${goodHallRun.status}`);
     }
 
     console.log('made-my-day e2e api test passed');

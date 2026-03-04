@@ -802,6 +802,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       if (importRunPromise) return json(res, 409, { error: 'import run already in progress' });
       const result = await runIngestJob().catch((error) => ({ added: 0, error: error?.message || String(error) }));
@@ -809,6 +812,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && u.pathname === '/api/hall-of-fame/run') {
+      if (!hasJsonContentType(req)) {
+        return json(res, 415, { error: 'Content-Type must be application/json.' });
+      }
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       if (hallOfFameRunPromise) return json(res, 409, { error: 'hall-of-fame run already in progress' });
       await runWeeklyWinnerAutomationLocked();
