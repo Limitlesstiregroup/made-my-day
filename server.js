@@ -948,6 +948,14 @@ const server = http.createServer(async (req, res) => {
 
     const store = loadStore();
 
+    if (req.method === 'GET' && u.pathname === '/api/health/live') {
+      return json(res, 200, {
+        ok: true,
+        service: 'made-my-day',
+        uptimeSeconds: Math.floor(process.uptime())
+      });
+    }
+
     if (req.method === 'GET' && u.pathname === '/api/health') {
       const configuredToken = getConfiguredAdminToken();
       return json(res, 200, {

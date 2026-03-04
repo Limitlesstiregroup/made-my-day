@@ -67,6 +67,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 
 ## API
 - `GET /api/health`
+- `GET /api/health/live` (always `200` + process uptime for liveness probes)
 - `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
 - `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
 - `GET /api/admin/hall-of-fame` (admin-only paginated JSON export)

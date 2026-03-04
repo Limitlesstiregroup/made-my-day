@@ -42,6 +42,15 @@ async function run() {
   try {
     await waitForServer();
 
+    const healthLive = await fetch(`${BASE}/api/health/live`);
+    if (healthLive.status !== 200) {
+      throw new Error(`expected 200 for liveness health endpoint, got ${healthLive.status}`);
+    }
+    const healthLiveJson = await healthLive.json();
+    if (healthLiveJson?.ok !== true || typeof healthLiveJson?.uptimeSeconds !== 'number') {
+      throw new Error('liveness health endpoint missing ok/uptimeSeconds payload');
+    }
+
     const unauthorizedHealthDetails = await fetch(`${BASE}/api/health/details`);
     if (unauthorizedHealthDetails.status !== 401) {
       throw new Error(`expected 401 for health details without admin token, got ${unauthorizedHealthDetails.status}`);
