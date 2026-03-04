@@ -57,6 +57,9 @@ async function run() {
     if (!healthDetailsJson?.operations?.totals || typeof healthDetailsJson.operations.totals.stories !== 'number') {
       throw new Error('health details missing operational totals');
     }
+    if (!healthDetailsJson?.operations?.runtimeGuards || typeof healthDetailsJson.operations.runtimeGuards.rateLimitKeysCapacity !== 'number') {
+      throw new Error('health details missing runtime guard telemetry');
+    }
 
     const unauthorizedGiftCardCsv = await fetch(`${BASE}/api/admin/gift-cards.csv`);
     if (unauthorizedGiftCardCsv.status !== 401) {

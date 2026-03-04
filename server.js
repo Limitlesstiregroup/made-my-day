@@ -206,6 +206,8 @@ function getOperationalSnapshot(store) {
   const manualStories = store.stories.length - importedStories;
   const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000) || null;
   const latestStory = store.stories[0] || null;
+  const rateLimitKeysUsed = mutationLog.size;
+  const idempotencyKeysPersisted = Array.isArray(store.idempotencyKeys) ? store.idempotencyKeys.length : 0;
 
   return {
     totals: {
@@ -223,6 +225,12 @@ function getOperationalSnapshot(store) {
       pendingWinner: store.pendingWinner,
       activeHallOfFameStoryId: activeHall ? activeHall.storyId : null,
       latestHallOfFameEntry: store.hallOfFame[0] || null
+    },
+    runtimeGuards: {
+      rateLimitKeysUsed,
+      rateLimitKeysCapacity: SAFE_RATE_LIMIT_MAX_KEYS,
+      idempotencyKeysPersisted,
+      idempotencyKeysCapacity: clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
     },
     latestStory: latestStory
       ? {
