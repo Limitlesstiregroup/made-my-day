@@ -830,6 +830,20 @@ const server = http.createServer(async (req, res) => {
   res.end('Not found');
 });
 
+const requestTimeoutMs = Number(process.env.REQUEST_TIMEOUT_MS || 30_000);
+const headersTimeoutMs = Number(process.env.HEADERS_TIMEOUT_MS || 15_000);
+const keepAliveTimeoutMs = Number(process.env.KEEP_ALIVE_TIMEOUT_MS || 5_000);
+
+server.requestTimeout = Number.isFinite(requestTimeoutMs) && requestTimeoutMs >= 1_000
+  ? Math.floor(requestTimeoutMs)
+  : 30_000;
+server.headersTimeout = Number.isFinite(headersTimeoutMs) && headersTimeoutMs >= 1_000
+  ? Math.floor(headersTimeoutMs)
+  : 15_000;
+server.keepAliveTimeout = Number.isFinite(keepAliveTimeoutMs) && keepAliveTimeoutMs >= 1_000
+  ? Math.floor(keepAliveTimeoutMs)
+  : 5_000;
+
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });

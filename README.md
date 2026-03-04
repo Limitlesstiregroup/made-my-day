@@ -47,6 +47,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
+- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`).
 
 ## API
 - `GET /api/health`
