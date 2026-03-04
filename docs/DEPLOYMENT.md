@@ -17,6 +17,7 @@ docker run --rm -p 4300:4300 \
 Optional runtime settings:
 - `IMPORT_TIMEOUT_MS` (default 10000)
 - `TRUST_PROXY=true` when running behind a trusted reverse proxy
+- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` for HTTP timeout hardening
 - `MADE_MY_DAY_ADMIN_TOKEN_FILE` to load admin token from a mounted secret file
 
 ## Release Readiness

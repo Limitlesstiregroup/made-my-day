@@ -625,12 +625,12 @@ async function runIngestJob() {
 }
 
 // run once on boot + every hour
-setTimeout(() => runIngestJob().catch(() => null), 1500);
-setInterval(() => runIngestJob().catch(() => null), 60 * 60 * 1000);
+const importBootTimeout = setTimeout(() => runIngestJob().catch(() => null), 1500);
+const importInterval = setInterval(() => runIngestJob().catch(() => null), 60 * 60 * 1000);
 
 // winner automation checks every minute
-setTimeout(() => runWeeklyWinnerAutomationLocked().catch(() => null), 2000);
-setInterval(() => runWeeklyWinnerAutomationLocked().catch(() => null), 60 * 1000);
+const winnerBootTimeout = setTimeout(() => runWeeklyWinnerAutomationLocked().catch(() => null), 2000);
+const winnerInterval = setInterval(() => runWeeklyWinnerAutomationLocked().catch(() => null), 60 * 1000);
 
 const server = http.createServer(async (req, res) => {
   const requestId = `req_${crypto.randomUUID()}`;
@@ -865,3 +865,18 @@ server.keepAliveTimeout = Number.isFinite(keepAliveTimeoutMs) && keepAliveTimeou
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });
+
+function shutdown(signal) {
+  console.log(`made-my-day shutting down (${signal})`);
+  clearTimeout(importBootTimeout);
+  clearInterval(importInterval);
+  clearTimeout(winnerBootTimeout);
+  clearInterval(winnerInterval);
+  server.close(() => {
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
