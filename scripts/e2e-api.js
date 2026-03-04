@@ -28,7 +28,8 @@ async function run() {
       ...process.env,
       PORT: String(PORT),
       MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
-      MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'admin_token_live_previous_5678'
+      MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'admin_token_live_previous_5678',
+      MAX_COMMENTS_PER_STORY: '5'
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -195,6 +196,26 @@ async function run() {
     });
     if (goodComment.status !== 201) {
       throw new Error(`expected 201 for comment create, got ${goodComment.status}`);
+    }
+
+    for (let i = 0; i < 4; i += 1) {
+      const extraComment = await fetch(`${BASE}/api/stories/${storyId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: `Extra comment ${i + 1} to fill per-story cap.` })
+      });
+      if (extraComment.status !== 201) {
+        throw new Error(`expected 201 while filling comment cap, got ${extraComment.status}`);
+      }
+    }
+
+    const maxedComment = await fetch(`${BASE}/api/stories/${storyId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'This comment should exceed the per-story cap.' })
+    });
+    if (maxedComment.status !== 409) {
+      throw new Error(`expected 409 when max comments per story reached, got ${maxedComment.status}`);
     }
 
     const badImportType = await fetch(`${BASE}/api/import/run`, {

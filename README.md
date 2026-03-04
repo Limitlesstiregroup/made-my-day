@@ -53,6 +53,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
+- `MAX_COMMENTS_PER_STORY` (default `500`, min `5`) caps comments accepted per story to prevent hotspot abuse from exhausting storage.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
 - `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS <= HEADERS_TIMEOUT_MS`).
 - `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_MUTATIONS` tune POST mutation throttling.

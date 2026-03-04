@@ -40,6 +40,9 @@ const MAX_STORY_CHARS = Number.isFinite(Number(process.env.MAX_STORY_CHARS)) && 
 const MAX_COMMENT_CHARS = Number.isFinite(Number(process.env.MAX_COMMENT_CHARS)) && Number(process.env.MAX_COMMENT_CHARS) >= 20
   ? Math.floor(Number(process.env.MAX_COMMENT_CHARS))
   : 300;
+const MAX_COMMENTS_PER_STORY = Number.isFinite(Number(process.env.MAX_COMMENTS_PER_STORY)) && Number(process.env.MAX_COMMENTS_PER_STORY) >= 5
+  ? Math.floor(Number(process.env.MAX_COMMENTS_PER_STORY))
+  : 500;
 const MAX_AUTHOR_CHARS = Number.isFinite(Number(process.env.MAX_AUTHOR_CHARS)) && Number(process.env.MAX_AUTHOR_CHARS) >= 10
   ? Math.floor(Number(process.env.MAX_AUTHOR_CHARS))
   : 60;
@@ -140,6 +143,9 @@ function getConfigIssues() {
   const maxCommentChars = parseIntOrDefault(process.env.MAX_COMMENT_CHARS, 300);
   if (maxCommentChars < 20) issues.push('maxCommentChars');
 
+  const maxCommentsPerStory = parseIntOrDefault(process.env.MAX_COMMENTS_PER_STORY, 500);
+  if (maxCommentsPerStory < 5) issues.push('maxCommentsPerStory');
+
   const maxAuthorChars = parseIntOrDefault(process.env.MAX_AUTHOR_CHARS, 60);
   if (maxAuthorChars < 10) issues.push('maxAuthorChars');
 
@@ -185,6 +191,7 @@ function getReadinessStatus() {
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
+      maxCommentsPerStory: issues.includes('maxCommentsPerStory') ? 'fail' : 'pass',
       maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
       trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass',
       requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
@@ -916,6 +923,7 @@ const server = http.createServer(async (req, res) => {
         imports: {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
           maxBodyBytes: MAX_BODY_BYTES,
+          maxCommentsPerStory: MAX_COMMENTS_PER_STORY,
           lastRun: lastImportRun
         }
       });
@@ -1132,6 +1140,14 @@ const server = http.createServer(async (req, res) => {
       if (!commentText || commentText.length < 2) {
         return json(res, 400, { error: 'Comment is too short.' });
       }
+      const existingCommentCount = store.comments.filter((entry) => entry.storyId === storyId).length;
+      if (existingCommentCount >= MAX_COMMENTS_PER_STORY) {
+        return json(res, 409, {
+          error: 'Comment limit reached for this story.',
+          maxCommentsPerStory: MAX_COMMENTS_PER_STORY
+        });
+      }
+
       const comment = {
         id: id('com'),
         storyId,
