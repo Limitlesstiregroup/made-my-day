@@ -64,6 +64,15 @@ async function run() {
       throw new Error(`expected 200 for HEAD health endpoint access, got ${healthHead.status}`);
     }
 
+    const readiness = await fetch(`${BASE}/api/health/ready`);
+    if (readiness.status !== 503) {
+      throw new Error(`expected 503 for readiness with missing GA config, got ${readiness.status}`);
+    }
+    const readinessJson = await readiness.json();
+    if (!Array.isArray(readinessJson?.issueCodes) || readinessJson.issueCodes.length === 0) {
+      throw new Error('readiness endpoint should return issueCodes array for GA triage');
+    }
+
     const oversizedUrl = await fetch(`${BASE}/api/health?pad=${'x'.repeat(2200)}`);
     if (oversizedUrl.status !== 414) {
       throw new Error(`expected 414 for oversized request URL, got ${oversizedUrl.status}`);

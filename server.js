@@ -1149,7 +1149,8 @@ const server = http.createServer(async (req, res) => {
       return json(res, readiness.ready ? 200 : 503, {
         ok: readiness.ready,
         service: 'made-my-day',
-        checks: readiness.checks
+        checks: readiness.checks,
+        issueCodes: readiness.issueCodes
       });
     }
 
