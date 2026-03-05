@@ -91,6 +91,18 @@ function looksLikeHttpsUrl(value) {
   }
 }
 
+function looksLikePlaceholderEscalationUrl(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    const host = parsed.hostname.toLowerCase();
+    return host === 'example.com' || host.endsWith('.example.com');
+  } catch {
+    return false;
+  }
+}
+
 function evaluateReadiness(env = process.env) {
   const issues = [];
 
@@ -122,8 +134,8 @@ function evaluateReadiness(env = process.env) {
   }
 
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
-  if (!looksLikeHttpsUrl(escalationDocUrl)) {
-    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid https URL (env or *_FILE)');
+  if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid non-placeholder https URL (env or *_FILE)');
   }
 
   const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
@@ -261,5 +273,6 @@ module.exports = {
   getPreviousAdminToken,
   getAdminTokenCandidates,
   looksLikeHttpsUrl,
+  looksLikePlaceholderEscalationUrl,
   evaluateReadiness
 };

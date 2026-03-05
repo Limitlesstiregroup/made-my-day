@@ -73,7 +73,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
 - `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS <= HEADERS_TIMEOUT_MS`).
 - `MADE_MY_DAY_ONCALL_PRIMARY` (or `MADE_MY_DAY_ONCALL_PRIMARY_FILE`) required on-call owner for GA readiness (team handle/email/pager alias, >=3 chars).
-- `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) required escalation runbook URL for GA readiness (must be `https://`).
+- `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) required escalation runbook URL for GA readiness (must be a non-placeholder `https://` URL; `example.com` values are rejected).
 - `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_MUTATIONS` tune POST mutation throttling.
 - `RATE_LIMIT_MAX_KEYS` (default `10000`, min `1000`, max `200000`) caps in-memory rate-limit IP buckets to stay bounded under spray traffic.
 - `IDEMPOTENCY_TTL_MS` (default `86400000`, min `60000`, max `604800000`) keeps idempotency keys valid for safe retry windows.

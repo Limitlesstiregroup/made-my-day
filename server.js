@@ -170,6 +170,18 @@ function looksLikeHttpsUrl(value) {
   }
 }
 
+function looksLikePlaceholderEscalationUrl(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    const host = parsed.hostname.toLowerCase();
+    return host === 'example.com' || host.endsWith('.example.com');
+  } catch {
+    return false;
+  }
+}
+
 function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -200,7 +212,7 @@ function getConfigIssues() {
   }
 
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
-  if (!looksLikeHttpsUrl(escalationDocUrl)) {
+  if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }
 
