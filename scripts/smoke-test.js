@@ -49,6 +49,16 @@ try {
     'unreadable *_FILE paths should surface explicit release-readiness issues'
   );
 
+  const relativeFilePathIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN_FILE: './relative-admin-token.txt',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    relativeFilePathIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE must be an absolute path'),
+    'relative *_FILE paths should surface absolute-path guidance'
+  );
+
   const tmpPermissiveTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-open-${Date.now()}`);
   fs.writeFileSync(tmpPermissiveTokenFile, 'admin_token_file_primary_1234\n');
   fs.chmodSync(tmpPermissiveTokenFile, 0o644);

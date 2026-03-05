@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
+const path = require('node:path');
 
 const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
 
@@ -49,6 +50,11 @@ function hasSecretFileReadError(filePath) {
   } catch {
     return true;
   }
+}
+
+function isSecretFilePathInvalid(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  return !path.isAbsolute(String(filePath).trim());
 }
 
 function isSecretFileTooPermissive(filePath) {
@@ -153,13 +159,17 @@ function evaluateReadiness(env = process.env) {
   const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
   secretFileKeys.forEach((key) => {
     const currentFile = env[`${key}_FILE`];
-    if (hasSecretFileReadError(currentFile)) {
+    if (isSecretFilePathInvalid(currentFile)) {
+      issues.push(`${key}_FILE must be an absolute path`);
+    } else if (hasSecretFileReadError(currentFile)) {
       issues.push(`${key}_FILE could not be read`);
     } else if (isSecretFileTooPermissive(currentFile)) {
       issues.push(`${key}_FILE permissions are too open (require chmod 600 owner-only)`);
     }
     const previousFile = env[`${key}_PREVIOUS_FILE`];
-    if (hasSecretFileReadError(previousFile)) {
+    if (isSecretFilePathInvalid(previousFile)) {
+      issues.push(`${key}_PREVIOUS_FILE must be an absolute path`);
+    } else if (hasSecretFileReadError(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE could not be read`);
     } else if (isSecretFileTooPermissive(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE permissions are too open (require chmod 600 owner-only)`);
@@ -288,6 +298,7 @@ module.exports = {
   readSecretFile,
   hasSecretFileReadError,
   isSecretFileTooPermissive,
+  isSecretFilePathInvalid,
   getConfiguredAdminToken,
   getPreviousAdminToken,
   getAdminTokenCandidates,

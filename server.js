@@ -106,6 +106,11 @@ function hasSecretFileReadError(filePath) {
   }
 }
 
+function isSecretFilePathInvalid(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  return !path.isAbsolute(String(filePath).trim());
+}
+
 function isSecretFileTooPermissive(filePath) {
   if (!filePath || String(filePath).trim() === '') return false;
   try {
@@ -297,6 +302,10 @@ function getConfigIssues() {
     'MADE_MY_DAY_ONCALL_PRIMARY',
     'MADE_MY_DAY_ESCALATION_DOC_URL'
   ];
+  if (secretFileKeys.some((key) => isSecretFilePathInvalid(process.env[`${key}_FILE`]) || isSecretFilePathInvalid(process.env[`${key}_PREVIOUS_FILE`]))) {
+    issues.push('secretFiles');
+  }
+
   if (secretFileKeys.some((key) => hasSecretFileReadError(process.env[`${key}_FILE`]) || hasSecretFileReadError(process.env[`${key}_PREVIOUS_FILE`]))) {
     issues.push('secretFiles');
   }
