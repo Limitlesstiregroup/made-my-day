@@ -185,7 +185,7 @@ function getConfigIssues() {
   const issues = [];
 
   const configuredToken = getConfiguredAdminToken();
-  if (configuredToken && !hasStrongAdminToken()) {
+  if (!configuredToken || !hasStrongAdminToken()) {
     issues.push('adminToken');
   }
 
@@ -286,7 +286,7 @@ function getReadinessStatus() {
     ready: issues.length === 0,
     issueCodes: [...issues],
     checks: {
-      adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
+      adminToken: issues.includes('adminToken') ? 'fail' : 'pass',
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',

@@ -97,6 +97,11 @@ function evaluateReadiness(env = process.env) {
   const configuredToken = getConfiguredAdminToken(env);
   const previousToken = getPreviousAdminToken(env);
   const adminTokenCandidates = getAdminTokenCandidates(env);
+
+  if (!configuredToken) {
+    issues.push('MADE_MY_DAY_ADMIN_TOKEN must be set via env or MADE_MY_DAY_ADMIN_TOKEN_FILE for GA readiness');
+  }
+
   for (const token of adminTokenCandidates) {
     if (token.length < 16) {
       issues.push('MADE_MY_DAY admin tokens must be at least 16 characters when set (env or *_FILE)');
