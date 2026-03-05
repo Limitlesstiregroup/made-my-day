@@ -793,50 +793,64 @@ function getRateLimitState(req) {
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+
+    const succeed = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+
     const declaredContentLength = Number(req.headers['content-length']);
     if (Number.isFinite(declaredContentLength) && declaredContentLength > MAX_BODY_BYTES) {
       const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
       error.code = 'BODY_TOO_LARGE';
-      reject(error);
+      fail(error);
       return;
     }
 
     let body = '';
     let totalBytes = 0;
-    let tooLarge = false;
-    let settled = false;
 
-    const failTooLarge = () => {
-      if (settled) return;
-      settled = true;
-      const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
-      error.code = 'BODY_TOO_LARGE';
-      reject(error);
-    };
+    req.on('aborted', () => {
+      const error = new Error('request aborted');
+      error.code = 'REQUEST_ABORTED';
+      fail(error);
+    });
 
     req.on('data', (chunk) => {
+      if (settled) return;
       totalBytes += chunk.length;
       if (totalBytes > MAX_BODY_BYTES) {
-        tooLarge = true;
-        failTooLarge();
+        const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
+        error.code = 'BODY_TOO_LARGE';
+        fail(error);
+        req.destroy();
         return;
       }
-      if (!tooLarge) body += chunk;
+      body += chunk;
     });
+
     req.on('end', () => {
-      if (settled || tooLarge) return;
-      settled = true;
-      if (!body) return resolve({});
+      if (!body) {
+        succeed({});
+        return;
+      }
       try {
-        resolve(JSON.parse(body));
+        succeed(JSON.parse(body));
       } catch (error) {
-        reject(error);
+        fail(error);
       }
     });
+
     req.on('error', (error) => {
-      if (settled) return;
-      settled = true;
-      reject(error);
+      fail(error);
     });
   });
 }
