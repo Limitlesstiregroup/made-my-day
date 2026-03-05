@@ -108,6 +108,17 @@ function parseIntOrDefault(value, fallback) {
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
 }
 
+function looksLikeHttpsUrl(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -130,6 +141,16 @@ function getConfigIssues() {
   const previousToken = getPreviousAdminToken();
   if (configuredToken && previousToken && configuredToken === previousToken) {
     issues.push('adminTokenRotation');
+  }
+
+  const oncallPrimary = String(process.env.MADE_MY_DAY_ONCALL_PRIMARY || '').trim();
+  if (oncallPrimary.length < 3) {
+    issues.push('oncallPrimary');
+  }
+
+  const escalationDocUrl = String(process.env.MADE_MY_DAY_ESCALATION_DOC_URL || '').trim();
+  if (!looksLikeHttpsUrl(escalationDocUrl)) {
+    issues.push('escalationDocUrl');
   }
 
   const importTimeout = parseIntOrDefault(process.env.IMPORT_TIMEOUT_MS, 10000);
@@ -192,6 +213,8 @@ function getReadinessStatus() {
     checks: {
       adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
+      oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
+      escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',

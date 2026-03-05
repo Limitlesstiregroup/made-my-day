@@ -27,7 +27,9 @@ try {
 
   const issuesFromFiles = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpTokenFile,
-    MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE: tmpPrevTokenFile
+    MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE: tmpPrevTokenFile,
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
 
   fs.unlinkSync(tmpTokenFile);

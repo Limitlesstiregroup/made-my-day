@@ -43,6 +43,17 @@ function getAdminTokenCandidates(env = process.env) {
   return [...new Set(values)];
 }
 
+function looksLikeHttpsUrl(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function evaluateReadiness(env = process.env) {
   const issues = [];
 
@@ -58,6 +69,16 @@ function evaluateReadiness(env = process.env) {
 
   if (configuredToken && previousToken && configuredToken === previousToken) {
     issues.push('MADE_MY_DAY rotation fallback token must differ from primary admin token');
+  }
+
+  const oncallPrimary = String(env.MADE_MY_DAY_ONCALL_PRIMARY || '').trim();
+  if (oncallPrimary.length < 3) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be set and at least 3 characters');
+  }
+
+  const escalationDocUrl = String(env.MADE_MY_DAY_ESCALATION_DOC_URL || '').trim();
+  if (!looksLikeHttpsUrl(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid https URL');
   }
 
   for (const token of adminTokenCandidates) {
@@ -138,5 +159,6 @@ module.exports = {
   getConfiguredAdminToken,
   getPreviousAdminToken,
   getAdminTokenCandidates,
+  looksLikeHttpsUrl,
   evaluateReadiness
 };
