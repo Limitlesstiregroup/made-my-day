@@ -641,8 +641,12 @@ function csvValue(value) {
   return formulaSafe;
 }
 
-function csv(res, status, rows, { noStore = true } = {}) {
-  const headers = { 'Content-Type': 'text/csv; charset=utf-8', ...securityHeaders() };
+function csv(res, status, rows, { noStore = true, headers: extraHeaders } = {}) {
+  const headers = {
+    'Content-Type': 'text/csv; charset=utf-8',
+    ...securityHeaders(),
+    ...(extraHeaders || {})
+  };
   if (noStore) applyNoStoreHeaders(headers);
   res.writeHead(status, headers);
   res.end(rows.map((row) => row.map((value) => csvValue(value)).join(',')).join('\n'));
@@ -1194,24 +1198,28 @@ const server = http.createServer(async (req, res) => {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
+      const records = store.hallOfFame.slice(offset, offset + limit);
+      const total = store.hallOfFame.length;
+      const nextOffset = offset + records.length < total ? offset + records.length : null;
+      const nextLink = buildPaginationLink('api/admin/hall-of-fame.csv', limit, nextOffset);
       const rows = [['storyId', 'publishedAt', 'score', 'giftCardCode', 'notifiedAt']].concat(
-        store.hallOfFame
-          .slice(offset, offset + limit)
-          .map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
+        records.map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
       );
-      return csv(res, 200, rows);
+      return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards.csv') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
+      const records = store.giftCards.slice(offset, offset + limit);
+      const total = store.giftCards.length;
+      const nextOffset = offset + records.length < total ? offset + records.length : null;
+      const nextLink = buildPaginationLink('api/admin/gift-cards.csv', limit, nextOffset);
       const rows = [['storyId', 'code', 'status', 'amountUsd', 'queuedAt', 'issuedAt']].concat(
-        store.giftCards
-          .slice(offset, offset + limit)
-          .map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
+        records.map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
       );
-      return csv(res, 200, rows);
+      return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame') {
