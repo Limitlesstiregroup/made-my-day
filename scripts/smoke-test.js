@@ -57,6 +57,12 @@ try {
     'release readiness should reject headers timeout values above request timeout'
   );
 
+  const keepAliveOrderIssue = evaluateReadiness({ HEADERS_TIMEOUT_MS: '10000', KEEP_ALIVE_TIMEOUT_MS: '15000' });
+  assert.ok(
+    keepAliveOrderIssue.includes('KEEP_ALIVE_TIMEOUT_MS must be less than or equal to HEADERS_TIMEOUT_MS'),
+    'release readiness should reject keep-alive timeout values above headers timeout'
+  );
+
   const idempotencyKeysIssue = evaluateReadiness({ MAX_IDEMPOTENCY_KEYS: '999999' });
   assert.ok(
     idempotencyKeysIssue.includes('MAX_IDEMPOTENCY_KEYS must be between 100 and 200000'),
