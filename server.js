@@ -83,10 +83,18 @@ function readSecretFile(filePath) {
   }
 }
 
+const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'];
+
 function looksLikePlaceholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'].some((token) => normalized.includes(token));
+  return PLACEHOLDER_TOKENS.some((token) => normalized.includes(token));
+}
+
+function looksLikePlaceholderToken(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return PLACEHOLDER_TOKENS.includes(normalized);
 }
 
 function getConfiguredAdminToken() {
@@ -164,7 +172,7 @@ function getConfigIssues() {
   }
 
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
-  if (oncallPrimary.length < 3) {
+  if (oncallPrimary.length < 3 || looksLikePlaceholderToken(oncallPrimary)) {
     issues.push('oncallPrimary');
   }
 

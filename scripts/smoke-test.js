@@ -45,6 +45,15 @@ try {
     'placeholder previous token should fail release readiness'
   );
 
+  const oncallPlaceholderIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'todo',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oncallPlaceholderIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value'),
+    'placeholder on-call owner should fail release readiness'
+  );
+
   const maxBodyIssue = evaluateReadiness({ MAX_BODY_BYTES: '512' });
   assert.ok(
     maxBodyIssue.includes('MAX_BODY_BYTES must be between 1024 and 262144'),

@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
 
+const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
+
 function placeholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'].some((t) => normalized.includes(t));
+  return [...PLACEHOLDER_TOKENS].some((t) => normalized.includes(t));
+}
+
+function placeholderToken(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return PLACEHOLDER_TOKENS.has(normalized);
 }
 
 function parseIntOrDefault(value, fallback) {
@@ -93,6 +101,9 @@ function evaluateReadiness(env = process.env) {
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY', env);
   if (oncallPrimary.length < 3) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be set and at least 3 characters (env or *_FILE)');
+  }
+  if (placeholderToken(oncallPrimary)) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value');
   }
 
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
