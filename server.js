@@ -1420,11 +1420,12 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
+      const normalizedAuthor = body.author ? sanitizeUserText(body.author, MAX_AUTHOR_CHARS) : '';
       const comment = {
         id: id('com'),
         storyId,
         text: commentText,
-        author: body.author ? sanitizeUserText(body.author, MAX_AUTHOR_CHARS) : 'Anonymous',
+        author: normalizedAuthor || 'Anonymous',
         createdAt: new Date().toISOString()
       };
       store.comments.push(comment);

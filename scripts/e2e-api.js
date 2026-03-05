@@ -242,6 +242,10 @@ async function run() {
     if (goodComment.status !== 201) {
       throw new Error(`expected 201 for comment create, got ${goodComment.status}`);
     }
+    const goodCommentBody = await goodComment.json();
+    if (goodCommentBody?.comment?.author !== 'Anonymous') {
+      throw new Error(`expected default Anonymous author, got ${goodCommentBody?.comment?.author}`);
+    }
 
     for (let i = 0; i < 4; i += 1) {
       const extraComment = await fetch(`${BASE}/api/stories/${storyId}/comments`, {
