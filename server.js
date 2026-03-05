@@ -593,6 +593,8 @@ function securityHeaders() {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
     'X-Permitted-Cross-Domain-Policies': 'none',
+    'X-DNS-Prefetch-Control': 'off',
+    'X-Download-Options': 'noopen',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
