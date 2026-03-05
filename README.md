@@ -74,7 +74,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_MUTATIONS` tune POST mutation throttling.
 - `RATE_LIMIT_MAX_KEYS` (default `10000`, min `1000`, max `200000`) caps in-memory rate-limit IP buckets to stay bounded under spray traffic.
 - `IDEMPOTENCY_TTL_MS` (default `86400000`, min `60000`) keeps idempotency keys valid for safe retry windows.
-- `MAX_IDEMPOTENCY_KEYS` (default `5000`, min `100`) bounds persisted idempotency key records.
+- `MAX_IDEMPOTENCY_KEYS` (default `5000`, min `100`, max `200000`) bounds persisted idempotency key records.
 
 ## API
 - `GET /api/health`

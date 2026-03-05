@@ -98,6 +98,16 @@ function evaluateReadiness(env = process.env) {
     issues.push('MAX_BODY_BYTES must be between 1024 and 262144');
   }
 
+  const maxUrlChars = parseIntOrDefault(env.MAX_URL_CHARS, 2048);
+  if (maxUrlChars < 256 || maxUrlChars > 8192) {
+    issues.push('MAX_URL_CHARS must be between 256 and 8192');
+  }
+
+  const maxIdempotencyKeys = parseIntOrDefault(env.MAX_IDEMPOTENCY_KEYS, 5000);
+  if (maxIdempotencyKeys < 100 || maxIdempotencyKeys > 200000) {
+    issues.push('MAX_IDEMPOTENCY_KEYS must be between 100 and 200000');
+  }
+
   const maxStoryChars = parseIntOrDefault(env.MAX_STORY_CHARS, 5000);
   if (maxStoryChars < 200) issues.push('MAX_STORY_CHARS must be >= 200');
 

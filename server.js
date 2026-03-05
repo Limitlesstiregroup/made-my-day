@@ -53,7 +53,7 @@ const IDEMPOTENCY_TTL_MS = Number.isFinite(Number(process.env.IDEMPOTENCY_TTL_MS
   ? Math.floor(Number(process.env.IDEMPOTENCY_TTL_MS))
   : 24 * 60 * 60 * 1000;
 const MAX_IDEMPOTENCY_KEYS = Number.isFinite(Number(process.env.MAX_IDEMPOTENCY_KEYS)) && Number(process.env.MAX_IDEMPOTENCY_KEYS) >= 100
-  ? Math.floor(Number(process.env.MAX_IDEMPOTENCY_KEYS))
+  ? Math.floor(Math.min(Number(process.env.MAX_IDEMPOTENCY_KEYS), 200000))
   : 5000;
 const mutationLog = new Map();
 const mutationLogOrder = [];
@@ -171,6 +171,11 @@ function getConfigIssues() {
     issues.push('maxUrlChars');
   }
 
+  const maxIdempotencyKeysRaw = parseIntOrDefault(process.env.MAX_IDEMPOTENCY_KEYS, 5000);
+  if (maxIdempotencyKeysRaw < 100 || maxIdempotencyKeysRaw > 200000) {
+    issues.push('maxIdempotencyKeys');
+  }
+
   const maxStoryChars = parseIntOrDefault(process.env.MAX_STORY_CHARS, 5000);
   if (maxStoryChars < 200) issues.push('maxStoryChars');
 
@@ -226,6 +231,7 @@ function getReadinessStatus() {
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
+      maxIdempotencyKeys: issues.includes('maxIdempotencyKeys') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
       maxCommentsPerStory: issues.includes('maxCommentsPerStory') ? 'fail' : 'pass',

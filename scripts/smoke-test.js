@@ -56,6 +56,12 @@ try {
     timeoutOrderIssue.includes('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS'),
     'release readiness should reject headers timeout values above request timeout'
   );
+
+  const idempotencyKeysIssue = evaluateReadiness({ MAX_IDEMPOTENCY_KEYS: '999999' });
+  assert.ok(
+    idempotencyKeysIssue.includes('MAX_IDEMPOTENCY_KEYS must be between 100 and 200000'),
+    'release readiness should reject out-of-range MAX_IDEMPOTENCY_KEYS'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);
