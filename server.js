@@ -1592,17 +1592,28 @@ server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });
 
-function shutdown(signal) {
+let shuttingDown = false;
+
+function shutdown(signal, exitCode = 0) {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log(`made-my-day shutting down (${signal})`);
   clearTimeout(importBootTimeout);
   clearInterval(importInterval);
   clearTimeout(winnerBootTimeout);
   clearInterval(winnerInterval);
   server.close(() => {
-    process.exit(0);
+    process.exit(exitCode);
   });
   setTimeout(() => process.exit(1), 10_000).unref();
 }
 
+function handleFatalError(type, error) {
+  console.error(`made-my-day ${type}`, error);
+  shutdown(type, 1);
+}
+
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => handleFatalError('unhandledRejection', reason));
+process.on('uncaughtException', (error) => handleFatalError('uncaughtException', error));
