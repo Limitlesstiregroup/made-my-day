@@ -1054,10 +1054,17 @@ function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
 
+function isValidIncomingHostHeader(hostHeader) {
+  if (!hostHeader) return false;
+  if (hostHeader.length > 255) return false;
+  if (/[\u0000-\u001F\u007F\s]/.test(hostHeader)) return false;
+  return true;
+}
+
 function isAllowedHost(req) {
-  if (ALLOWED_HOSTS.length === 0) return true;
   const incomingHost = getNormalizedHostHeader(req);
-  if (!incomingHost) return false;
+  if (!isValidIncomingHostHeader(incomingHost)) return false;
+  if (ALLOWED_HOSTS.length === 0) return true;
   return ALLOWED_HOSTS.includes(incomingHost);
 }
 
@@ -1078,7 +1085,9 @@ const server = http.createServer(async (req, res) => {
       return json(res, 421, { error: 'Request host not allowed' });
     }
 
-    const u = new URL(rawUrl, `http://${req.headers.host || `localhost:${PORT}`}`);
+    const normalizedHost = getNormalizedHostHeader(req);
+    const urlBaseHost = isValidIncomingHostHeader(normalizedHost) ? normalizedHost : `localhost:${PORT}`;
+    const u = new URL(rawUrl, `http://${urlBaseHost}`);
 
   if (u.pathname.startsWith('/api/')) {
     const rateLimit = getRateLimitState(req);
