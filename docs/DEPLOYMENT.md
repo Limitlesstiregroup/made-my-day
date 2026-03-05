@@ -15,8 +15,8 @@ docker run --rm -p 4300:4300 \
 ```
 
 Runtime settings required for GA readiness:
-- `MADE_MY_DAY_ONCALL_PRIMARY` (team handle/email/pager alias, >=3 chars)
-- `MADE_MY_DAY_ESCALATION_DOC_URL` (https URL to escalation runbook)
+- `MADE_MY_DAY_ONCALL_PRIMARY` (or `MADE_MY_DAY_ONCALL_PRIMARY_FILE`) (team handle/email/pager alias, >=3 chars)
+- `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) (https URL to escalation runbook)
 
 Optional runtime settings:
 - `IMPORT_TIMEOUT_MS` (default 10000)

@@ -112,6 +112,12 @@ function getPreviousAdminToken() {
   ].find(Boolean) || '';
 }
 
+function getTextConfigValue(key) {
+  const direct = String(process.env[key] || '').trim();
+  if (direct) return direct;
+  return readSecretFile(process.env[`${key}_FILE`]);
+}
+
 function hasStrongAdminToken() {
   const configuredToken = getConfiguredAdminToken();
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
@@ -157,12 +163,12 @@ function getConfigIssues() {
     issues.push('adminTokenRotation');
   }
 
-  const oncallPrimary = String(process.env.MADE_MY_DAY_ONCALL_PRIMARY || '').trim();
+  const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
   if (oncallPrimary.length < 3) {
     issues.push('oncallPrimary');
   }
 
-  const escalationDocUrl = String(process.env.MADE_MY_DAY_ESCALATION_DOC_URL || '').trim();
+  const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
   if (!looksLikeHttpsUrl(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }

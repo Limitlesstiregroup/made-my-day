@@ -55,6 +55,13 @@ function getAdminTokenCandidates(env = process.env) {
   return [...new Set(values)];
 }
 
+function getTextConfigValue(key, env = process.env) {
+  return [
+    String(env[key] || '').trim(),
+    readSecretFile(env[`${key}_FILE`])
+  ].find(Boolean) || '';
+}
+
 function looksLikeHttpsUrl(value) {
   const normalized = String(value || '').trim();
   if (!normalized) return false;
@@ -83,14 +90,14 @@ function evaluateReadiness(env = process.env) {
     issues.push('MADE_MY_DAY rotation fallback token must differ from primary admin token');
   }
 
-  const oncallPrimary = String(env.MADE_MY_DAY_ONCALL_PRIMARY || '').trim();
+  const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY', env);
   if (oncallPrimary.length < 3) {
-    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be set and at least 3 characters');
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be set and at least 3 characters (env or *_FILE)');
   }
 
-  const escalationDocUrl = String(env.MADE_MY_DAY_ESCALATION_DOC_URL || '').trim();
+  const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
   if (!looksLikeHttpsUrl(escalationDocUrl)) {
-    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid https URL');
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid https URL (env or *_FILE)');
   }
 
   for (const token of adminTokenCandidates) {
