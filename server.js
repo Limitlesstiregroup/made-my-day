@@ -30,6 +30,7 @@ const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
 const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
+const ALLOWED_HOSTS = [...new Set(String(process.env.ALLOWED_HOSTS || '').split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
 const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
 const SAFE_RATE_LIMIT_MAX_KEYS = Number.isFinite(RATE_LIMIT_MAX_KEYS) && RATE_LIMIT_MAX_KEYS >= 1000
@@ -171,6 +172,10 @@ function getConfigIssues() {
     issues.push('maxUrlChars');
   }
 
+  if (ALLOWED_HOSTS.length > 0 && ALLOWED_HOSTS.some((host) => !/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(host))) {
+    issues.push('allowedHosts');
+  }
+
   const maxIdempotencyKeysRaw = parseIntOrDefault(process.env.MAX_IDEMPOTENCY_KEYS, 5000);
   if (maxIdempotencyKeysRaw < 100 || maxIdempotencyKeysRaw > 200000) {
     issues.push('maxIdempotencyKeys');
@@ -231,6 +236,7 @@ function getReadinessStatus() {
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
+      allowedHosts: issues.includes('allowedHosts') ? 'fail' : 'pass',
       maxIdempotencyKeys: issues.includes('maxIdempotencyKeys') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
@@ -973,6 +979,17 @@ function getRequestId(req) {
   return `req_${crypto.randomUUID()}`;
 }
 
+function getNormalizedHostHeader(req) {
+  return String(req.headers.host || '').trim().toLowerCase();
+}
+
+function isAllowedHost(req) {
+  if (ALLOWED_HOSTS.length === 0) return true;
+  const incomingHost = getNormalizedHostHeader(req);
+  if (!incomingHost) return false;
+  return ALLOWED_HOSTS.includes(incomingHost);
+}
+
 const server = http.createServer(async (req, res) => {
   const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
@@ -984,6 +1001,10 @@ const server = http.createServer(async (req, res) => {
         error: 'Request URL too long',
         maxUrlChars: MAX_URL_CHARS
       });
+    }
+
+    if (!isAllowedHost(req)) {
+      return json(res, 421, { error: 'Request host not allowed' });
     }
 
     const u = new URL(rawUrl, `http://${req.headers.host || `localhost:${PORT}`}`);

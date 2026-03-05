@@ -7,6 +7,7 @@ Anonymous same-day positive story platform.
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
+- Optional host-header allowlist (`ALLOWED_HOSTS`) to mitigate DNS rebinding and misrouted ingress (mismatches return HTTP 421)
 - JSON API hardening: story mutations (`POST /api/stories`, `/api/stories/:id/like`, `/api/stories/:id/share`, `/api/stories/:id/comments`) and admin automation triggers (`POST /api/import/run`, `POST /api/hall-of-fame/run`) require `Content-Type: application/json`; malformed JSON returns HTTP 400 and oversized payloads return HTTP 413
 - Safer IP rate-limit identity: `x-forwarded-for` is only trusted when `TRUST_PROXY=true`, and only valid IPv4/IPv6 client values are accepted (malformed/oversized forwarded headers are ignored)
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid)
@@ -64,6 +65,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
 - `MAX_URL_CHARS` (default `2048`, min `256`, max `8192`) caps request URL length before routing (oversized URLs return `414`).
+- `ALLOWED_HOSTS` (optional comma-separated `host[:port]` allowlist) rejects mismatched Host headers with `421` when set.
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_COMMENTS_PER_STORY` (default `500`, min `5`) caps comments accepted per story to prevent hotspot abuse from exhausting storage.
