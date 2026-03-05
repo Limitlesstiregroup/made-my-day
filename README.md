@@ -27,6 +27,7 @@ Anonymous same-day positive story platform.
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - Stories feed pagination (`GET /api/stories?limit=&offset=`) to cap payload size and improve GA polling stability
+- Paginated JSON feeds now emit RFC 8288 `Link: <...>; rel="next"` headers (`/api/stories`, `/api/hall-of-fame`, `/api/admin/hall-of-fame`, `/api/admin/gift-cards`) for safer cursorless polling clients
 - React UI
 - Auto-imports 5 real positive stories/hour at random times from public sources (bounded by configurable fetch timeout)
 - Weekly Hall of Fame winner (likes + shares + comments)

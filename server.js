@@ -114,6 +114,11 @@ function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEG
   return Math.max(min, Math.min(max, Math.floor(parsed)));
 }
 
+function buildPaginationLink(pathname, limit, nextOffset) {
+  if (!Number.isFinite(nextOffset) || nextOffset < 0) return undefined;
+  return `</${pathname.replace(/^\//, '')}?limit=${limit}&offset=${nextOffset}>; rel="next"`;
+}
+
 function getConfigIssues() {
   const issues = [];
 
@@ -539,20 +544,23 @@ function weakEtagForPayload(payload) {
   return `W/"${hash}"`;
 }
 
-function jsonCached(req, res, status, data) {
+function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
   const etag = weakEtagForPayload(data);
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'private, max-age=0, must-revalidate',
+    ETag: etag,
+    ...securityHeaders(),
+    ...(extraHeaders || {})
+  };
+
   if (String(req.headers['if-none-match'] || '').trim() === etag) {
-    res.writeHead(304, { ETag: etag, ...securityHeaders() });
+    res.writeHead(304, headers);
     res.end();
     return;
   }
 
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'private, max-age=0, must-revalidate',
-    ETag: etag,
-    ...securityHeaders()
-  });
+  res.writeHead(status, headers);
   res.end(JSON.stringify(data, null, 2));
 }
 
@@ -1027,15 +1035,19 @@ const server = http.createServer(async (req, res) => {
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const total = store.hallOfFame.length;
       const records = store.hallOfFame.slice(offset, offset + limit);
+      const nextOffset = offset + records.length < total ? offset + records.length : null;
+      const nextLink = buildPaginationLink('api/admin/hall-of-fame', limit, nextOffset);
       return json(res, 200, {
         records,
         pagination: {
           total,
           limit,
           offset,
-          hasMore: offset + records.length < total,
-          nextOffset: offset + records.length < total ? offset + records.length : null
+          hasMore: nextOffset !== null,
+          nextOffset
         }
+      }, {
+        headers: nextLink ? { Link: nextLink } : undefined
       });
     }
 
@@ -1045,15 +1057,19 @@ const server = http.createServer(async (req, res) => {
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const total = store.giftCards.length;
       const records = store.giftCards.slice(offset, offset + limit);
+      const nextOffset = offset + records.length < total ? offset + records.length : null;
+      const nextLink = buildPaginationLink('api/admin/gift-cards', limit, nextOffset);
       return json(res, 200, {
         records,
         pagination: {
           total,
           limit,
           offset,
-          hasMore: offset + records.length < total,
-          nextOffset: offset + records.length < total ? offset + records.length : null
+          hasMore: nextOffset !== null,
+          nextOffset
         }
+      }, {
+        headers: nextLink ? { Link: nextLink } : undefined
       });
     }
 
@@ -1077,16 +1093,20 @@ const server = http.createServer(async (req, res) => {
         .slice(offset, offset + limit)
         .map((s) => storyView(s, store));
 
+      const nextOffset = offset + pagedStories.length < totalStories ? offset + pagedStories.length : null;
+      const nextLink = buildPaginationLink('api/stories', limit, nextOffset);
       return jsonCached(req, res, 200, {
         stories: pagedStories,
         pagination: {
           total: totalStories,
           limit,
           offset,
-          hasMore: offset + pagedStories.length < totalStories,
-          nextOffset: offset + pagedStories.length < totalStories ? offset + pagedStories.length : null
+          hasMore: nextOffset !== null,
+          nextOffset
         },
         activeHallOfFameStoryId: activeHall?.storyId || null
+      }, {
+        headers: nextLink ? { Link: nextLink } : undefined
       });
     }
 
@@ -1097,16 +1117,20 @@ const server = http.createServer(async (req, res) => {
       const offset = Number.isFinite(offsetRaw) ? Math.max(0, Math.floor(offsetRaw)) : 0;
       const total = store.hallOfFame.length;
       const hallSlice = store.hallOfFame.slice(offset, offset + limit);
+      const nextOffset = offset + hallSlice.length < total ? offset + hallSlice.length : null;
+      const nextLink = buildPaginationLink('api/hall-of-fame', limit, nextOffset);
       return jsonCached(req, res, 200, {
         hallOfFame: hallSlice,
         pagination: {
           total,
           limit,
           offset,
-          hasMore: offset + hallSlice.length < total,
-          nextOffset: offset + hallSlice.length < total ? offset + hallSlice.length : null
+          hasMore: nextOffset !== null,
+          nextOffset
         },
         pendingWinner: store.pendingWinner
+      }, {
+        headers: nextLink ? { Link: nextLink } : undefined
       });
     }
 
