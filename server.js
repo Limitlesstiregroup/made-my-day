@@ -111,6 +111,15 @@ function isSecretFilePathInvalid(filePath) {
   return !path.isAbsolute(String(filePath).trim());
 }
 
+function isSecretFileSymlink(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    return fs.lstatSync(String(filePath)).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function isSecretFileTooPermissive(filePath) {
   if (!filePath || String(filePath).trim() === '') return false;
   try {
@@ -307,6 +316,10 @@ function getConfigIssues() {
   }
 
   if (secretFileKeys.some((key) => hasSecretFileReadError(process.env[`${key}_FILE`]) || hasSecretFileReadError(process.env[`${key}_PREVIOUS_FILE`]))) {
+    issues.push('secretFiles');
+  }
+
+  if (secretFileKeys.some((key) => isSecretFileSymlink(process.env[`${key}_FILE`]) || isSecretFileSymlink(process.env[`${key}_PREVIOUS_FILE`]))) {
     issues.push('secretFiles');
   }
 
