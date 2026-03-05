@@ -558,6 +558,10 @@ function methodNotAllowed(res, allowed) {
   );
 }
 
+function isGetOrHead(req) {
+  return req.method === 'GET' || req.method === 'HEAD';
+}
+
 function csvValue(value) {
   const text = String(value ?? '');
   const formulaSafe = /^[=+\-@]/.test(text.trimStart()) ? `'${text}` : text;
@@ -1040,8 +1044,8 @@ const server = http.createServer(async (req, res) => {
 
     const store = loadStore();
 
-    if (u.pathname === '/api/health/live' && req.method !== 'GET') {
-      return methodNotAllowed(res, ['GET']);
+    if (u.pathname === '/api/health/live' && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
     }
 
     if (u.pathname === '/api/health/live') {
@@ -1052,11 +1056,11 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (u.pathname === '/api/health' && req.method !== 'GET') {
-      return methodNotAllowed(res, ['GET']);
+    if (u.pathname === '/api/health' && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/health') {
+    if (isGetOrHead(req) && u.pathname === '/api/health') {
       const configuredToken = getConfiguredAdminToken();
       return json(res, 200, {
         ok: true,
@@ -1078,11 +1082,11 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (u.pathname === '/api/health/ready' && req.method !== 'GET') {
-      return methodNotAllowed(res, ['GET']);
+    if (u.pathname === '/api/health/ready' && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/health/ready') {
+    if (isGetOrHead(req) && u.pathname === '/api/health/ready') {
       const readiness = getReadinessStatus();
       return json(res, readiness.ready ? 200 : 503, {
         ok: readiness.ready,
@@ -1091,11 +1095,11 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (u.pathname === '/api/health/details' && req.method !== 'GET') {
-      return methodNotAllowed(res, ['GET']);
+    if (u.pathname === '/api/health/details' && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/health/details') {
+    if (isGetOrHead(req) && u.pathname === '/api/health/details') {
       if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
       const readiness = getReadinessStatus();
       return json(res, 200, {

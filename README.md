@@ -79,10 +79,10 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_IDEMPOTENCY_KEYS` (default `5000`, min `100`, max `200000`) bounds persisted idempotency key records.
 
 ## API
-- `GET /api/health`
-- `GET /api/health/live` (always `200` + process uptime for liveness probes)
-- `GET /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
-- `GET /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
+- `GET|HEAD /api/health`
+- `GET|HEAD /api/health/live` (always `200` + process uptime for liveness probes)
+- `GET|HEAD /api/health/ready` (`200` when GA-ready config checks pass, else `503`)
+- `GET|HEAD /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
 - `GET /api/admin/hall-of-fame` (admin-only paginated JSON export)
 - `GET /api/admin/hall-of-fame.csv` (admin-only CSV export)
 - `GET /api/admin/gift-cards` (admin-only paginated JSON export)

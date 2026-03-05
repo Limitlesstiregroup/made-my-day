@@ -53,10 +53,15 @@ async function run() {
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {
-      throw new Error(`expected 405 for non-GET health endpoint access, got ${healthWrongMethod.status}`);
+      throw new Error(`expected 405 for non-GET/HEAD health endpoint access, got ${healthWrongMethod.status}`);
     }
-    if (healthWrongMethod.headers.get('allow') !== 'GET') {
-      throw new Error('expected Allow: GET for non-GET health endpoint access');
+    if (healthWrongMethod.headers.get('allow') !== 'GET, HEAD') {
+      throw new Error('expected Allow: GET, HEAD for non-GET/HEAD health endpoint access');
+    }
+
+    const healthHead = await fetch(`${BASE}/api/health`, { method: 'HEAD' });
+    if (healthHead.status !== 200) {
+      throw new Error(`expected 200 for HEAD health endpoint access, got ${healthHead.status}`);
     }
 
     const oversizedUrl = await fetch(`${BASE}/api/health?pad=${'x'.repeat(2200)}`);
