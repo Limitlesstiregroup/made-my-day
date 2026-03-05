@@ -62,6 +62,12 @@ try {
     idempotencyKeysIssue.includes('MAX_IDEMPOTENCY_KEYS must be between 100 and 200000'),
     'release readiness should reject out-of-range MAX_IDEMPOTENCY_KEYS'
   );
+
+  const nonIntegerIssue = evaluateReadiness({ HEADERS_TIMEOUT_MS: '15000.75' });
+  assert.ok(
+    nonIntegerIssue.includes('HEADERS_TIMEOUT_MS must be an integer'),
+    'release readiness should reject non-integer timeout values'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);

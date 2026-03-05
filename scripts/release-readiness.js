@@ -12,6 +12,18 @@ function parseIntOrDefault(value, fallback) {
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
 }
 
+function isUnset(value) {
+  return value === undefined || value === null || String(value).trim() === '';
+}
+
+function validateIntegerEnv(value, label, issues) {
+  if (isUnset(value)) return;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    issues.push(`${label} must be an integer`);
+  }
+}
+
 function readSecretFile(filePath) {
   if (!filePath || String(filePath).trim() === '') return '';
   try {
@@ -87,6 +99,17 @@ function evaluateReadiness(env = process.env) {
       break;
     }
   }
+
+  validateIntegerEnv(env.IMPORT_TIMEOUT_MS, 'IMPORT_TIMEOUT_MS', issues);
+  validateIntegerEnv(env.MAX_BODY_BYTES, 'MAX_BODY_BYTES', issues);
+  validateIntegerEnv(env.MAX_URL_CHARS, 'MAX_URL_CHARS', issues);
+  validateIntegerEnv(env.MAX_IDEMPOTENCY_KEYS, 'MAX_IDEMPOTENCY_KEYS', issues);
+  validateIntegerEnv(env.MAX_STORY_CHARS, 'MAX_STORY_CHARS', issues);
+  validateIntegerEnv(env.MAX_COMMENT_CHARS, 'MAX_COMMENT_CHARS', issues);
+  validateIntegerEnv(env.MAX_AUTHOR_CHARS, 'MAX_AUTHOR_CHARS', issues);
+  validateIntegerEnv(env.REQUEST_TIMEOUT_MS, 'REQUEST_TIMEOUT_MS', issues);
+  validateIntegerEnv(env.HEADERS_TIMEOUT_MS, 'HEADERS_TIMEOUT_MS', issues);
+  validateIntegerEnv(env.KEEP_ALIVE_TIMEOUT_MS, 'KEEP_ALIVE_TIMEOUT_MS', issues);
 
   const importTimeout = parseIntOrDefault(env.IMPORT_TIMEOUT_MS, 10000);
   if (importTimeout < 1000 || importTimeout > 60000) {
