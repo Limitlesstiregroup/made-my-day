@@ -549,6 +549,15 @@ function json(res, status, data, { noStore = true, headers: extraHeaders } = {})
   res.end(JSON.stringify(data, null, 2));
 }
 
+function methodNotAllowed(res, allowed) {
+  return json(
+    res,
+    405,
+    { error: 'method not allowed', allowed },
+    { headers: { Allow: allowed.join(', ') } }
+  );
+}
+
 function csvValue(value) {
   const text = String(value ?? '');
   const formulaSafe = /^[=+\-@]/.test(text.trimStart()) ? `'${text}` : text;
@@ -1031,12 +1040,20 @@ const server = http.createServer(async (req, res) => {
 
     const store = loadStore();
 
-    if (req.method === 'GET' && u.pathname === '/api/health/live') {
+    if (u.pathname === '/api/health/live' && req.method !== 'GET') {
+      return methodNotAllowed(res, ['GET']);
+    }
+
+    if (u.pathname === '/api/health/live') {
       return json(res, 200, {
         ok: true,
         service: 'made-my-day',
         uptimeSeconds: Math.floor(process.uptime())
       });
+    }
+
+    if (u.pathname === '/api/health' && req.method !== 'GET') {
+      return methodNotAllowed(res, ['GET']);
     }
 
     if (req.method === 'GET' && u.pathname === '/api/health') {
@@ -1061,6 +1078,10 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    if (u.pathname === '/api/health/ready' && req.method !== 'GET') {
+      return methodNotAllowed(res, ['GET']);
+    }
+
     if (req.method === 'GET' && u.pathname === '/api/health/ready') {
       const readiness = getReadinessStatus();
       return json(res, readiness.ready ? 200 : 503, {
@@ -1068,6 +1089,10 @@ const server = http.createServer(async (req, res) => {
         service: 'made-my-day',
         checks: readiness.checks
       });
+    }
+
+    if (u.pathname === '/api/health/details' && req.method !== 'GET') {
+      return methodNotAllowed(res, ['GET']);
     }
 
     if (req.method === 'GET' && u.pathname === '/api/health/details') {

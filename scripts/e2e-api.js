@@ -51,6 +51,14 @@ async function run() {
       throw new Error('liveness health endpoint missing ok/uptimeSeconds payload');
     }
 
+    const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
+    if (healthWrongMethod.status !== 405) {
+      throw new Error(`expected 405 for non-GET health endpoint access, got ${healthWrongMethod.status}`);
+    }
+    if (healthWrongMethod.headers.get('allow') !== 'GET') {
+      throw new Error('expected Allow: GET for non-GET health endpoint access');
+    }
+
     const oversizedUrl = await fetch(`${BASE}/api/health?pad=${'x'.repeat(2200)}`);
     if (oversizedUrl.status !== 414) {
       throw new Error(`expected 414 for oversized request URL, got ${oversizedUrl.status}`);
