@@ -19,6 +19,9 @@ function clampMaxBodyBytes(value) {
 }
 
 const MAX_BODY_BYTES = clampMaxBodyBytes(process.env.MAX_BODY_BYTES);
+const MAX_URL_CHARS = Number.isFinite(Number(process.env.MAX_URL_CHARS))
+  ? Math.floor(Math.max(256, Math.min(Number(process.env.MAX_URL_CHARS), 8192)))
+  : 2048;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
 const RATE_LIMIT_MAX_KEYS = Number(process.env.RATE_LIMIT_MAX_KEYS || 10_000);
@@ -163,6 +166,11 @@ function getConfigIssues() {
     issues.push('maxBodyBytes');
   }
 
+  const maxUrlCharsRaw = parseIntOrDefault(process.env.MAX_URL_CHARS, 2048);
+  if (maxUrlCharsRaw < 256 || maxUrlCharsRaw > 8192) {
+    issues.push('maxUrlChars');
+  }
+
   const maxStoryChars = parseIntOrDefault(process.env.MAX_STORY_CHARS, 5000);
   if (maxStoryChars < 200) issues.push('maxStoryChars');
 
@@ -217,6 +225,7 @@ function getReadinessStatus() {
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
+      maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
       maxCommentChars: issues.includes('maxCommentChars') ? 'fail' : 'pass',
       maxCommentsPerStory: issues.includes('maxCommentsPerStory') ? 'fail' : 'pass',
@@ -955,7 +964,15 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Request-Id', requestId);
 
   try {
-    const u = new URL(req.url, `http://${req.headers.host || `localhost:${PORT}`}`);
+    const rawUrl = typeof req.url === 'string' ? req.url : '';
+    if (rawUrl.length > MAX_URL_CHARS) {
+      return json(res, 414, {
+        error: 'Request URL too long',
+        maxUrlChars: MAX_URL_CHARS
+      });
+    }
+
+    const u = new URL(rawUrl, `http://${req.headers.host || `localhost:${PORT}`}`);
 
   if (u.pathname.startsWith('/api/')) {
     const rateLimit = getRateLimitState(req);
@@ -1002,6 +1019,7 @@ const server = http.createServer(async (req, res) => {
         imports: {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
           maxBodyBytes: MAX_BODY_BYTES,
+          maxUrlChars: MAX_URL_CHARS,
           maxCommentsPerStory: MAX_COMMENTS_PER_STORY,
           lastRun: lastImportRun
         }

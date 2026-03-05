@@ -51,6 +51,11 @@ async function run() {
       throw new Error('liveness health endpoint missing ok/uptimeSeconds payload');
     }
 
+    const oversizedUrl = await fetch(`${BASE}/api/health?pad=${'x'.repeat(2200)}`);
+    if (oversizedUrl.status !== 414) {
+      throw new Error(`expected 414 for oversized request URL, got ${oversizedUrl.status}`);
+    }
+
     const unauthorizedHealthDetails = await fetch(`${BASE}/api/health/details`);
     if (unauthorizedHealthDetails.status !== 401) {
       throw new Error(`expected 401 for health details without admin token, got ${unauthorizedHealthDetails.status}`);
