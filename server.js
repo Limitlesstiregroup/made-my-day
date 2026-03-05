@@ -596,6 +596,7 @@ function securityHeaders() {
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
+    'X-Robots-Tag': 'noindex, nofollow',
     'Content-Security-Policy': "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
   };
