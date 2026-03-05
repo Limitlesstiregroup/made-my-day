@@ -800,6 +800,17 @@ function getRateLimitState(req) {
   };
 }
 
+function parseDeclaredContentLength(rawHeader) {
+  if (Array.isArray(rawHeader)) return null;
+  if (rawHeader == null) return null;
+  const normalized = String(rawHeader).trim();
+  if (!normalized) return null;
+  if (!/^\d+$/.test(normalized)) return { invalid: true, value: null };
+  const value = Number(normalized);
+  if (!Number.isSafeInteger(value) || value < 0) return { invalid: true, value: null };
+  return { invalid: false, value };
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -816,8 +827,14 @@ function readBody(req) {
       resolve(value);
     };
 
-    const declaredContentLength = Number(req.headers['content-length']);
-    if (Number.isFinite(declaredContentLength) && declaredContentLength > MAX_BODY_BYTES) {
+    const declaredContentLength = parseDeclaredContentLength(req.headers['content-length']);
+    if (declaredContentLength?.invalid) {
+      const error = new Error('invalid content-length header');
+      error.code = 'INVALID_CONTENT_LENGTH';
+      fail(error);
+      return;
+    }
+    if (Number.isFinite(declaredContentLength?.value) && declaredContentLength.value > MAX_BODY_BYTES) {
       const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
       error.code = 'BODY_TOO_LARGE';
       fail(error);
@@ -847,6 +864,12 @@ function readBody(req) {
     });
 
     req.on('end', () => {
+      if (Number.isFinite(declaredContentLength?.value) && declaredContentLength.value !== totalBytes) {
+        const error = new Error('content-length mismatch');
+        error.code = 'CONTENT_LENGTH_MISMATCH';
+        fail(error);
+        return;
+      }
       if (!body) {
         succeed({});
         return;
