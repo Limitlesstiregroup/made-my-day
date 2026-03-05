@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
+const net = require('node:net');
 const path = require('node:path');
 
 const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
@@ -121,6 +122,35 @@ function looksLikePlaceholderEscalationUrl(value) {
   }
 }
 
+function isValidAllowedHostEntry(host) {
+  const normalized = String(host || '').trim().toLowerCase();
+  if (!normalized) return false;
+
+  const bracketedIpv6Match = normalized.match(/^\[([a-f0-9:]+)](?::(\d{1,5}))?$/i);
+  if (bracketedIpv6Match) {
+    const ip = bracketedIpv6Match[1];
+    const portPart = bracketedIpv6Match[2] || '';
+    if (net.isIP(ip) !== 6) return false;
+    if (!portPart) return true;
+    const port = Number(portPart);
+    return Number.isInteger(port) && port >= 1 && port <= 65535;
+  }
+
+  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(normalized)) return false;
+  const [hostPart, portPart = ''] = normalized.split(':');
+  if (!hostPart) return false;
+  if (hostPart.includes('.') && net.isIP(hostPart) === 0 && !/^[a-z0-9.-]+$/i.test(hostPart)) return false;
+  if (!portPart) return true;
+  const port = Number(portPart);
+  return Number.isInteger(port) && port >= 1 && port <= 65535;
+}
+
+function getAllowedHosts(env = process.env) {
+  const raw = String(env.ALLOWED_HOSTS || '').trim();
+  if (!raw) return [];
+  return [...new Set(raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
+}
+
 function evaluateReadiness(env = process.env) {
   const issues = [];
 
@@ -154,6 +184,14 @@ function evaluateReadiness(env = process.env) {
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid non-placeholder https URL (env or *_FILE)');
+  }
+
+  const allowedHosts = getAllowedHosts(env);
+  if (allowedHosts.length > 0) {
+    const invalidAllowedHost = allowedHosts.find((host) => !isValidAllowedHostEntry(host));
+    if (invalidAllowedHost) {
+      issues.push('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)');
+    }
   }
 
   const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
@@ -304,5 +342,7 @@ module.exports = {
   getAdminTokenCandidates,
   looksLikeHttpsUrl,
   looksLikePlaceholderEscalationUrl,
+  isValidAllowedHostEntry,
+  getAllowedHosts,
   evaluateReadiness
 };

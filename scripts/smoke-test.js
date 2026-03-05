@@ -122,6 +122,14 @@ try {
     nonIntegerIssue.includes('HEADERS_TIMEOUT_MS must be an integer'),
     'release readiness should reject non-integer timeout values'
   );
+
+  const invalidAllowedHostsIssue = evaluateReadiness({
+    ALLOWED_HOSTS: 'valid.example.com:443, bad host value'
+  });
+  assert.ok(
+    invalidAllowedHostsIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
+    'release readiness should reject malformed ALLOWED_HOSTS entries'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);
