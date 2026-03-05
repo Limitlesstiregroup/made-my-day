@@ -1588,6 +1588,20 @@ server.requestTimeout = resolvedTimeouts.requestTimeout;
 server.headersTimeout = resolvedTimeouts.headersTimeout;
 server.keepAliveTimeout = resolvedTimeouts.keepAliveTimeout;
 
+function shouldEnforceLiveReadiness(env = process.env) {
+  const value = String(env.MADE_MY_DAY_ENFORCE_LIVE_READY || '').trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+}
+
+const startupReadiness = getReadinessStatus();
+if (shouldEnforceLiveReadiness(process.env) && !startupReadiness.ready) {
+  console.error('made-my-day startup blocked: live-readiness enforcement failed');
+  if (startupReadiness.issueCodes.length) {
+    console.error('Config issues:', startupReadiness.issueCodes.join(', '));
+  }
+  process.exit(1);
+}
+
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });
