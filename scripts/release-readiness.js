@@ -51,6 +51,18 @@ function hasSecretFileReadError(filePath) {
   }
 }
 
+function isSecretFileTooPermissive(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    const stats = fs.statSync(String(filePath));
+    if (!stats.isFile()) return true;
+    const mode = stats.mode & 0o777;
+    return (mode & 0o077) !== 0;
+  } catch {
+    return false;
+  }
+}
+
 function getConfiguredAdminToken(env = process.env) {
   return [
     String(env.MADE_MY_DAY_ADMIN_TOKEN || '').trim(),
@@ -140,11 +152,17 @@ function evaluateReadiness(env = process.env) {
 
   const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
   secretFileKeys.forEach((key) => {
-    if (hasSecretFileReadError(env[`${key}_FILE`])) {
+    const currentFile = env[`${key}_FILE`];
+    if (hasSecretFileReadError(currentFile)) {
       issues.push(`${key}_FILE could not be read`);
+    } else if (isSecretFileTooPermissive(currentFile)) {
+      issues.push(`${key}_FILE permissions are too open (require chmod 600 owner-only)`);
     }
-    if (hasSecretFileReadError(env[`${key}_PREVIOUS_FILE`])) {
+    const previousFile = env[`${key}_PREVIOUS_FILE`];
+    if (hasSecretFileReadError(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE could not be read`);
+    } else if (isSecretFileTooPermissive(previousFile)) {
+      issues.push(`${key}_PREVIOUS_FILE permissions are too open (require chmod 600 owner-only)`);
     }
   });
 
@@ -269,6 +287,7 @@ module.exports = {
   parseIntOrDefault,
   readSecretFile,
   hasSecretFileReadError,
+  isSecretFileTooPermissive,
   getConfiguredAdminToken,
   getPreviousAdminToken,
   getAdminTokenCandidates,

@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { evaluateReadiness } = require('./release-readiness');
+const { evaluateReadiness, isSecretFileTooPermissive } = require('./release-readiness');
 
 try {
   const storiesPath = path.join(process.cwd(), 'data/stories.json');
@@ -24,6 +24,8 @@ try {
   const tmpPrevTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-prev-${Date.now()}`);
   fs.writeFileSync(tmpTokenFile, 'admin_token_file_primary_1234\n');
   fs.writeFileSync(tmpPrevTokenFile, 'admin_token_file_previous_5678\n');
+  fs.chmodSync(tmpTokenFile, 0o600);
+  fs.chmodSync(tmpPrevTokenFile, 0o600);
 
   const issuesFromFiles = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpTokenFile,
@@ -46,6 +48,23 @@ try {
     unreadableSecretFileIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE could not be read'),
     'unreadable *_FILE paths should surface explicit release-readiness issues'
   );
+
+  const tmpPermissiveTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-open-${Date.now()}`);
+  fs.writeFileSync(tmpPermissiveTokenFile, 'admin_token_file_primary_1234\n');
+  fs.chmodSync(tmpPermissiveTokenFile, 0o644);
+  assert.equal(isSecretFileTooPermissive(tmpPermissiveTokenFile), true, 'group/world-readable secret files should be flagged');
+  const permissiveFileIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpPermissiveTokenFile,
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    permissiveFileIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE permissions are too open (require chmod 600 owner-only)'),
+    'permissive *_FILE paths should surface chmod guidance'
+  );
+  fs.chmodSync(tmpPermissiveTokenFile, 0o600);
+  assert.equal(isSecretFileTooPermissive(tmpPermissiveTokenFile), false, 'owner-only secret files should pass permission checks');
+  fs.unlinkSync(tmpPermissiveTokenFile);
 
   const placeholderIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'change-me-previous-token-1234'
