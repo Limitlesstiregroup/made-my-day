@@ -680,6 +680,14 @@ function getRateLimitState(req) {
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
+    const declaredContentLength = Number(req.headers['content-length']);
+    if (Number.isFinite(declaredContentLength) && declaredContentLength > MAX_BODY_BYTES) {
+      const error = new Error(`request body exceeds ${MAX_BODY_BYTES} bytes`);
+      error.code = 'BODY_TOO_LARGE';
+      reject(error);
+      return;
+    }
+
     let body = '';
     let totalBytes = 0;
     let tooLarge = false;
