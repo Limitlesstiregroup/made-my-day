@@ -35,8 +35,21 @@ const ALLOWED_HOSTS = [...new Set(String(process.env.ALLOWED_HOSTS || '').split(
 function isValidAllowedHostEntry(host) {
   const normalized = String(host || '').trim().toLowerCase();
   if (!normalized) return false;
+
+  const bracketedIpv6Match = normalized.match(/^\[([a-f0-9:]+)](?::(\d{1,5}))?$/i);
+  if (bracketedIpv6Match) {
+    const ip = bracketedIpv6Match[1];
+    const portPart = bracketedIpv6Match[2] || '';
+    if (net.isIP(ip) !== 6) return false;
+    if (!portPart) return true;
+    const port = Number(portPart);
+    return Number.isInteger(port) && port >= 1 && port <= 65535;
+  }
+
   if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(normalized)) return false;
-  const portPart = normalized.includes(':') ? normalized.split(':').pop() : '';
+  const [hostPart, portPart = ''] = normalized.split(':');
+  if (!hostPart) return false;
+  if (hostPart.includes('.') && net.isIP(hostPart) === 0 && !/^[a-z0-9.-]+$/i.test(hostPart)) return false;
   if (!portPart) return true;
   const port = Number(portPart);
   return Number.isInteger(port) && port >= 1 && port <= 65535;
