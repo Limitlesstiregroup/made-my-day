@@ -121,6 +121,10 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.IMPORT_TIMEOUT_MS, 'IMPORT_TIMEOUT_MS', issues);
   validateIntegerEnv(env.MAX_BODY_BYTES, 'MAX_BODY_BYTES', issues);
   validateIntegerEnv(env.MAX_URL_CHARS, 'MAX_URL_CHARS', issues);
+  validateIntegerEnv(env.RATE_LIMIT_WINDOW_MS, 'RATE_LIMIT_WINDOW_MS', issues);
+  validateIntegerEnv(env.RATE_LIMIT_MAX_MUTATIONS, 'RATE_LIMIT_MAX_MUTATIONS', issues);
+  validateIntegerEnv(env.RATE_LIMIT_MAX_KEYS, 'RATE_LIMIT_MAX_KEYS', issues);
+  validateIntegerEnv(env.IDEMPOTENCY_TTL_MS, 'IDEMPOTENCY_TTL_MS', issues);
   validateIntegerEnv(env.MAX_IDEMPOTENCY_KEYS, 'MAX_IDEMPOTENCY_KEYS', issues);
   validateIntegerEnv(env.MAX_STORY_CHARS, 'MAX_STORY_CHARS', issues);
   validateIntegerEnv(env.MAX_COMMENT_CHARS, 'MAX_COMMENT_CHARS', issues);
@@ -142,6 +146,26 @@ function evaluateReadiness(env = process.env) {
   const maxUrlChars = parseIntOrDefault(env.MAX_URL_CHARS, 2048);
   if (maxUrlChars < 256 || maxUrlChars > 8192) {
     issues.push('MAX_URL_CHARS must be between 256 and 8192');
+  }
+
+  const rateLimitWindowMs = parseIntOrDefault(env.RATE_LIMIT_WINDOW_MS, 60_000);
+  if (rateLimitWindowMs < 1_000 || rateLimitWindowMs > 3_600_000) {
+    issues.push('RATE_LIMIT_WINDOW_MS must be between 1000 and 3600000');
+  }
+
+  const rateLimitMaxMutations = parseIntOrDefault(env.RATE_LIMIT_MAX_MUTATIONS, 120);
+  if (rateLimitMaxMutations < 10 || rateLimitMaxMutations > 10000) {
+    issues.push('RATE_LIMIT_MAX_MUTATIONS must be between 10 and 10000');
+  }
+
+  const rateLimitMaxKeys = parseIntOrDefault(env.RATE_LIMIT_MAX_KEYS, 10000);
+  if (rateLimitMaxKeys < 1000 || rateLimitMaxKeys > 200000) {
+    issues.push('RATE_LIMIT_MAX_KEYS must be between 1000 and 200000');
+  }
+
+  const idempotencyTtlMs = parseIntOrDefault(env.IDEMPOTENCY_TTL_MS, 86_400_000);
+  if (idempotencyTtlMs < 60_000 || idempotencyTtlMs > 604_800_000) {
+    issues.push('IDEMPOTENCY_TTL_MS must be between 60000 and 604800000');
   }
 
   const maxIdempotencyKeys = parseIntOrDefault(env.MAX_IDEMPOTENCY_KEYS, 5000);
