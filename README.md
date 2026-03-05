@@ -43,6 +43,11 @@ npm run dev
 ```
 Open `http://localhost:4300`.
 
+Seed local/live config:
+```bash
+cp .env.example .env
+```
+
 Release readiness check:
 ```bash
 npm run release:check
