@@ -284,6 +284,7 @@ function getReadinessStatus() {
   const issues = getConfigIssues();
   return {
     ready: issues.length === 0,
+    issueCodes: [...issues],
     checks: {
       adminToken: issues.includes('adminToken') ? 'fail' : (getConfiguredAdminToken() ? 'pass' : 'preview'),
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
