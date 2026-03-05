@@ -37,6 +37,16 @@ try {
 
   assert.equal(issuesFromFiles.length, 0, 'release readiness should accept admin token *_FILE fallbacks');
 
+  const unreadableSecretFileIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN_FILE: '/tmp/does-not-exist-made-my-day-admin-token',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    unreadableSecretFileIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE could not be read'),
+    'unreadable *_FILE paths should surface explicit release-readiness issues'
+  );
+
   const placeholderIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'change-me-previous-token-1234'
   });

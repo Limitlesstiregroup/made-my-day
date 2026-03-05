@@ -41,6 +41,16 @@ function readSecretFile(filePath) {
   }
 }
 
+function hasSecretFileReadError(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    fs.readFileSync(String(filePath), 'utf8');
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function getConfiguredAdminToken(env = process.env) {
   return [
     String(env.MADE_MY_DAY_ADMIN_TOKEN || '').trim(),
@@ -110,6 +120,16 @@ function evaluateReadiness(env = process.env) {
   if (!looksLikeHttpsUrl(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid https URL (env or *_FILE)');
   }
+
+  const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
+  secretFileKeys.forEach((key) => {
+    if (hasSecretFileReadError(env[`${key}_FILE`])) {
+      issues.push(`${key}_FILE could not be read`);
+    }
+    if (hasSecretFileReadError(env[`${key}_PREVIOUS_FILE`])) {
+      issues.push(`${key}_PREVIOUS_FILE could not be read`);
+    }
+  });
 
   for (const token of adminTokenCandidates) {
     if (placeholderSecret(token)) {
@@ -231,6 +251,7 @@ module.exports = {
   placeholderSecret,
   parseIntOrDefault,
   readSecretFile,
+  hasSecretFileReadError,
   getConfiguredAdminToken,
   getPreviousAdminToken,
   getAdminTokenCandidates,

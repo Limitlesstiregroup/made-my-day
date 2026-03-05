@@ -96,6 +96,16 @@ function readSecretFile(filePath) {
   }
 }
 
+function hasSecretFileReadError(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    fs.readFileSync(String(filePath), 'utf8');
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'];
 
 function looksLikePlaceholderSecret(value) {
@@ -258,6 +268,15 @@ function getConfigIssues() {
     issues.push('keepAliveTimeoutOrder');
   }
 
+  const secretFileKeys = [
+    'MADE_MY_DAY_ADMIN_TOKEN',
+    'MADE_MY_DAY_ONCALL_PRIMARY',
+    'MADE_MY_DAY_ESCALATION_DOC_URL'
+  ];
+  if (secretFileKeys.some((key) => hasSecretFileReadError(process.env[`${key}_FILE`]) || hasSecretFileReadError(process.env[`${key}_PREVIOUS_FILE`]))) {
+    issues.push('secretFiles');
+  }
+
   return issues;
 }
 
@@ -270,6 +289,7 @@ function getReadinessStatus() {
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
+      secretFiles: issues.includes('secretFiles') ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
