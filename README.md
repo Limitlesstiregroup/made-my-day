@@ -65,7 +65,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
 - `MAX_URL_CHARS` (default `2048`, min `256`, max `8192`) caps request URL length before routing (oversized URLs return `414`).
-- `ALLOWED_HOSTS` (optional comma-separated `host[:port]` allowlist) rejects mismatched Host headers with `421` when set.
+- `ALLOWED_HOSTS` (optional comma-separated `host[:port]` allowlist, with ports restricted to `1-65535`) rejects mismatched Host headers with `421` when set.
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_COMMENTS_PER_STORY` (default `500`, min `5`) caps comments accepted per story to prevent hotspot abuse from exhausting storage.

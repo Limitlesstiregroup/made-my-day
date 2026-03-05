@@ -31,6 +31,16 @@ const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
 const ALLOWED_HOSTS = [...new Set(String(process.env.ALLOWED_HOSTS || '').split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
+
+function isValidAllowedHostEntry(host) {
+  const normalized = String(host || '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(normalized)) return false;
+  const portPart = normalized.includes(':') ? normalized.split(':').pop() : '';
+  if (!portPart) return true;
+  const port = Number(portPart);
+  return Number.isInteger(port) && port >= 1 && port <= 65535;
+}
 const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
 const SAFE_RATE_LIMIT_MAX_KEYS = Number.isFinite(RATE_LIMIT_MAX_KEYS) && RATE_LIMIT_MAX_KEYS >= 1000
@@ -172,7 +182,7 @@ function getConfigIssues() {
     issues.push('maxUrlChars');
   }
 
-  if (ALLOWED_HOSTS.length > 0 && ALLOWED_HOSTS.some((host) => !/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(host))) {
+  if (ALLOWED_HOSTS.length > 0 && ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
     issues.push('allowedHosts');
   }
 
