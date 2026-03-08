@@ -156,9 +156,50 @@ const mutationLog = new Map();
 const mutationLogOrder = [];
 const adminRunIdempotencyCache = new Map();
 const engagementIdempotencyCache = new Map();
+const IDEMPOTENCY_CACHE_FILE = String(process.env.IDEMPOTENCY_CACHE_FILE || path.join(DATA_DIR, 'idempotency-cache.json'));
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
+
+function saveIdempotencyCaches() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const payload = {
+      adminRun: [...adminRunIdempotencyCache.entries()],
+      engagement: [...engagementIdempotencyCache.entries()]
+    };
+    const tmpSuffix = `${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const tmpFile = `${IDEMPOTENCY_CACHE_FILE}.${tmpSuffix}.tmp`;
+    fs.writeFileSync(tmpFile, JSON.stringify(payload, null, 2));
+    fs.renameSync(tmpFile, IDEMPOTENCY_CACHE_FILE);
+  } catch {
+    // best-effort persistence only
+  }
+}
+
+function loadIdempotencyCaches() {
+  try {
+    if (!fs.existsSync(IDEMPOTENCY_CACHE_FILE)) return;
+    const parsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_FILE, 'utf8'));
+    const now = Date.now();
+
+    const restore = (targetMap, entries) => {
+      if (!Array.isArray(entries)) return;
+      for (const entry of entries) {
+        if (!Array.isArray(entry) || entry.length !== 2) continue;
+        const [key, value] = entry;
+        if (typeof key !== 'string' || !key) continue;
+        if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now || typeof value.result !== 'object') continue;
+        targetMap.set(key, value);
+      }
+    };
+
+    restore(adminRunIdempotencyCache, parsed?.adminRun);
+    restore(engagementIdempotencyCache, parsed?.engagement);
+  } catch {
+    // best-effort persistence only
+  }
+}
 
 function readSecretFile(filePath) {
   if (!filePath || String(filePath).trim() === '') return '';
@@ -749,7 +790,7 @@ function getAdminRunIdempotent(scope, idempotencyKey) {
   const cacheKey = `${scope}:${idempotencyKey}`;
   const hit = adminRunIdempotencyCache.get(cacheKey);
   if (!hit || !Number.isFinite(hit.expiresAt) || hit.expiresAt <= Date.now()) {
-    adminRunIdempotencyCache.delete(cacheKey);
+    if (adminRunIdempotencyCache.delete(cacheKey)) saveIdempotencyCaches();
     return null;
   }
   return hit.result;
@@ -765,20 +806,22 @@ function rememberAdminRunIdempotent(scope, idempotencyKey, result) {
   });
 
   const max = clampLimit(MAX_IDEMPOTENCY_KEYS, 5000);
-  if (adminRunIdempotencyCache.size <= max) return;
-
-  for (const [key, value] of adminRunIdempotencyCache.entries()) {
-    if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
-      adminRunIdempotencyCache.delete(key);
+  if (adminRunIdempotencyCache.size > max) {
+    for (const [key, value] of adminRunIdempotencyCache.entries()) {
+      if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
+        adminRunIdempotencyCache.delete(key);
+      }
+      if (adminRunIdempotencyCache.size <= max) break;
     }
-    if (adminRunIdempotencyCache.size <= max) break;
+
+    while (adminRunIdempotencyCache.size > max) {
+      const oldest = adminRunIdempotencyCache.keys().next();
+      if (oldest.done) break;
+      adminRunIdempotencyCache.delete(oldest.value);
+    }
   }
 
-  while (adminRunIdempotencyCache.size > max) {
-    const oldest = adminRunIdempotencyCache.keys().next();
-    if (oldest.done) break;
-    adminRunIdempotencyCache.delete(oldest.value);
-  }
+  saveIdempotencyCaches();
 }
 
 function getEngagementIdempotent(scope, idempotencyKey) {
@@ -786,7 +829,7 @@ function getEngagementIdempotent(scope, idempotencyKey) {
   const cacheKey = `${scope}:${idempotencyKey}`;
   const hit = engagementIdempotencyCache.get(cacheKey);
   if (!hit || !Number.isFinite(hit.expiresAt) || hit.expiresAt <= Date.now()) {
-    engagementIdempotencyCache.delete(cacheKey);
+    if (engagementIdempotencyCache.delete(cacheKey)) saveIdempotencyCaches();
     return null;
   }
   return hit.result;
@@ -802,20 +845,22 @@ function rememberEngagementIdempotent(scope, idempotencyKey, result) {
   });
 
   const max = clampLimit(MAX_IDEMPOTENCY_KEYS, 5000);
-  if (engagementIdempotencyCache.size <= max) return;
-
-  for (const [key, value] of engagementIdempotencyCache.entries()) {
-    if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
-      engagementIdempotencyCache.delete(key);
+  if (engagementIdempotencyCache.size > max) {
+    for (const [key, value] of engagementIdempotencyCache.entries()) {
+      if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now) {
+        engagementIdempotencyCache.delete(key);
+      }
+      if (engagementIdempotencyCache.size <= max) break;
     }
-    if (engagementIdempotencyCache.size <= max) break;
+
+    while (engagementIdempotencyCache.size > max) {
+      const oldest = engagementIdempotencyCache.keys().next();
+      if (oldest.done) break;
+      engagementIdempotencyCache.delete(oldest.value);
+    }
   }
 
-  while (engagementIdempotencyCache.size > max) {
-    const oldest = engagementIdempotencyCache.keys().next();
-    if (oldest.done) break;
-    engagementIdempotencyCache.delete(oldest.value);
-  }
+  saveIdempotencyCaches();
 }
 
 function findRecentIdempotentStory(store, idempotencyKey) {
@@ -2160,6 +2205,8 @@ if (shouldEnforceLiveReadiness(process.env) && !startupReadiness.ready) {
   process.exit(1);
 }
 
+loadIdempotencyCaches();
+
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });
@@ -2174,6 +2221,7 @@ function shutdown(signal, exitCode = 0) {
   clearInterval(importInterval);
   clearTimeout(winnerBootTimeout);
   clearInterval(winnerInterval);
+  saveIdempotencyCaches();
   server.close(() => {
     process.exit(exitCode);
   });
