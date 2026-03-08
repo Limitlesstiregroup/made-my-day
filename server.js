@@ -479,6 +479,11 @@ function getConfigIssues() {
     issues.push('maxHeaderBytes');
   }
 
+  const maxQueryCharsRaw = parseIntOrDefault(process.env.MAX_QUERY_CHARS, 1024);
+  if (maxQueryCharsRaw < 128 || maxQueryCharsRaw > 4096) {
+    issues.push('maxQueryChars');
+  }
+
   if (ALLOWED_HOSTS.length > 0) {
     if (ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
       issues.push('allowedHosts');
@@ -588,6 +593,7 @@ function getReadinessStatus() {
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
       maxHeaderBytes: issues.includes('maxHeaderBytes') ? 'fail' : 'pass',
+      maxQueryChars: issues.includes('maxQueryChars') ? 'fail' : 'pass',
       allowedHosts: issues.includes('allowedHosts') ? 'fail' : 'pass',
       maxIdempotencyKeys: issues.includes('maxIdempotencyKeys') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
