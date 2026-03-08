@@ -82,6 +82,18 @@ async function run() {
       throw new Error(`expected 200 for HEAD health endpoint access, got ${healthHead.status}`);
     }
 
+    const healthHeadRaw = await sendRawHttp([
+      'HEAD /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    const [, healthHeadBody = ''] = healthHeadRaw.split('\r\n\r\n');
+    if (healthHeadBody !== '') {
+      throw new Error('expected no payload body for HEAD /api/health');
+    }
+
     const malformedHostResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: good.example,bad.example',

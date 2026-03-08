@@ -686,15 +686,21 @@ function applyNoStoreHeaders(headers) {
   headers.Vary = headers.Vary ? `${headers.Vary}, Authorization` : 'Authorization';
 }
 
+function shouldSuppressBodyForMethod(res) {
+  return res?.req?.method === 'HEAD';
+}
+
 function json(res, status, data, { noStore = true, headers: extraHeaders } = {}) {
+  const body = JSON.stringify(data, null, 2);
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     ...securityHeaders(),
     ...(extraHeaders || {})
   };
   if (noStore) applyNoStoreHeaders(headers);
+  headers['Content-Length'] = Buffer.byteLength(body);
   res.writeHead(status, headers);
-  res.end(JSON.stringify(data, null, 2));
+  res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
 }
 
 function methodNotAllowed(res, allowed) {
@@ -720,14 +726,16 @@ function csvValue(value) {
 }
 
 function csv(res, status, rows, { noStore = true, headers: extraHeaders } = {}) {
+  const body = rows.map((row) => row.map((value) => csvValue(value)).join(',')).join('\n');
   const headers = {
     'Content-Type': 'text/csv; charset=utf-8',
     ...securityHeaders(),
     ...(extraHeaders || {})
   };
   if (noStore) applyNoStoreHeaders(headers);
+  headers['Content-Length'] = Buffer.byteLength(body);
   res.writeHead(status, headers);
-  res.end(rows.map((row) => row.map((value) => csvValue(value)).join(',')).join('\n'));
+  res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
 }
 
 function hasJsonContentType(req) {
@@ -755,6 +763,7 @@ function weakEtagForPayload(payload) {
 
 function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
   const etag = weakEtagForPayload(data);
+  const body = JSON.stringify(data, null, 2);
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'private, max-age=0, must-revalidate',
@@ -769,8 +778,9 @@ function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
     return;
   }
 
+  headers['Content-Length'] = Buffer.byteLength(body);
   res.writeHead(status, headers);
-  res.end(JSON.stringify(data, null, 2));
+  res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
 }
 
 function id(prefix) {
