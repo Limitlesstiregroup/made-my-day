@@ -31,7 +31,7 @@ const MAX_COMMENTS = Number(process.env.MAX_COMMENTS || 20000);
 const MAX_HALL_OF_FAME = Number(process.env.MAX_HALL_OF_FAME || 520);
 const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
-const ALLOWED_HOSTS = [...new Set(String(process.env.ALLOWED_HOSTS || '').split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
+const ALLOWED_HOSTS = getAllowedHosts(process.env);
 
 function isValidDnsHostname(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
@@ -123,6 +123,14 @@ function readSecretFile(filePath) {
   } catch {
     return '';
   }
+}
+
+function getAllowedHosts(env = process.env) {
+  const direct = String(env.ALLOWED_HOSTS || '').trim();
+  const fileValue = readSecretFile(env.ALLOWED_HOSTS_FILE);
+  const raw = direct || fileValue;
+  if (!raw) return [];
+  return [...new Set(raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
 }
 
 function hasSecretFileReadError(filePath) {
@@ -412,7 +420,8 @@ function getConfigIssues() {
     'MADE_MY_DAY_ADMIN_TOKEN',
     'MADE_MY_DAY_ONCALL_PRIMARY',
     'MADE_MY_DAY_ONCALL_SECONDARY',
-    'MADE_MY_DAY_ESCALATION_DOC_URL'
+    'MADE_MY_DAY_ESCALATION_DOC_URL',
+    'ALLOWED_HOSTS'
   ];
   if (secretFileKeys.some((key) => isSecretFilePathInvalid(process.env[`${key}_FILE`]) || isSecretFilePathInvalid(process.env[`${key}_PREVIOUS_FILE`]))) {
     issues.push('secretFiles');
