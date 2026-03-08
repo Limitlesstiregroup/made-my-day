@@ -24,6 +24,7 @@ Optional runtime settings:
 - `IMPORT_TIMEOUT_MS` (default 10000)
 - `TRUST_PROXY=true` when running behind a trusted reverse proxy
 - `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` for HTTP timeout hardening
+- `MAX_REQUESTS_PER_SOCKET` (default `100`, range `1..1000`) to recycle long-lived keep-alive sockets predictably
 - `MAX_HEADER_BYTES` (default `16384`) to cap inbound request header size and fail oversized headers with HTTP 431
 - `MADE_MY_DAY_ADMIN_TOKEN_FILE` to load admin token from a mounted secret file
 

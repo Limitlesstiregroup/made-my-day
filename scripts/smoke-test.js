@@ -234,6 +234,12 @@ try {
     'release readiness should reject non-integer timeout values'
   );
 
+  const maxRequestsPerSocketIssue = evaluateReadiness({ MAX_REQUESTS_PER_SOCKET: '1001' });
+  assert.ok(
+    maxRequestsPerSocketIssue.includes('MAX_REQUESTS_PER_SOCKET must be between 1 and 1000'),
+    'release readiness should reject out-of-range MAX_REQUESTS_PER_SOCKET values'
+  );
+
   const maxCommentsPerStoryIssue = evaluateReadiness({ MAX_COMMENTS_PER_STORY: '4' });
   assert.ok(
     maxCommentsPerStoryIssue.includes('MAX_COMMENTS_PER_STORY must be >= 5'),

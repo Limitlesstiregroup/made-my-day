@@ -9,6 +9,7 @@ Anonymous same-day positive story platform.
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
 - Query-string hardening via query length cap (`MAX_QUERY_CHARS`, default `1024`): oversized query strings return HTTP 414 before route handling
 - Header-flood hardening via max request-header size cap (`MAX_HEADER_BYTES`, default `16384`): oversized headers are rejected at parser level with HTTP 431 (`Request Header Fields Too Large`)
+- Keep-alive socket churn hardening via per-socket request cap (`MAX_REQUESTS_PER_SOCKET`, default `100`): sockets are recycled after bounded request counts to reduce long-lived abuse risk
 - Request correlation hardening: `x-request-id` must be a single token (`8-128` chars, `[a-zA-Z0-9:_-.]`); malformed, duplicate, or comma-joined values are rejected with HTTP 400 (`invalid x-request-id header`) to avoid log correlation ambiguity
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
@@ -92,6 +93,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_COMMENTS_PER_STORY` (default `500`, min `5`) caps comments accepted per story to prevent hotspot abuse from exhausting storage.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
 - `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS <= HEADERS_TIMEOUT_MS`).
+- `MAX_REQUESTS_PER_SOCKET` caps keep-alive reuse per socket (default `100`, min `1`, max `1000`).
 - `MADE_MY_DAY_ONCALL_PRIMARY` (or `MADE_MY_DAY_ONCALL_PRIMARY_FILE`) required on-call owner for GA readiness (team handle/email/pager alias, >=3 chars).
 - `MADE_MY_DAY_ONCALL_SECONDARY` (or `MADE_MY_DAY_ONCALL_SECONDARY_FILE`) required backup on-call owner for GA readiness (must differ from primary).
 - `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) required escalation runbook URL for GA readiness (must be a non-placeholder `https://` URL pointing to a specific runbook path and without embedded username/password credentials; `example.com`, `localhost`, and private-network hosts are rejected).
