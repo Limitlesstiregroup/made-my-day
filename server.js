@@ -916,12 +916,30 @@ function getRateLimitState(req) {
 }
 
 function parseDeclaredContentLength(rawHeader) {
-  if (Array.isArray(rawHeader)) return null;
   if (rawHeader == null) return null;
+
+  if (Array.isArray(rawHeader)) {
+    if (rawHeader.length === 0) return null;
+    const normalizedValues = rawHeader.map((value) => String(value).trim()).filter(Boolean);
+    if (normalizedValues.length === 0) return null;
+    const [firstValue, ...restValues] = normalizedValues;
+    if (!/^\d+$/.test(firstValue)) return { invalid: true, value: null };
+    if (restValues.some((value) => value !== firstValue)) return { invalid: true, value: null };
+    const numericValue = Number(firstValue);
+    if (!Number.isSafeInteger(numericValue) || numericValue < 0) return { invalid: true, value: null };
+    return { invalid: false, value: numericValue };
+  }
+
   const normalized = String(rawHeader).trim();
   if (!normalized) return null;
-  if (!/^\d+$/.test(normalized)) return { invalid: true, value: null };
-  const value = Number(normalized);
+
+  const candidateValues = normalized.split(',').map((value) => value.trim()).filter(Boolean);
+  if (candidateValues.length === 0) return null;
+  const [firstValue, ...restValues] = candidateValues;
+  if (!/^\d+$/.test(firstValue)) return { invalid: true, value: null };
+  if (restValues.some((value) => value !== firstValue)) return { invalid: true, value: null };
+
+  const value = Number(firstValue);
   if (!Number.isSafeInteger(value) || value < 0) return { invalid: true, value: null };
   return { invalid: false, value };
 }

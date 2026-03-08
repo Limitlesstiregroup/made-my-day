@@ -120,6 +120,20 @@ async function run() {
       throw new Error('expected 421 when host header contains invalid userinfo delimiters');
     }
 
+    const conflictingContentLengthResponse = await sendRawHttp([
+      'POST /api/stories HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Content-Type: application/json',
+      'Content-Length: 2',
+      'Content-Length: 3',
+      'Connection: close',
+      '',
+      '{}'
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(conflictingContentLengthResponse)) {
+      throw new Error('expected 400 when content-length headers conflict');
+    }
+
     const readiness = await fetch(`${BASE}/api/health/ready`);
     if (readiness.status !== 503) {
       throw new Error(`expected 503 for readiness with missing GA config, got ${readiness.status}`);
