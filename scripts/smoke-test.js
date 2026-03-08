@@ -102,6 +102,16 @@ try {
     'placeholder previous token should fail release readiness'
   );
 
+  const whitespaceTokenIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin token with spaces 1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    whitespaceTokenIssues.includes('MADE_MY_DAY admin tokens must not contain whitespace characters'),
+    'admin tokens with whitespace should fail release readiness'
+  );
+
   const oncallPlaceholderIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: 'todo',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'

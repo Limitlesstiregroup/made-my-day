@@ -17,6 +17,10 @@ function placeholderToken(value) {
   return PLACEHOLDER_TOKENS.has(normalized);
 }
 
+function hasUnsafeSecretWhitespace(value) {
+  return /\s/.test(String(value || ''));
+}
+
 function parseIntOrDefault(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
@@ -242,6 +246,13 @@ function evaluateReadiness(env = process.env) {
   for (const token of adminTokenCandidates) {
     if (token.length < 16) {
       issues.push('MADE_MY_DAY admin tokens must be at least 16 characters when set (env or *_FILE)');
+      break;
+    }
+  }
+
+  for (const token of adminTokenCandidates) {
+    if (hasUnsafeSecretWhitespace(token)) {
+      issues.push('MADE_MY_DAY admin tokens must not contain whitespace characters');
       break;
     }
   }

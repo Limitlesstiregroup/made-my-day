@@ -187,6 +187,10 @@ function looksLikePlaceholderToken(value) {
   return PLACEHOLDER_TOKENS.includes(normalized);
 }
 
+function hasUnsafeSecretWhitespace(value) {
+  return /\s/.test(String(value || ''));
+}
+
 function getConfiguredAdminToken() {
   const direct = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
   if (direct) return direct;
@@ -298,6 +302,11 @@ function getConfigIssues() {
   const previousToken = getPreviousAdminToken();
   if (configuredToken && previousToken && configuredToken === previousToken) {
     issues.push('adminTokenRotation');
+  }
+
+  const adminTokenCandidates = getAdminTokenCandidates();
+  if (adminTokenCandidates.some((token) => hasUnsafeSecretWhitespace(token))) {
+    issues.push('adminTokenFormat');
   }
 
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
@@ -427,7 +436,7 @@ function getReadinessStatus() {
     ready: issues.length === 0,
     issueCodes: [...issues],
     checks: {
-      adminToken: issues.includes('adminToken') ? 'fail' : 'pass',
+      adminToken: (issues.includes('adminToken') || issues.includes('adminTokenFormat')) ? 'fail' : 'pass',
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
