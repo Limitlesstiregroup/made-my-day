@@ -53,7 +53,9 @@ async function run() {
       MADE_MY_DAY_ONCALL_SECONDARY_FILE: '',
       MADE_MY_DAY_ESCALATION_DOC_URL: '',
       MADE_MY_DAY_ESCALATION_DOC_URL_FILE: '',
-      MAX_COMMENTS_PER_STORY: '5'
+      MAX_COMMENTS_PER_STORY: '5',
+      RATE_LIMIT_MAX_MUTATIONS: '1000',
+      RATE_LIMIT_WINDOW_MS: '60000'
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
