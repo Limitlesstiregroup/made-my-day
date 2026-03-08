@@ -237,7 +237,9 @@ function isValidAllowedHostEntry(host) {
 }
 
 function getAllowedHosts(env = process.env) {
-  const raw = String(env.ALLOWED_HOSTS || '').trim();
+  const direct = String(env.ALLOWED_HOSTS || '').trim();
+  const fileValue = readSecretFile(env.ALLOWED_HOSTS_FILE);
+  const raw = direct || fileValue;
   if (!raw) return [];
   return [...new Set(raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
 }
@@ -325,7 +327,7 @@ function evaluateReadiness(env = process.env) {
     }
   }
 
-  const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ONCALL_SECONDARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
+  const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ONCALL_SECONDARY', 'MADE_MY_DAY_ESCALATION_DOC_URL', 'ALLOWED_HOSTS'];
   secretFileKeys.forEach((key) => {
     const currentFile = env[`${key}_FILE`];
     if (isSecretFilePathInvalid(currentFile)) {

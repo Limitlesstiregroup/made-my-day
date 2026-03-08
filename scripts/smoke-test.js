@@ -40,6 +40,20 @@ try {
 
   assert.equal(issuesFromFiles.length, 0, 'release readiness should accept admin token *_FILE fallbacks');
 
+  const tmpAllowedHostsFile = path.join(process.cwd(), 'data', `.tmp-allowed-hosts-${Date.now()}`);
+  fs.writeFileSync(tmpAllowedHostsFile, 'app.mademyday.com,api.mademyday.com:443\n');
+  fs.chmodSync(tmpAllowedHostsFile, 0o600);
+  const allowedHostsFileIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'primary_admin_token_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation',
+    ALLOWED_HOSTS_FILE: tmpAllowedHostsFile
+  });
+  fs.unlinkSync(tmpAllowedHostsFile);
+
+  assert.equal(allowedHostsFileIssues.length, 0, 'release readiness should accept ALLOWED_HOSTS_FILE when host entries are valid');
+
   const unreadableSecretFileIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: '/tmp/does-not-exist-made-my-day-admin-token',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
