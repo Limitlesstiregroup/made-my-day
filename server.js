@@ -10,6 +10,44 @@ const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(DATA_DIR, 'stories.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+function getCorruptSnapshotLimit() {
+  const raw = Number(process.env.MADE_MY_DAY_CORRUPT_SNAPSHOT_LIMIT || 5);
+  if (!Number.isFinite(raw)) return 5;
+  return Math.max(1, Math.min(25, Math.floor(raw)));
+}
+
+function snapshotCorruptStoreFile(filePath) {
+  const badCopy = `${filePath}.corrupt-${Date.now()}`;
+  try {
+    fs.copyFileSync(filePath, badCopy);
+  } catch {
+    return;
+  }
+
+  const dir = path.dirname(filePath);
+  const baseName = path.basename(filePath);
+  const prefix = `${baseName}.corrupt-`;
+
+  try {
+    const snapshots = fs.readdirSync(dir)
+      .filter((name) => name.startsWith(prefix))
+      .sort();
+    const maxSnapshots = getCorruptSnapshotLimit();
+    const excess = snapshots.length - maxSnapshots;
+    if (excess > 0) {
+      snapshots.slice(0, excess).forEach((name) => {
+        try {
+          fs.unlinkSync(path.join(dir, name));
+        } catch {
+          // Ignore best-effort cleanup failures.
+        }
+      });
+    }
+  } catch {
+    // Ignore cleanup failures.
+  }
+}
 function clampMaxBodyBytes(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 16 * 1024;
@@ -635,13 +673,8 @@ function loadStore() {
   try {
     store = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
   } catch {
-    // Recover from partial/corrupted writes and keep a forensics snapshot.
-    const badCopy = `${STORE_FILE}.corrupt-${Date.now()}`;
-    try {
-      fs.copyFileSync(STORE_FILE, badCopy);
-    } catch {
-      // Ignore backup failures; continue with a safe empty store.
-    }
+    // Recover from partial/corrupted writes and keep a bounded forensics snapshot set.
+    snapshotCorruptStoreFile(STORE_FILE);
     store = emptyStore();
     writeStoreFileAtomically(store);
   }
