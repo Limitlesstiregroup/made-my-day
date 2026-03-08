@@ -506,17 +506,43 @@ function secureTokenEquals(incomingToken, configuredToken) {
   return crypto.timingSafeEqual(incomingBuffer, configuredBuffer);
 }
 
-function hasAdminAuth(req) {
+function parseAuthorizationBearer(req) {
+  const header = req.headers.authorization;
+  if (Array.isArray(header)) return { malformed: true, token: '' };
+  if (typeof header !== 'string') return { malformed: false, token: '' };
+  const value = header.trim();
+  if (!value) return { malformed: false, token: '' };
+  if (value.includes(',')) return { malformed: true, token: '' };
+  if (!value.startsWith('Bearer ')) return { malformed: false, token: '' };
+  const incoming = value.slice('Bearer '.length).trim();
+  if (incoming.length === 0 || incoming.length > 1024) return { malformed: true, token: '' };
+  return { malformed: false, token: incoming };
+}
+
+function getAdminAuthStatus(req) {
   const configuredToken = getConfiguredAdminToken();
-  if (!configuredToken) return true; // preview mode
-  if (!hasStrongAdminToken()) return false;
-  const header = req.headers.authorization || '';
-  if (!header.startsWith('Bearer ')) return false;
-  const incoming = header.slice('Bearer '.length).trim();
-  if (incoming.length === 0 || incoming.length > 1024) return false;
+  if (!configuredToken) return { allowed: true, malformed: false }; // preview mode
+  if (!hasStrongAdminToken()) return { allowed: false, malformed: false };
+
+  const parsedAuth = parseAuthorizationBearer(req);
+  if (parsedAuth.malformed) return { allowed: false, malformed: true };
+  if (!parsedAuth.token) return { allowed: false, malformed: false };
+
   const candidates = getAdminTokenCandidates().filter((token) => token.length >= 16 && !looksLikePlaceholderSecret(token));
-  if (candidates.length === 0) return false;
-  return candidates.some((token) => secureTokenEquals(incoming, token));
+  if (candidates.length === 0) return { allowed: false, malformed: false };
+  const allowed = candidates.some((token) => secureTokenEquals(parsedAuth.token, token));
+  return { allowed, malformed: false };
+}
+
+function requireAdminAuth(req, res) {
+  const auth = getAdminAuthStatus(req);
+  if (auth.allowed) return true;
+  if (auth.malformed) {
+    json(res, 400, { error: 'invalid authorization header' });
+    return false;
+  }
+  json(res, 401, { error: 'unauthorized' });
+  return false;
 }
 
 function writeStoreFileAtomically(store) {
@@ -1393,7 +1419,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (isGetOrHead(req) && u.pathname === '/api/health/details') {
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       const readiness = getReadinessStatus();
       return json(res, 200, {
         ok: true,
@@ -1404,7 +1430,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame.csv') {
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const records = store.hallOfFame.slice(offset, offset + limit);
@@ -1418,7 +1444,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards.csv') {
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const records = store.giftCards.slice(offset, offset + limit);
@@ -1432,7 +1458,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame') {
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const total = store.hallOfFame.length;
@@ -1454,7 +1480,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards') {
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const total = store.giftCards.length;
@@ -1677,7 +1703,7 @@ const server = http.createServer(async (req, res) => {
       if (!hasJsonContentType(req)) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       try {
         await readBody(req);
       } catch (error) {
@@ -1710,7 +1736,7 @@ const server = http.createServer(async (req, res) => {
       if (!hasJsonContentType(req)) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
-      if (!hasAdminAuth(req)) return json(res, 401, { error: 'unauthorized' });
+      if (!requireAdminAuth(req, res)) return;
       try {
         await readBody(req);
       } catch (error) {

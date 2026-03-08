@@ -156,6 +156,13 @@ async function run() {
       throw new Error('expected Vary: Authorization on unauthorized health details');
     }
 
+    const malformedHealthDetails = await fetch(`${BASE}/api/health/details`, {
+      headers: { Authorization: 'Bearer admin_token_live_primary_1234, Bearer injected' }
+    });
+    if (malformedHealthDetails.status !== 400) {
+      throw new Error(`expected 400 for malformed authorization header, got ${malformedHealthDetails.status}`);
+    }
+
     const healthDetails = await fetch(`${BASE}/api/health/details`, {
       headers: { Authorization: 'Bearer admin_token_live_primary_1234' }
     });
