@@ -109,6 +109,17 @@ async function run() {
       throw new Error('expected 421 when host header contains comma-separated values');
     }
 
+    const malformedUserInfoHostResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: good.example:443@evil.example',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 421 /.test(malformedUserInfoHostResponse)) {
+      throw new Error('expected 421 when host header contains invalid userinfo delimiters');
+    }
+
     const readiness = await fetch(`${BASE}/api/health/ready`);
     if (readiness.status !== 503) {
       throw new Error(`expected 503 for readiness with missing GA config, got ${readiness.status}`);

@@ -1256,7 +1256,7 @@ function isValidIncomingHostHeader(hostHeader) {
   if (hostHeader.length > 255) return false;
   if (/[\u0000-\u001F\u007F\s]/.test(hostHeader)) return false;
   if (/[,\\/]/.test(hostHeader)) return false;
-  return true;
+  return parseAllowedHostEntry(hostHeader) !== null;
 }
 
 function isAllowedHost(req) {
