@@ -1463,6 +1463,20 @@ function hasDuplicateHostHeader(req) {
   return false;
 }
 
+function hasDuplicateRawHeader(req, targetName) {
+  if (!Array.isArray(req.rawHeaders)) return false;
+  const normalizedTarget = String(targetName || '').toLowerCase();
+  if (!normalizedTarget) return false;
+  let count = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (String(req.rawHeaders[i] || '').toLowerCase() === normalizedTarget) {
+      count += 1;
+      if (count > 1) return true;
+    }
+  }
+  return false;
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -1492,6 +1506,16 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasDuplicateHostHeader(req)) {
       return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
+    }
+    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded'))) {
+      return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
+    }
+    if (TRUST_PROXY) {
+      const forwardedFor = req.headers['x-forwarded-for'];
+      const forwarded = req.headers.forwarded;
+      if ((typeof forwardedFor === 'string' && forwardedFor.includes(',')) || (typeof forwarded === 'string' && forwarded.includes(','))) {
+        return json(res, 400, { error: 'Multi-hop forwarding headers are not allowed' });
+      }
     }
     const rawUrl = typeof req.url === 'string' ? req.url : '';
     if (!rawUrl.startsWith('/')) {

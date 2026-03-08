@@ -55,7 +55,8 @@ async function run() {
       MADE_MY_DAY_ESCALATION_DOC_URL_FILE: '',
       MAX_COMMENTS_PER_STORY: '5',
       RATE_LIMIT_MAX_MUTATIONS: '1000',
-      RATE_LIMIT_WINDOW_MS: '60000'
+      RATE_LIMIT_WINDOW_MS: '60000',
+      TRUST_PROXY: 'true'
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -143,6 +144,18 @@ async function run() {
     ].join('\r\n'));
     if (!/^HTTP\/1\.1 400 /.test(duplicateHostHeaderResponse)) {
       throw new Error('expected 400 when duplicate Host headers are sent');
+    }
+
+    const multiHopForwardingHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-For: 203.0.113.10, 198.51.100.11',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardingHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop forwarding headers are sent while TRUST_PROXY=true');
     }
 
     const absoluteTargetResponse = await sendRawHttp([
