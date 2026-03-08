@@ -346,6 +346,7 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.MAX_IDEMPOTENCY_KEYS, 'MAX_IDEMPOTENCY_KEYS', issues);
   validateIntegerEnv(env.MAX_STORY_CHARS, 'MAX_STORY_CHARS', issues);
   validateIntegerEnv(env.MAX_COMMENT_CHARS, 'MAX_COMMENT_CHARS', issues);
+  validateIntegerEnv(env.MAX_COMMENTS_PER_STORY, 'MAX_COMMENTS_PER_STORY', issues);
   validateIntegerEnv(env.MAX_AUTHOR_CHARS, 'MAX_AUTHOR_CHARS', issues);
   validateIntegerEnv(env.REQUEST_TIMEOUT_MS, 'REQUEST_TIMEOUT_MS', issues);
   validateIntegerEnv(env.HEADERS_TIMEOUT_MS, 'HEADERS_TIMEOUT_MS', issues);
@@ -396,6 +397,9 @@ function evaluateReadiness(env = process.env) {
 
   const maxCommentChars = parseIntOrDefault(env.MAX_COMMENT_CHARS, 300);
   if (maxCommentChars < 20) issues.push('MAX_COMMENT_CHARS must be >= 20');
+
+  const maxCommentsPerStory = parseIntOrDefault(env.MAX_COMMENTS_PER_STORY, 500);
+  if (maxCommentsPerStory < 5) issues.push('MAX_COMMENTS_PER_STORY must be >= 5');
 
   const maxAuthorChars = parseIntOrDefault(env.MAX_AUTHOR_CHARS, 60);
   if (maxAuthorChars < 10) issues.push('MAX_AUTHOR_CHARS must be >= 10');

@@ -164,6 +164,12 @@ try {
     'release readiness should reject non-integer timeout values'
   );
 
+  const maxCommentsPerStoryIssue = evaluateReadiness({ MAX_COMMENTS_PER_STORY: '4' });
+  assert.ok(
+    maxCommentsPerStoryIssue.includes('MAX_COMMENTS_PER_STORY must be >= 5'),
+    'release readiness should reject MAX_COMMENTS_PER_STORY values below 5'
+  );
+
   const invalidAllowedHostsIssue = evaluateReadiness({
     ALLOWED_HOSTS: 'valid.example.com:443, bad host value'
   });
