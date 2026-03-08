@@ -590,7 +590,7 @@ function requireAdminAuth(req, res) {
     json(res, 400, { error: 'invalid authorization header' });
     return false;
   }
-  json(res, 401, { error: 'unauthorized' });
+  json(res, 401, { error: 'unauthorized' }, { headers: { 'WWW-Authenticate': 'Bearer realm="made-my-day"' } });
   return false;
 }
 
