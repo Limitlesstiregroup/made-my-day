@@ -9,6 +9,7 @@ Anonymous same-day positive story platform.
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
 - Query-string hardening via query length cap (`MAX_QUERY_CHARS`, default `1024`): oversized query strings return HTTP 414 before route handling
 - Header-flood hardening via max request-header size cap (`MAX_HEADER_BYTES`, default `16384`): oversized headers are rejected at parser level with HTTP 431 (`Request Header Fields Too Large`)
+- Request correlation hardening: `x-request-id` must be a single token (`8-128` chars, `[a-zA-Z0-9:_-.]`); malformed, duplicate, or comma-joined values are rejected with HTTP 400 (`invalid x-request-id header`) to avoid log correlation ambiguity
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
 - Content-Length hardening for JSON mutations: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability

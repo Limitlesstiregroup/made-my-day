@@ -1433,13 +1433,22 @@ const winnerInterval = setInterval(() => runWeeklyWinnerAutomationLocked().catch
 
 function getRequestId(req) {
   const incoming = req.headers['x-request-id'];
+  if (Array.isArray(incoming)) {
+    return { requestId: `req_${crypto.randomUUID()}`, malformed: true };
+  }
   if (typeof incoming === 'string') {
     const trimmed = incoming.trim();
+    if (trimmed.includes(',')) {
+      return { requestId: `req_${crypto.randomUUID()}`, malformed: true };
+    }
     if (trimmed.length >= 8 && trimmed.length <= 128 && /^[a-zA-Z0-9:_\-.]+$/.test(trimmed)) {
-      return trimmed;
+      return { requestId: trimmed, malformed: false };
+    }
+    if (trimmed.length > 0) {
+      return { requestId: `req_${crypto.randomUUID()}`, malformed: true };
     }
   }
-  return `req_${crypto.randomUUID()}`;
+  return { requestId: `req_${crypto.randomUUID()}`, malformed: false };
 }
 
 function hasDuplicateHostHeader(req) {
@@ -1474,10 +1483,13 @@ function isAllowedHost(req) {
 }
 
 const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req, res) => {
-  const requestId = getRequestId(req);
+  const { requestId, malformed: malformedRequestId } = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
   try {
+    if (malformedRequestId) {
+      return json(res, 400, { error: 'invalid x-request-id header' });
+    }
     if (hasDuplicateHostHeader(req)) {
       return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
     }
