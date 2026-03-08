@@ -32,6 +32,20 @@ const MAX_GIFT_CARDS = Number(process.env.MAX_GIFT_CARDS || 520);
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '').trim().toLowerCase() === 'true';
 const ALLOWED_HOSTS = [...new Set(String(process.env.ALLOWED_HOSTS || '').split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
 
+function isValidDnsHostname(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized.includes('..')) return false;
+  if (normalized.startsWith('.') || normalized.endsWith('.')) return false;
+  const labels = normalized.split('.');
+  return labels.every((label) => {
+    if (!label || label.length > 63) return false;
+    if (!/^[a-z0-9-]+$/.test(label)) return false;
+    if (label.startsWith('-') || label.endsWith('-')) return false;
+    return true;
+  });
+}
+
 function isValidAllowedHostEntry(host) {
   const normalized = String(host || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -46,10 +60,15 @@ function isValidAllowedHostEntry(host) {
     return Number.isInteger(port) && port >= 1 && port <= 65535;
   }
 
-  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(normalized)) return false;
-  const [hostPart, portPart = ''] = normalized.split(':');
+  const hostPortMatch = normalized.match(/^([^:]+)(?::(\d{1,5}))?$/);
+  if (!hostPortMatch) return false;
+  const hostPart = hostPortMatch[1];
+  const portPart = hostPortMatch[2] || '';
   if (!hostPart) return false;
-  if (hostPart.includes('.') && net.isIP(hostPart) === 0 && !/^[a-z0-9.-]+$/i.test(hostPart)) return false;
+
+  const ipVersion = net.isIP(hostPart);
+  if (ipVersion === 0 && !isValidDnsHostname(hostPart)) return false;
+
   if (!portPart) return true;
   const port = Number(portPart);
   return Number.isInteger(port) && port >= 1 && port <= 65535;

@@ -130,6 +130,22 @@ try {
     invalidAllowedHostsIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
     'release readiness should reject malformed ALLOWED_HOSTS entries'
   );
+
+  const invalidLeadingHyphenHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: '-bad.example.com'
+  });
+  assert.ok(
+    invalidLeadingHyphenHostIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
+    'release readiness should reject host labels that begin with hyphens'
+  );
+
+  const invalidDoubleDotHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: 'bad..example.com'
+  });
+  assert.ok(
+    invalidDoubleDotHostIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
+    'release readiness should reject hostnames with empty labels'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);
