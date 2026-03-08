@@ -128,6 +128,26 @@ try {
     'placeholder on-call owner should fail release readiness'
   );
 
+  const missingSecondaryOncallIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    missingSecondaryOncallIssues.includes('MADE_MY_DAY_ONCALL_SECONDARY must be set and at least 3 characters (env or *_FILE)'),
+    'missing backup on-call owner should fail release readiness'
+  );
+
+  const duplicateOncallOwnersIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    duplicateOncallOwnersIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY and MADE_MY_DAY_ONCALL_SECONDARY must not be the same'),
+    'primary and secondary on-call owners must differ for GA readiness'
+  );
 
   const localEscalationIssue = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',

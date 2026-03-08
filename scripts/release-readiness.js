@@ -269,6 +269,17 @@ function evaluateReadiness(env = process.env) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value');
   }
 
+  const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY', env);
+  if (oncallSecondary.length < 3) {
+    issues.push('MADE_MY_DAY_ONCALL_SECONDARY must be set and at least 3 characters (env or *_FILE)');
+  }
+  if (placeholderToken(oncallSecondary)) {
+    issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not be a placeholder value');
+  }
+  if (oncallPrimary && oncallSecondary && oncallPrimary === oncallSecondary) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY and MADE_MY_DAY_ONCALL_SECONDARY must not be the same');
+  }
+
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid non-placeholder https URL (env or *_FILE)');
