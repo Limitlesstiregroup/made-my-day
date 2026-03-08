@@ -7,6 +7,7 @@ Anonymous same-day positive story platform.
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
+- Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
 - Content-Length hardening for JSON mutations: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability
 - Request-smuggling hardening for JSON mutations: requests carrying both `Transfer-Encoding` and `Content-Length` are rejected with HTTP 400 (`ambiguous request framing`)
 - Optional host-header allowlist (`ALLOWED_HOSTS`) to mitigate DNS rebinding and misrouted ingress (mismatches return HTTP 421); GA readiness rejects localhost/private-network allowlist entries

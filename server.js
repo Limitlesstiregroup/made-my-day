@@ -1368,6 +1368,9 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const rawUrl = typeof req.url === 'string' ? req.url : '';
+    if (!rawUrl.startsWith('/')) {
+      return json(res, 400, { error: 'origin-form request-target required' });
+    }
     if (rawUrl.length > MAX_URL_CHARS) {
       return json(res, 414, {
         error: 'Request URL too long',

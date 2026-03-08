@@ -131,6 +131,17 @@ async function run() {
       throw new Error('expected 421 when host header contains invalid userinfo delimiters');
     }
 
+    const absoluteTargetResponse = await sendRawHttp([
+      'GET http://127.0.0.1:4399/api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(absoluteTargetResponse)) {
+      throw new Error('expected 400 when request-target is absolute-form instead of origin-form');
+    }
+
     const conflictingContentLengthResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
       'Host: 127.0.0.1:4399',
