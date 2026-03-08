@@ -143,6 +143,22 @@ async function run() {
       throw new Error('expected 400 when content-length headers conflict');
     }
 
+    const ambiguousFramingResponse = await sendRawHttp([
+      'POST /api/stories HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Content-Type: application/json',
+      'Transfer-Encoding: chunked',
+      'Content-Length: 4',
+      'Connection: close',
+      '',
+      '0',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(ambiguousFramingResponse)) {
+      throw new Error('expected 400 when transfer-encoding and content-length are both present');
+    }
+
     const readiness = await fetch(`${BASE}/api/health/ready`);
     if (readiness.status !== 503) {
       throw new Error(`expected 503 for readiness with missing GA config, got ${readiness.status}`);

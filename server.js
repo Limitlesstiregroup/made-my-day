@@ -1001,6 +1001,12 @@ function parseDeclaredContentLength(rawHeader) {
   return { invalid: false, value };
 }
 
+function hasTransferEncodingHeader(rawHeader) {
+  if (rawHeader == null) return false;
+  if (Array.isArray(rawHeader)) return rawHeader.some((value) => String(value).trim().length > 0);
+  return String(rawHeader).trim().length > 0;
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -1021,6 +1027,12 @@ function readBody(req) {
     if (declaredContentLength?.invalid) {
       const error = new Error('invalid content-length header');
       error.code = 'INVALID_CONTENT_LENGTH';
+      fail(error);
+      return;
+    }
+    if (hasTransferEncodingHeader(req.headers['transfer-encoding']) && Number.isFinite(declaredContentLength?.value)) {
+      const error = new Error('ambiguous request framing');
+      error.code = 'AMBIGUOUS_REQUEST_FRAMING';
       fail(error);
       return;
     }

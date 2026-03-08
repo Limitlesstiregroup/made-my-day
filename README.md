@@ -8,6 +8,7 @@ Anonymous same-day positive story platform.
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
 - Content-Length hardening for JSON mutations: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability
+- Request-smuggling hardening for JSON mutations: requests carrying both `Transfer-Encoding` and `Content-Length` are rejected with HTTP 400 (`ambiguous request framing`)
 - Optional host-header allowlist (`ALLOWED_HOSTS`) to mitigate DNS rebinding and misrouted ingress (mismatches return HTTP 421); GA readiness rejects localhost/private-network allowlist entries
 - Incoming `Host` header hardening: malformed/control-char/oversized or delimiter-smuggled host headers are rejected with HTTP 421 before routing
 - JSON API hardening: story mutations (`POST /api/stories`, `/api/stories/:id/like`, `/api/stories/:id/share`, `/api/stories/:id/comments`) and admin automation triggers (`POST /api/import/run`, `POST /api/hall-of-fame/run`) require `Content-Type: application/json`; malformed JSON returns HTTP 400 and oversized payloads return HTTP 413
