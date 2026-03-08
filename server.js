@@ -157,9 +157,32 @@ const mutationLogOrder = [];
 const adminRunIdempotencyCache = new Map();
 const engagementIdempotencyCache = new Map();
 const IDEMPOTENCY_CACHE_FILE = String(process.env.IDEMPOTENCY_CACHE_FILE || path.join(DATA_DIR, 'idempotency-cache.json'));
+const IDEMPOTENCY_CACHE_BACKUP_FILE = `${IDEMPOTENCY_CACHE_FILE}.bak`;
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
+
+function restoreIdempotencyEntries(targetMap, entries, now = Date.now()) {
+  if (!Array.isArray(entries)) return false;
+  let restored = false;
+  for (const entry of entries) {
+    if (!Array.isArray(entry) || entry.length !== 2) continue;
+    const [key, value] = entry;
+    if (typeof key !== 'string' || !key) continue;
+    if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now || typeof value.result !== 'object') continue;
+    targetMap.set(key, value);
+    restored = true;
+  }
+  return restored;
+}
+
+function restoreIdempotencyCaches(parsed) {
+  if (!parsed || typeof parsed !== 'object') return false;
+  const now = Date.now();
+  const restoredAdmin = restoreIdempotencyEntries(adminRunIdempotencyCache, parsed.adminRun, now);
+  const restoredEngagement = restoreIdempotencyEntries(engagementIdempotencyCache, parsed.engagement, now);
+  return restoredAdmin || restoredEngagement;
+}
 
 function saveIdempotencyCaches() {
   try {
@@ -172,6 +195,7 @@ function saveIdempotencyCaches() {
     const tmpFile = `${IDEMPOTENCY_CACHE_FILE}.${tmpSuffix}.tmp`;
     fs.writeFileSync(tmpFile, JSON.stringify(payload, null, 2));
     fs.renameSync(tmpFile, IDEMPOTENCY_CACHE_FILE);
+    fs.copyFileSync(IDEMPOTENCY_CACHE_FILE, IDEMPOTENCY_CACHE_BACKUP_FILE);
   } catch {
     // best-effort persistence only
   }
@@ -179,23 +203,14 @@ function saveIdempotencyCaches() {
 
 function loadIdempotencyCaches() {
   try {
-    if (!fs.existsSync(IDEMPOTENCY_CACHE_FILE)) return;
-    const parsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_FILE, 'utf8'));
-    const now = Date.now();
-
-    const restore = (targetMap, entries) => {
-      if (!Array.isArray(entries)) return;
-      for (const entry of entries) {
-        if (!Array.isArray(entry) || entry.length !== 2) continue;
-        const [key, value] = entry;
-        if (typeof key !== 'string' || !key) continue;
-        if (!value || !Number.isFinite(value.expiresAt) || value.expiresAt <= now || typeof value.result !== 'object') continue;
-        targetMap.set(key, value);
-      }
-    };
-
-    restore(adminRunIdempotencyCache, parsed?.adminRun);
-    restore(engagementIdempotencyCache, parsed?.engagement);
+    if (fs.existsSync(IDEMPOTENCY_CACHE_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_FILE, 'utf8'));
+      if (restoreIdempotencyCaches(parsed)) return;
+    }
+    if (fs.existsSync(IDEMPOTENCY_CACHE_BACKUP_FILE)) {
+      const backupParsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_BACKUP_FILE, 'utf8'));
+      restoreIdempotencyCaches(backupParsed);
+    }
   } catch {
     // best-effort persistence only
   }
