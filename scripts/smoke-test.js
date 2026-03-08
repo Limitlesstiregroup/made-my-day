@@ -177,6 +177,14 @@ try {
     invalidDoubleDotHostIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
     'release readiness should reject hostnames with empty labels'
   );
+
+  const privateAllowedHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: 'app.mademyday.com,127.0.0.1'
+  });
+  assert.ok(
+    privateAllowedHostIssue.includes('ALLOWED_HOSTS must not include localhost/private network hosts in GA mode'),
+    'release readiness should reject localhost/private hosts in ALLOWED_HOSTS for GA mode'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);

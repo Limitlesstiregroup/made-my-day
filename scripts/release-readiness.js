@@ -185,32 +185,41 @@ function isValidDnsHostname(hostname) {
   });
 }
 
-function isValidAllowedHostEntry(host) {
+function parseAllowedHostEntry(host) {
   const normalized = String(host || '').trim().toLowerCase();
-  if (!normalized) return false;
+  if (!normalized) return null;
 
   const bracketedIpv6Match = normalized.match(/^\[([a-f0-9:]+)](?::(\d{1,5}))?$/i);
   if (bracketedIpv6Match) {
-    const ip = bracketedIpv6Match[1];
+    const hostPart = bracketedIpv6Match[1];
     const portPart = bracketedIpv6Match[2] || '';
-    if (net.isIP(ip) !== 6) return false;
-    if (!portPart) return true;
-    const port = Number(portPart);
-    return Number.isInteger(port) && port >= 1 && port <= 65535;
+    if (net.isIP(hostPart) !== 6) return null;
+    if (portPart) {
+      const port = Number(portPart);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+    }
+    return { host: hostPart, isIp: true, version: 6 };
   }
 
   const hostPortMatch = normalized.match(/^([^:]+)(?::(\d{1,5}))?$/);
-  if (!hostPortMatch) return false;
+  if (!hostPortMatch) return null;
   const hostPart = hostPortMatch[1];
   const portPart = hostPortMatch[2] || '';
-  if (!hostPart) return false;
+  if (!hostPart) return null;
 
   const ipVersion = net.isIP(hostPart);
-  if (ipVersion === 0 && !isValidDnsHostname(hostPart)) return false;
+  if (ipVersion === 0 && !isValidDnsHostname(hostPart)) return null;
 
-  if (!portPart) return true;
-  const port = Number(portPart);
-  return Number.isInteger(port) && port >= 1 && port <= 65535;
+  if (portPart) {
+    const port = Number(portPart);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+  }
+
+  return { host: hostPart, isIp: ipVersion !== 0, version: ipVersion || null };
+}
+
+function isValidAllowedHostEntry(host) {
+  return parseAllowedHostEntry(host) !== null;
 }
 
 function getAllowedHosts(env = process.env) {
@@ -269,6 +278,15 @@ function evaluateReadiness(env = process.env) {
     const invalidAllowedHost = allowedHosts.find((host) => !isValidAllowedHostEntry(host));
     if (invalidAllowedHost) {
       issues.push('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)');
+    }
+
+    const privateAllowedHost = allowedHosts.find((host) => {
+      const parsed = parseAllowedHostEntry(host);
+      if (!parsed) return false;
+      return isPrivateOrLocalEscalationHost(parsed.host);
+    });
+    if (privateAllowedHost) {
+      issues.push('ALLOWED_HOSTS must not include localhost/private network hosts in GA mode');
     }
   }
 

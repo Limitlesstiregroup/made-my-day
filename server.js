@@ -46,32 +46,41 @@ function isValidDnsHostname(hostname) {
   });
 }
 
-function isValidAllowedHostEntry(host) {
+function parseAllowedHostEntry(host) {
   const normalized = String(host || '').trim().toLowerCase();
-  if (!normalized) return false;
+  if (!normalized) return null;
 
   const bracketedIpv6Match = normalized.match(/^\[([a-f0-9:]+)](?::(\d{1,5}))?$/i);
   if (bracketedIpv6Match) {
-    const ip = bracketedIpv6Match[1];
+    const hostPart = bracketedIpv6Match[1];
     const portPart = bracketedIpv6Match[2] || '';
-    if (net.isIP(ip) !== 6) return false;
-    if (!portPart) return true;
-    const port = Number(portPart);
-    return Number.isInteger(port) && port >= 1 && port <= 65535;
+    if (net.isIP(hostPart) !== 6) return null;
+    if (portPart) {
+      const port = Number(portPart);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+    }
+    return { host: hostPart, isIp: true, version: 6 };
   }
 
   const hostPortMatch = normalized.match(/^([^:]+)(?::(\d{1,5}))?$/);
-  if (!hostPortMatch) return false;
+  if (!hostPortMatch) return null;
   const hostPart = hostPortMatch[1];
   const portPart = hostPortMatch[2] || '';
-  if (!hostPart) return false;
+  if (!hostPart) return null;
 
   const ipVersion = net.isIP(hostPart);
-  if (ipVersion === 0 && !isValidDnsHostname(hostPart)) return false;
+  if (ipVersion === 0 && !isValidDnsHostname(hostPart)) return null;
 
-  if (!portPart) return true;
-  const port = Number(portPart);
-  return Number.isInteger(port) && port >= 1 && port <= 65535;
+  if (portPart) {
+    const port = Number(portPart);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+  }
+
+  return { host: hostPart, isIp: ipVersion !== 0, version: ipVersion || null };
+}
+
+function isValidAllowedHostEntry(host) {
+  return parseAllowedHostEntry(host) !== null;
 }
 const SAFE_RATE_LIMIT_WINDOW_MS = Number.isFinite(RATE_LIMIT_WINDOW_MS) && RATE_LIMIT_WINDOW_MS > 0 ? RATE_LIMIT_WINDOW_MS : 60 * 1000;
 const SAFE_RATE_LIMIT_MAX_MUTATIONS = Number.isFinite(RATE_LIMIT_MAX_MUTATIONS) && RATE_LIMIT_MAX_MUTATIONS > 0 ? RATE_LIMIT_MAX_MUTATIONS : 45;
@@ -326,8 +335,17 @@ function getConfigIssues() {
     issues.push('maxUrlChars');
   }
 
-  if (ALLOWED_HOSTS.length > 0 && ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
-    issues.push('allowedHosts');
+  if (ALLOWED_HOSTS.length > 0) {
+    if (ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
+      issues.push('allowedHosts');
+    }
+    if (ALLOWED_HOSTS.some((host) => {
+      const parsed = parseAllowedHostEntry(host);
+      if (!parsed) return false;
+      return isPrivateOrLocalEscalationHost(parsed.host);
+    })) {
+      issues.push('allowedHosts');
+    }
   }
 
   const maxIdempotencyKeysRaw = parseIntOrDefault(process.env.MAX_IDEMPOTENCY_KEYS, 5000);
