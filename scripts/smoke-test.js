@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { evaluateReadiness, isSecretFileTooPermissive } = require('./release-readiness');
+const { evaluateReadiness, isSecretFileSymlink, isSecretFileTooPermissive } = require('./release-readiness');
 
 try {
   const storiesPath = path.join(process.cwd(), 'data/stories.json');
@@ -58,6 +58,24 @@ try {
     relativeFilePathIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE must be an absolute path'),
     'relative *_FILE paths should surface absolute-path guidance'
   );
+
+  const tmpRealTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-real-${Date.now()}`);
+  const tmpSymlinkTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-link-${Date.now()}`);
+  fs.writeFileSync(tmpRealTokenFile, 'admin_token_file_primary_1234\n');
+  fs.chmodSync(tmpRealTokenFile, 0o600);
+  fs.symlinkSync(tmpRealTokenFile, tmpSymlinkTokenFile);
+  assert.equal(isSecretFileSymlink(tmpSymlinkTokenFile), true, 'symbolic-link secret files should be detected');
+  const symlinkFileIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpSymlinkTokenFile,
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    symlinkFileIssues.includes('MADE_MY_DAY_ADMIN_TOKEN_FILE must not be a symbolic link'),
+    'symlink *_FILE paths should be rejected for secret loading hardening'
+  );
+  fs.unlinkSync(tmpSymlinkTokenFile);
+  fs.unlinkSync(tmpRealTokenFile);
 
   const tmpPermissiveTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-open-${Date.now()}`);
   fs.writeFileSync(tmpPermissiveTokenFile, 'admin_token_file_primary_1234\n');

@@ -58,6 +58,15 @@ function isSecretFilePathInvalid(filePath) {
   return !path.isAbsolute(String(filePath).trim());
 }
 
+function isSecretFileSymlink(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    return fs.lstatSync(String(filePath)).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function isSecretFileTooPermissive(filePath) {
   if (!filePath || String(filePath).trim() === '') return false;
   try {
@@ -65,6 +74,19 @@ function isSecretFileTooPermissive(filePath) {
     if (!stats.isFile()) return true;
     const mode = stats.mode & 0o777;
     return (mode & 0o077) !== 0;
+  } catch {
+    return false;
+  }
+}
+
+function isSecretFileWrongOwner(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  if (typeof process.getuid !== 'function') return false;
+  try {
+    const stats = fs.statSync(String(filePath));
+    if (!stats.isFile()) return true;
+    const currentUid = process.getuid();
+    return stats.uid !== currentUid && stats.uid !== 0;
   } catch {
     return false;
   }
@@ -220,16 +242,24 @@ function evaluateReadiness(env = process.env) {
       issues.push(`${key}_FILE must be an absolute path`);
     } else if (hasSecretFileReadError(currentFile)) {
       issues.push(`${key}_FILE could not be read`);
+    } else if (isSecretFileSymlink(currentFile)) {
+      issues.push(`${key}_FILE must not be a symbolic link`);
     } else if (isSecretFileTooPermissive(currentFile)) {
       issues.push(`${key}_FILE permissions are too open (require chmod 600 owner-only)`);
+    } else if (isSecretFileWrongOwner(currentFile)) {
+      issues.push(`${key}_FILE must be owned by current runtime user (or root)`);
     }
     const previousFile = env[`${key}_PREVIOUS_FILE`];
     if (isSecretFilePathInvalid(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE must be an absolute path`);
     } else if (hasSecretFileReadError(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE could not be read`);
+    } else if (isSecretFileSymlink(previousFile)) {
+      issues.push(`${key}_PREVIOUS_FILE must not be a symbolic link`);
     } else if (isSecretFileTooPermissive(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE permissions are too open (require chmod 600 owner-only)`);
+    } else if (isSecretFileWrongOwner(previousFile)) {
+      issues.push(`${key}_PREVIOUS_FILE must be owned by current runtime user (or root)`);
     }
   });
 
@@ -354,7 +384,9 @@ module.exports = {
   parseIntOrDefault,
   readSecretFile,
   hasSecretFileReadError,
+  isSecretFileSymlink,
   isSecretFileTooPermissive,
+  isSecretFileWrongOwner,
   isSecretFilePathInvalid,
   getConfiguredAdminToken,
   getPreviousAdminToken,
