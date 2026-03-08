@@ -23,6 +23,9 @@ const MAX_BODY_BYTES = clampMaxBodyBytes(process.env.MAX_BODY_BYTES);
 const MAX_URL_CHARS = Number.isFinite(Number(process.env.MAX_URL_CHARS))
   ? Math.floor(Math.max(256, Math.min(Number(process.env.MAX_URL_CHARS), 8192)))
   : 2048;
+const MAX_HEADER_BYTES = Number.isFinite(Number(process.env.MAX_HEADER_BYTES))
+  ? Math.floor(Math.max(4096, Math.min(Number(process.env.MAX_HEADER_BYTES), 65536)))
+  : 16 * 1024;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
 const RATE_LIMIT_MAX_KEYS = Number(process.env.RATE_LIMIT_MAX_KEYS || 10_000);
@@ -358,6 +361,11 @@ function getConfigIssues() {
     issues.push('maxUrlChars');
   }
 
+  const maxHeaderBytesRaw = parseIntOrDefault(process.env.MAX_HEADER_BYTES, 16 * 1024);
+  if (maxHeaderBytesRaw < 4096 || maxHeaderBytesRaw > 65536) {
+    issues.push('maxHeaderBytes');
+  }
+
   if (ALLOWED_HOSTS.length > 0) {
     if (ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
       issues.push('allowedHosts');
@@ -461,6 +469,7 @@ function getReadinessStatus() {
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
+      maxHeaderBytes: issues.includes('maxHeaderBytes') ? 'fail' : 'pass',
       allowedHosts: issues.includes('allowedHosts') ? 'fail' : 'pass',
       maxIdempotencyKeys: issues.includes('maxIdempotencyKeys') ? 'fail' : 'pass',
       maxStoryChars: issues.includes('maxStoryChars') ? 'fail' : 'pass',
@@ -1378,7 +1387,7 @@ function isAllowedHost(req) {
   return ALLOWED_HOSTS.includes(incomingHost);
 }
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req, res) => {
   const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
@@ -1464,6 +1473,7 @@ const server = http.createServer(async (req, res) => {
           timeoutMs: SAFE_IMPORT_TIMEOUT_MS,
           maxBodyBytes: MAX_BODY_BYTES,
           maxUrlChars: MAX_URL_CHARS,
+          maxHeaderBytes: MAX_HEADER_BYTES,
           maxCommentsPerStory: MAX_COMMENTS_PER_STORY,
           lastRun: lastImportRun
         }
