@@ -1855,10 +1855,17 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (u.pathname === '/' || u.pathname === '/index.html') {
+    if (!isGetOrHead(req)) return methodNotAllowed(res, ['GET', 'HEAD']);
     return sendFile(res, path.join(PUBLIC_DIR, 'index.html'));
   }
-  if (u.pathname === '/app.js') return sendFile(res, path.join(PUBLIC_DIR, 'app.js'));
-  if (u.pathname === '/styles.css') return sendFile(res, path.join(PUBLIC_DIR, 'styles.css'));
+  if (u.pathname === '/app.js') {
+    if (!isGetOrHead(req)) return methodNotAllowed(res, ['GET', 'HEAD']);
+    return sendFile(res, path.join(PUBLIC_DIR, 'app.js'));
+  }
+  if (u.pathname === '/styles.css') {
+    if (!isGetOrHead(req)) return methodNotAllowed(res, ['GET', 'HEAD']);
+    return sendFile(res, path.join(PUBLIC_DIR, 'styles.css'));
+  }
 
   res.writeHead(404);
   res.end('Not found');
