@@ -148,6 +148,16 @@ function looksLikePlaceholderEscalationUrl(value) {
   }
 }
 
+function hasEscalationUrlCredentials(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return Boolean(parsed.username || parsed.password);
+  } catch {
+    return false;
+  }
+}
 
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
@@ -283,6 +293,9 @@ function evaluateReadiness(env = process.env) {
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid non-placeholder https URL (env or *_FILE)');
+  }
+  if (hasEscalationUrlCredentials(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not embed username/password credentials');
   }
   if (escalationDocUrl) {
     try {

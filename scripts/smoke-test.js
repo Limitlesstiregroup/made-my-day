@@ -162,6 +162,17 @@ try {
   assert.equal(isPrivateOrLocalEscalationHost('10.1.2.3'), true, 'RFC1918 hosts should be rejected for escalation runbooks');
   assert.equal(isPrivateOrLocalEscalationHost('runbooks.mademyday.com'), false, 'public escalation hosts should remain allowed');
 
+  const credentialedEscalationIssue = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://user:pass@runbooks.mademyday.com/escalation'
+  });
+  assert.ok(
+    credentialedEscalationIssue.includes('MADE_MY_DAY_ESCALATION_DOC_URL must not embed username/password credentials'),
+    'release readiness should reject credentialed escalation runbook URLs'
+  );
+
   const maxBodyIssue = evaluateReadiness({ MAX_BODY_BYTES: '512' });
   assert.ok(
     maxBodyIssue.includes('MAX_BODY_BYTES must be between 1024 and 262144'),
