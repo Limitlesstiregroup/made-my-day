@@ -132,6 +132,19 @@ function isSecretFileTooPermissive(filePath) {
   }
 }
 
+function isSecretFileWrongOwner(filePath) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  if (typeof process.getuid !== 'function') return false;
+  try {
+    const stats = fs.statSync(String(filePath));
+    if (!stats.isFile()) return true;
+    const currentUid = process.getuid();
+    return stats.uid !== currentUid && stats.uid !== 0;
+  } catch {
+    return false;
+  }
+}
+
 const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'];
 
 function looksLikePlaceholderSecret(value) {
@@ -327,6 +340,10 @@ function getConfigIssues() {
     issues.push('secretFilePermissions');
   }
 
+  if (secretFileKeys.some((key) => isSecretFileWrongOwner(process.env[`${key}_FILE`]) || isSecretFileWrongOwner(process.env[`${key}_PREVIOUS_FILE`]))) {
+    issues.push('secretFileOwnership');
+  }
+
   return issues;
 }
 
@@ -340,7 +357,7 @@ function getReadinessStatus() {
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
-      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions')) ? 'fail' : 'pass',
+      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileOwnership')) ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
