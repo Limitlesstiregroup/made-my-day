@@ -1,2 +1,4 @@
 # Runtime-generated state
 stories.json
+idempotency-cache.json
+idempotency-cache.json.bak
