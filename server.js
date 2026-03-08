@@ -1529,19 +1529,24 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateHostHeader(req)) {
       return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
     }
-    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host'))) {
+    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
     }
     if (TRUST_PROXY) {
       const forwardedFor = req.headers['x-forwarded-for'];
       const forwarded = req.headers.forwarded;
       const forwardedHost = req.headers['x-forwarded-host'];
+      const forwardedProto = req.headers['x-forwarded-proto'];
       if (
         (typeof forwardedFor === 'string' && forwardedFor.includes(',')) ||
         (typeof forwarded === 'string' && forwarded.includes(',')) ||
-        (typeof forwardedHost === 'string' && forwardedHost.includes(','))
+        (typeof forwardedHost === 'string' && forwardedHost.includes(',')) ||
+        (typeof forwardedProto === 'string' && forwardedProto.includes(','))
       ) {
         return json(res, 400, { error: 'Multi-hop forwarding headers are not allowed' });
+      }
+      if (typeof forwardedProto === 'string' && forwardedProto.trim() !== '' && !/^https?$/i.test(forwardedProto.trim())) {
+        return json(res, 400, { error: 'invalid x-forwarded-proto header' });
       }
     }
     const rawUrl = typeof req.url === 'string' ? req.url : '';

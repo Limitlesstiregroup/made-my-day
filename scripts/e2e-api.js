@@ -183,6 +183,30 @@ async function run() {
       throw new Error('expected 400 when duplicate x-forwarded-host headers are sent while TRUST_PROXY=true');
     }
 
+    const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Proto: https,http',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardedProtoHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop x-forwarded-proto headers are sent while TRUST_PROXY=true');
+    }
+
+    const invalidForwardedProtoHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Proto: websocket',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedProtoHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-proto is not http/https while TRUST_PROXY=true');
+    }
+
     const absoluteTargetResponse = await sendRawHttp([
       'GET http://127.0.0.1:4399/api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',
