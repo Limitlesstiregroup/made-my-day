@@ -158,6 +158,31 @@ async function run() {
       throw new Error('expected 400 when multi-hop forwarding headers are sent while TRUST_PROXY=true');
     }
 
+    const multiHopForwardedHostHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Host: edge.mademyday.app, origin.mademyday.app',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardedHostHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop x-forwarded-host headers are sent while TRUST_PROXY=true');
+    }
+
+    const duplicateForwardedHostHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Host: edge.mademyday.app',
+      'X-Forwarded-Host: origin.mademyday.app',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateForwardedHostHeaderResponse)) {
+      throw new Error('expected 400 when duplicate x-forwarded-host headers are sent while TRUST_PROXY=true');
+    }
+
     const absoluteTargetResponse = await sendRawHttp([
       'GET http://127.0.0.1:4399/api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',
