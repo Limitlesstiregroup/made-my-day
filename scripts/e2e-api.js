@@ -172,6 +172,18 @@ async function run() {
       throw new Error('expected 400 when transfer-encoding and content-length are both present');
     }
 
+    const oversizedHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `X-Oversized: ${'x'.repeat(20000)}`,
+      'Host: 127.0.0.1:4399',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 431 /.test(oversizedHeaderResponse)) {
+      throw new Error('expected 431 when request headers exceed parser limits');
+    }
+
     const readiness = await fetch(`${BASE}/api/health/ready`);
     if (readiness.status !== 503) {
       throw new Error(`expected 503 for readiness with missing GA config, got ${readiness.status}`);

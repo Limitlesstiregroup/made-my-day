@@ -1921,6 +1921,25 @@ server.requestTimeout = resolvedTimeouts.requestTimeout;
 server.headersTimeout = resolvedTimeouts.headersTimeout;
 server.keepAliveTimeout = resolvedTimeouts.keepAliveTimeout;
 
+server.on('clientError', (error, socket) => {
+  if (!socket || !socket.writable) return;
+  const statusCode = error?.code === 'HPE_HEADER_OVERFLOW' ? 431 : 400;
+  const statusText = statusCode === 431 ? 'Request Header Fields Too Large' : 'Bad Request';
+  const response = [
+    `HTTP/1.1 ${statusCode} ${statusText}`,
+    'Connection: close',
+    'Content-Type: application/json; charset=utf-8',
+    'Cache-Control: no-store, private, max-age=0',
+    'Pragma: no-cache',
+    'Expires: 0',
+    'X-Content-Type-Options: nosniff',
+    'Content-Length: 0',
+    '',
+    ''
+  ].join('\r\n');
+  socket.end(response);
+});
+
 function shouldEnforceLiveReadiness(env = process.env) {
   const value = String(env.MADE_MY_DAY_ENFORCE_LIVE_READY || '').trim().toLowerCase();
   return value === '1' || value === 'true' || value === 'yes' || value === 'on';
