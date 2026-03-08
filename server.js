@@ -661,13 +661,20 @@ function sanitizeSourceName(value) {
   return cleaned || null;
 }
 
-function getIdempotencyKey(req) {
+function parseIdempotencyKey(req) {
   const header = req.headers['idempotency-key'];
-  if (typeof header !== 'string') return '';
+  if (Array.isArray(header)) return { malformed: true, key: '' };
+  if (typeof header !== 'string') return { malformed: false, key: '' };
   const key = header.trim();
-  if (key.length < 8 || key.length > 128) return '';
-  if (!/^[a-zA-Z0-9:_\-.]+$/.test(key)) return '';
-  return key;
+  if (!key) return { malformed: true, key: '' };
+  if (key.includes(',')) return { malformed: true, key: '' };
+  if (key.length < 8 || key.length > 128) return { malformed: true, key: '' };
+  if (!/^[a-zA-Z0-9:_\-.]+$/.test(key)) return { malformed: true, key: '' };
+  return { malformed: false, key };
+}
+
+function getIdempotencyKey(req) {
+  return parseIdempotencyKey(req).key;
 }
 
 function getAdminRunIdempotent(scope, idempotencyKey) {
@@ -1776,7 +1783,11 @@ const server = http.createServer(async (req, res) => {
         }
         return json(res, 400, { error: 'Invalid JSON body.' });
       }
-      const idempotencyKey = getIdempotencyKey(req);
+      const idempotency = parseIdempotencyKey(req);
+      if (idempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = idempotency.key;
       const priorResult = getAdminRunIdempotent('import-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
       if (importRunPromise) {
@@ -1809,7 +1820,11 @@ const server = http.createServer(async (req, res) => {
         }
         return json(res, 400, { error: 'Invalid JSON body.' });
       }
-      const idempotencyKey = getIdempotencyKey(req);
+      const idempotency = parseIdempotencyKey(req);
+      if (idempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = idempotency.key;
       const priorResult = getAdminRunIdempotent('hall-of-fame-run', idempotencyKey);
       if (priorResult) return json(res, 200, { ...priorResult, idempotent: true });
       if (hallOfFameRunPromise) {

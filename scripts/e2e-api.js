@@ -412,6 +412,19 @@ async function run() {
       throw new Error(`expected 200 for previous admin token during rotation, got ${authorizedWithPreviousToken.status}`);
     }
 
+    const malformedImportIdempotency = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Idempotency-Key': 'bad,key'
+      },
+      body: JSON.stringify({})
+    });
+    if (malformedImportIdempotency.status !== 400) {
+      throw new Error(`expected 400 for malformed import idempotency header, got ${malformedImportIdempotency.status}`);
+    }
+
     const importIdempotencyKey = `import-run-${uniqueSuffix}`;
     const importRunFirst = await fetch(`${BASE}/api/import/run`, {
       method: 'POST',
@@ -478,6 +491,19 @@ async function run() {
     const hallFeedJson = await hallFeed.json();
     if (!hallFeedJson?.pagination || hallFeedJson.pagination.limit !== 1 || hallFeedJson.pagination.offset !== 0) {
       throw new Error('hall-of-fame feed should include pagination metadata');
+    }
+
+    const malformedHallIdempotency = await fetch(`${BASE}/api/hall-of-fame/run`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'bad,key'
+      },
+      body: JSON.stringify({})
+    });
+    if (malformedHallIdempotency.status !== 400) {
+      throw new Error(`expected 400 for malformed hall-of-fame idempotency header, got ${malformedHallIdempotency.status}`);
     }
 
     const hallIdempotencyKey = `hall-run-${uniqueSuffix}`;
