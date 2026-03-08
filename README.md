@@ -12,6 +12,7 @@ Anonymous same-day positive story platform.
 - Keep-alive socket churn hardening via per-socket request cap (`MAX_REQUESTS_PER_SOCKET`, default `100`): sockets are recycled after bounded request counts to reduce long-lived abuse risk
 - Request correlation hardening: `x-request-id` must be a single token (`8-128` chars, `[a-zA-Z0-9:_-.]`); malformed, duplicate, or comma-joined values are rejected with HTTP 400 (`invalid x-request-id header`) to avoid log correlation ambiguity
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
+- Method-override hardening: requests carrying `x-http-method-override` are rejected with HTTP 400 (`x-http-method-override header is not allowed`) to prevent proxy/client verb-tunneling bypasses
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
 - Content-Length hardening for JSON mutations: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability
 - Request-smuggling hardening for JSON mutations: requests carrying both `Transfer-Encoding` and `Content-Length` are rejected with HTTP 400 (`ambiguous request framing`)

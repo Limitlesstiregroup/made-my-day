@@ -1568,6 +1568,12 @@ function hasDuplicateRawHeader(req, targetName) {
   return false;
 }
 
+function hasMethodOverrideHeader(req) {
+  const value = req.headers['x-http-method-override'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -1597,6 +1603,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasDuplicateHostHeader(req)) {
       return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
+    }
+    if (hasMethodOverrideHeader(req)) {
+      return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
     if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
