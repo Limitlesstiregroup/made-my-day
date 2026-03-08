@@ -1189,6 +1189,7 @@ function isValidIncomingHostHeader(hostHeader) {
   if (!hostHeader) return false;
   if (hostHeader.length > 255) return false;
   if (/[\u0000-\u001F\u007F\s]/.test(hostHeader)) return false;
+  if (/[,\\/]/.test(hostHeader)) return false;
   return true;
 }
 

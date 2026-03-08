@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+const net = require('node:net');
 
 const PORT = 4399;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -20,6 +21,23 @@ async function waitForServer(deadlineMs = 8000) {
     await wait(150);
   }
   throw new Error('server did not become ready in time');
+}
+
+async function sendRawHttp(requestText) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    const socket = net.createConnection({ host: '127.0.0.1', port: PORT }, () => {
+      socket.write(requestText);
+    });
+
+    socket.setEncoding('utf8');
+    socket.on('data', (chunk) => {
+      data += chunk;
+    });
+    socket.on('end', () => resolve(data));
+    socket.on('error', reject);
+    socket.setTimeout(5000, () => socket.destroy(new Error('RAW_HTTP_TIMEOUT')));
+  });
 }
 
 async function run() {
@@ -62,6 +80,17 @@ async function run() {
     const healthHead = await fetch(`${BASE}/api/health`, { method: 'HEAD' });
     if (healthHead.status !== 200) {
       throw new Error(`expected 200 for HEAD health endpoint access, got ${healthHead.status}`);
+    }
+
+    const malformedHostResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: good.example,bad.example',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 421 /.test(malformedHostResponse)) {
+      throw new Error('expected 421 when host header contains comma-separated values');
     }
 
     const readiness = await fetch(`${BASE}/api/health/ready`);
