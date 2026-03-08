@@ -73,6 +73,15 @@ async function run() {
       throw new Error('liveness health endpoint missing ok/uptimeSeconds payload');
     }
 
+    const healthVersion = await fetch(`${BASE}/api/health/version`);
+    if (healthVersion.status !== 200) {
+      throw new Error(`expected 200 for health version endpoint, got ${healthVersion.status}`);
+    }
+    const healthVersionJson = await healthVersion.json();
+    if (healthVersionJson?.ok !== true || typeof healthVersionJson?.version !== 'string') {
+      throw new Error('health version endpoint missing ok/version payload');
+    }
+
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {
       throw new Error(`expected 405 for non-GET/HEAD health endpoint access, got ${healthWrongMethod.status}`);

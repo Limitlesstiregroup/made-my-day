@@ -4,6 +4,7 @@ const fs = require('fs');
 const net = require('net');
 const path = require('path');
 const { URL } = require('url');
+const packageMeta = require('./package.json');
 
 const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
@@ -506,6 +507,17 @@ function getEscalationSnapshot() {
     oncallPrimary: oncallPrimary || null,
     escalationDocUrl: escalationDocUrl || null,
     configured: Boolean(oncallPrimary && escalationDocUrl)
+  };
+}
+
+function getVersionSnapshot() {
+  const gitSha = String(process.env.MADE_MY_DAY_GIT_SHA || process.env.GIT_COMMIT_SHA || '').trim() || null;
+  const buildId = String(process.env.MADE_MY_DAY_BUILD_ID || '').trim() || null;
+  return {
+    service: 'made-my-day',
+    version: packageMeta.version,
+    gitSha,
+    buildId
   };
 }
 
@@ -1382,6 +1394,14 @@ const server = http.createServer(async (req, res) => {
         service: 'made-my-day',
         uptimeSeconds: Math.floor(process.uptime())
       });
+    }
+
+    if (u.pathname === '/api/health/version' && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
+    }
+
+    if (isGetOrHead(req) && u.pathname === '/api/health/version') {
+      return json(res, 200, { ok: true, ...getVersionSnapshot() });
     }
 
     if (u.pathname === '/api/health' && !isGetOrHead(req)) {
