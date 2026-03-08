@@ -934,9 +934,31 @@ function csv(res, status, rows, { noStore = true, headers: extraHeaders } = {}) 
   res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
 }
 
-function hasJsonContentType(req) {
-  const value = String(req.headers['content-type'] || '').toLowerCase();
-  return value.startsWith('application/json');
+function getJsonContentTypeStatus(req) {
+  const rawHeader = req.headers['content-type'];
+  if (Array.isArray(rawHeader)) {
+    const normalized = rawHeader.map((value) => String(value).trim()).filter(Boolean);
+    if (normalized.length !== 1) {
+      return { ok: false, malformed: normalized.length > 1 };
+    }
+    return { ok: normalized[0].toLowerCase().startsWith('application/json'), malformed: false };
+  }
+
+  if (typeof rawHeader !== 'string') {
+    return { ok: false, malformed: false };
+  }
+
+  const normalized = rawHeader.trim();
+  if (!normalized) {
+    return { ok: false, malformed: false };
+  }
+
+  const values = normalized.split(',').map((value) => value.trim()).filter(Boolean);
+  if (values.length !== 1) {
+    return { ok: false, malformed: values.length > 1 };
+  }
+
+  return { ok: values[0].toLowerCase().startsWith('application/json'), malformed: false };
 }
 
 function stableStringify(value) {
@@ -1792,7 +1814,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname === '/api/stories') {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       const body = await readBody(req).catch((error) => {
@@ -1849,7 +1875,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/like$/)) {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       const storyId = u.pathname.split('/')[3];
@@ -1869,7 +1899,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/share$/)) {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       const storyId = u.pathname.split('/')[3];
@@ -1889,7 +1923,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname.match(/^\/api\/stories\/[^/]+\/comments$/)) {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       const storyId = u.pathname.split('/')[3];
@@ -1938,7 +1976,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname === '/api/import/run') {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!requireAdminAuth(req, res)) return;
@@ -1975,7 +2017,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
 
     if (req.method === 'POST' && u.pathname === '/api/hall-of-fame/run') {
-      if (!hasJsonContentType(req)) {
+      const jsonContentType = getJsonContentTypeStatus(req);
+      if (jsonContentType.malformed) {
+        return json(res, 400, { error: 'invalid content-type header' });
+      }
+      if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       if (!requireAdminAuth(req, res)) return;
