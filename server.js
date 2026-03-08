@@ -1491,7 +1491,19 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame.csv') {
+
+    const readOnlyApiPaths = new Set([
+      '/api/admin/hall-of-fame.csv',
+      '/api/admin/gift-cards.csv',
+      '/api/admin/hall-of-fame',
+      '/api/admin/gift-cards',
+      '/api/hall-of-fame'
+    ]);
+    if (readOnlyApiPaths.has(u.pathname) && !isGetOrHead(req)) {
+      return methodNotAllowed(res, ['GET', 'HEAD']);
+    }
+
+    if (isGetOrHead(req) && u.pathname === '/api/admin/hall-of-fame.csv') {
       if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
@@ -1505,7 +1517,7 @@ const server = http.createServer(async (req, res) => {
       return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards.csv') {
+    if (isGetOrHead(req) && u.pathname === '/api/admin/gift-cards.csv') {
       if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
@@ -1519,7 +1531,7 @@ const server = http.createServer(async (req, res) => {
       return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/admin/hall-of-fame') {
+    if (isGetOrHead(req) && u.pathname === '/api/admin/hall-of-fame') {
       if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
@@ -1541,7 +1553,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/admin/gift-cards') {
+    if (isGetOrHead(req) && u.pathname === '/api/admin/gift-cards') {
       if (!requireAdminAuth(req, res)) return;
       const limit = parseBoundedInt(u.searchParams.get('limit'), 250, { min: 1, max: 5000 });
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
@@ -1563,7 +1575,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/stories') {
+    if (isGetOrHead(req) && u.pathname === '/api/stories') {
       const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000);
       const limitRaw = Number(u.searchParams.get('limit') || 100);
       const offsetRaw = Number(u.searchParams.get('offset') || 0);
@@ -1600,7 +1612,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (req.method === 'GET' && u.pathname === '/api/hall-of-fame') {
+    if (isGetOrHead(req) && u.pathname === '/api/hall-of-fame') {
       const limitRaw = Number(u.searchParams.get('limit') || 100);
       const offsetRaw = Number(u.searchParams.get('offset') || 0);
       const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
