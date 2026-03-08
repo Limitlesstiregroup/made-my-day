@@ -964,13 +964,38 @@ function normalizeIp(candidate) {
   return unwrapped.toLowerCase();
 }
 
+function parseForwardedHeaderIp(headerValue) {
+  if (typeof headerValue !== 'string' || !headerValue.trim() || headerValue.length > 1024) return null;
+  const firstElement = headerValue.split(',')[0];
+  if (!firstElement) return null;
+  const directives = firstElement.split(';');
+  for (const directive of directives) {
+    const [rawKey, ...rawRest] = directive.split('=');
+    if (!rawKey || rawRest.length === 0) continue;
+    if (rawKey.trim().toLowerCase() !== 'for') continue;
+    const rawValue = rawRest.join('=').trim();
+    if (!rawValue) continue;
+    const unquoted = rawValue.startsWith('"') && rawValue.endsWith('"')
+      ? rawValue.slice(1, -1)
+      : rawValue;
+    const strippedPort = unquoted.startsWith('[')
+      ? unquoted.replace(/^\[([^\]]+)\](?::\d+)?$/, '$1')
+      : unquoted.replace(/:\d+$/, '');
+    const parsed = normalizeIp(strippedPort);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 function getRequestIp(req) {
   if (TRUST_PROXY) {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.trim() && forwarded.length <= 512) {
-      const forwardedIp = normalizeIp(forwarded.split(',')[0]);
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (typeof forwardedFor === 'string' && forwardedFor.trim() && forwardedFor.length <= 512) {
+      const forwardedIp = normalizeIp(forwardedFor.split(',')[0]);
       if (forwardedIp) return forwardedIp;
     }
+    const forwarded = parseForwardedHeaderIp(req.headers.forwarded);
+    if (forwarded) return forwarded;
   }
   return normalizeIp(req.socket?.remoteAddress) || 'unknown';
 }
