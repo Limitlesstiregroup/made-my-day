@@ -32,6 +32,7 @@ const envContents = [
   '# Usage: set -a; . ./.env.ga.local; set +a',
   `MADE_MY_DAY_ADMIN_TOKEN_FILE=${adminTokenFile}`,
   `MADE_MY_DAY_ONCALL_PRIMARY=${oncall}`,
+  `MADE_MY_DAY_ONCALL_SECONDARY=${oncallSecondary}`,
   `MADE_MY_DAY_ESCALATION_DOC_URL=${escalationUrl}`,
   `MADE_MY_DAY_ENFORCE_LIVE_READY=${enforceLiveReady}`,
   ''

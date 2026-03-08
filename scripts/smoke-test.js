@@ -31,6 +31,7 @@ try {
     MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpTokenFile,
     MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE: tmpPrevTokenFile,
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
 
@@ -42,6 +43,7 @@ try {
   const unreadableSecretFileIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: '/tmp/does-not-exist-made-my-day-admin-token',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -52,6 +54,7 @@ try {
   const relativeFilePathIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: './relative-admin-token.txt',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -68,6 +71,7 @@ try {
   const symlinkFileIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpSymlinkTokenFile,
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -84,6 +88,7 @@ try {
   const permissiveFileIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpPermissiveTokenFile,
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -105,6 +110,7 @@ try {
   const whitespaceTokenIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin token with spaces 1234',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -114,6 +120,7 @@ try {
 
   const oncallPlaceholderIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: 'todo',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
   });
   assert.ok(
@@ -125,6 +132,7 @@ try {
   const localEscalationIssue = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
     MADE_MY_DAY_ESCALATION_DOC_URL: 'https://localhost/escalation'
   });
   assert.ok(

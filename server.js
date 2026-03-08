@@ -315,6 +315,11 @@ function getConfigIssues() {
     issues.push('oncallPrimary');
   }
 
+  const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY');
+  if (oncallSecondary.length < 3 || looksLikePlaceholderToken(oncallSecondary) || oncallSecondary.toLowerCase() === oncallPrimary.toLowerCase()) {
+    issues.push('oncallSecondary');
+  }
+
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('escalationDocUrl');
@@ -406,6 +411,7 @@ function getConfigIssues() {
   const secretFileKeys = [
     'MADE_MY_DAY_ADMIN_TOKEN',
     'MADE_MY_DAY_ONCALL_PRIMARY',
+    'MADE_MY_DAY_ONCALL_SECONDARY',
     'MADE_MY_DAY_ESCALATION_DOC_URL'
   ];
   if (secretFileKeys.some((key) => isSecretFilePathInvalid(process.env[`${key}_FILE`]) || isSecretFilePathInvalid(process.env[`${key}_PREVIOUS_FILE`]))) {
@@ -440,6 +446,7 @@ function getReadinessStatus() {
       adminToken: (issues.includes('adminToken') || issues.includes('adminTokenFormat')) ? 'fail' : 'pass',
       adminTokenRotation: issues.includes('adminTokenRotation') ? 'fail' : 'pass',
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
+      oncallSecondary: issues.includes('oncallSecondary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
       secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileOwnership')) ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
@@ -502,11 +509,13 @@ function getOperationalSnapshot(store) {
 
 function getEscalationSnapshot() {
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
+  const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY');
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
   return {
     oncallPrimary: oncallPrimary || null,
+    oncallSecondary: oncallSecondary || null,
     escalationDocUrl: escalationDocUrl || null,
-    configured: Boolean(oncallPrimary && escalationDocUrl)
+    configured: Boolean(oncallPrimary && oncallSecondary && escalationDocUrl)
   };
 }
 

@@ -301,7 +301,7 @@ function evaluateReadiness(env = process.env) {
     }
   }
 
-  const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
+  const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ONCALL_SECONDARY', 'MADE_MY_DAY_ESCALATION_DOC_URL'];
   secretFileKeys.forEach((key) => {
     const currentFile = env[`${key}_FILE`];
     if (isSecretFilePathInvalid(currentFile)) {
