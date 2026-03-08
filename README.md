@@ -55,6 +55,13 @@ Release readiness check:
 npm run release:check
 ```
 
+Fast GA bootstrap (generates secure local admin token file + `.env.ga.local`):
+```bash
+npm run ga:quickstart -- --oncall=faisal --escalation-url=https://your-runbook-url
+set -a; . ./.env.ga.local; set +a
+npm run ga:gate
+```
+
 ## Container Deployment
 ```bash
 docker build -t made-my-day:latest .

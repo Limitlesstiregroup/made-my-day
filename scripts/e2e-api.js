@@ -47,6 +47,10 @@ async function run() {
       PORT: String(PORT),
       MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
       MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'admin_token_live_previous_5678',
+      MADE_MY_DAY_ONCALL_PRIMARY: '',
+      MADE_MY_DAY_ONCALL_PRIMARY_FILE: '',
+      MADE_MY_DAY_ESCALATION_DOC_URL: '',
+      MADE_MY_DAY_ESCALATION_DOC_URL_FILE: '',
       MAX_COMMENTS_PER_STORY: '5'
     },
     stdio: ['ignore', 'pipe', 'pipe']

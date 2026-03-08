@@ -10,6 +10,8 @@
     "lint": "node scripts/lint-check.js",
     "dev": "node server.js",
     "start": "node server.js",
-    "release:check": "node scripts/release-readiness.js"
+    "release:check": "node scripts/release-readiness.js",
+    "ga:quickstart": "node scripts/ga-quickstart.js",
+    "ga:gate": "npm run build && npm run lint && npm test && npm run release:check"
   }
 }
