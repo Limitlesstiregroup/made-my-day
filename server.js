@@ -268,6 +268,16 @@ function looksLikePlaceholderEscalationUrl(value) {
   }
 }
 
+function hasEscalationUrlRootPath(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return parsed.pathname === '/' || parsed.pathname.trim() === '';
+  } catch {
+    return false;
+  }
+}
 
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
@@ -336,6 +346,9 @@ function getConfigIssues() {
 
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
+    issues.push('escalationDocUrl');
+  }
+  if (hasEscalationUrlRootPath(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }
   if (escalationDocUrl) {

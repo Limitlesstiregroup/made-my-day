@@ -159,6 +159,17 @@ function hasEscalationUrlCredentials(value) {
   }
 }
 
+function hasEscalationUrlRootPath(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return parsed.pathname === '/' || parsed.pathname.trim() === '';
+  } catch {
+    return false;
+  }
+}
+
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -298,6 +309,9 @@ function evaluateReadiness(env = process.env) {
   }
   if (hasEscalationUrlCredentials(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not embed username/password credentials');
+  }
+  if (hasEscalationUrlRootPath(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must point to a specific runbook path (not site root)');
   }
   if (escalationDocUrl) {
     try {

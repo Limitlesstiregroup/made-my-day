@@ -187,6 +187,17 @@ try {
     'release readiness should reject credentialed escalation runbook URLs'
   );
 
+  const escalationRootPathIssue = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.com/'
+  });
+  assert.ok(
+    escalationRootPathIssue.includes('MADE_MY_DAY_ESCALATION_DOC_URL must point to a specific runbook path (not site root)'),
+    'release readiness should reject escalation URLs that target only the site root'
+  );
+
   const maxBodyIssue = evaluateReadiness({ MAX_BODY_BYTES: '512' });
   assert.ok(
     maxBodyIssue.includes('MAX_BODY_BYTES must be between 1024 and 262144'),
