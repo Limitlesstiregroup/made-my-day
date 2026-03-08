@@ -20,7 +20,7 @@ Anonymous same-day positive story platform.
 - Security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `X-DNS-Prefetch-Control`, `X-Download-Options`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Embedder-Policy`, `Cross-Origin-Resource-Policy`, `Origin-Agent-Cluster`, `Content-Security-Policy`, `X-Robots-Tag`, `Strict-Transport-Security`)
 - Request tracing header support: responses include `X-Request-Id`, and valid incoming `x-request-id` values (8-128 chars, `[A-Za-z0-9:_-.]`) are echoed for cross-service incident triage
 - Mutation rate-limit telemetry is emitted in both RFC 9333 (`RateLimit-*`) and legacy (`X-RateLimit-*`) headers for safer proxy/client interoperability during GA rollouts, including `RateLimit-Policy` (`<limit>;w=<windowSeconds>`) for explicit client backoff behavior
-- Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise) now includes runtime guard saturation telemetry (`runtimeGuards`) for rate-limit and idempotency capacity monitoring
+- Operational health details endpoint for runbook triage (`GET /api/health/details`, requires admin bearer token when admin auth is enabled; preview-open otherwise) now includes runtime guard saturation telemetry (`runtimeGuards`) for rate-limit/idempotency capacity monitoring plus on-call/escalation snapshot (`escalation`) for pager handoff context
 - Admin exports for weekly operations handoff protected by admin bearer token: paginated JSON (`GET /api/admin/hall-of-fame?limit=&offset=`, `GET /api/admin/gift-cards?limit=&offset=`) plus CSV (`GET /api/admin/hall-of-fame.csv?limit=&offset=`, `GET /api/admin/gift-cards.csv?limit=&offset=`)
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Sensitive admin/API responses now send stricter anti-cache headers (`Cache-Control: no-store, private, max-age=0` + `Pragma: no-cache` + `Expires: 0`) plus `Vary: Authorization` to reduce shared-proxy cache leakage risk across bearer-token contexts
@@ -94,7 +94,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `GET|HEAD /api/health`
 - `GET|HEAD /api/health/live` (always `200` + process uptime for liveness probes)
 - `GET|HEAD /api/health/ready` (`200` when GA-ready config checks pass, else `503`; response includes `checks` and `issueCodes` for quick runbook triage)
-- `GET|HEAD /api/health/details` (operational totals + import/winner automation snapshot for GA runbooks; requires admin auth when configured)
+- `GET|HEAD /api/health/details` (operational totals + import/winner automation snapshot + on-call/escalation snapshot for GA runbooks; requires admin auth when configured)
 - `GET /api/admin/hall-of-fame` (admin-only paginated JSON export)
 - `GET /api/admin/hall-of-fame.csv` (admin-only CSV export)
 - `GET /api/admin/gift-cards` (admin-only paginated JSON export)

@@ -499,6 +499,16 @@ function getOperationalSnapshot(store) {
   };
 }
 
+function getEscalationSnapshot() {
+  const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
+  const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
+  return {
+    oncallPrimary: oncallPrimary || null,
+    escalationDocUrl: escalationDocUrl || null,
+    configured: Boolean(oncallPrimary && escalationDocUrl)
+  };
+}
+
 function secureTokenEquals(incomingToken, configuredToken) {
   const incomingBuffer = Buffer.from(String(incomingToken));
   const configuredBuffer = Buffer.from(String(configuredToken));
@@ -1425,7 +1435,8 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         service: 'made-my-day',
         readiness,
-        operations: getOperationalSnapshot(store)
+        operations: getOperationalSnapshot(store),
+        escalation: getEscalationSnapshot()
       });
     }
 
