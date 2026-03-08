@@ -26,6 +26,9 @@ const MAX_URL_CHARS = Number.isFinite(Number(process.env.MAX_URL_CHARS))
 const MAX_HEADER_BYTES = Number.isFinite(Number(process.env.MAX_HEADER_BYTES))
   ? Math.floor(Math.max(4096, Math.min(Number(process.env.MAX_HEADER_BYTES), 65536)))
   : 16 * 1024;
+const MAX_QUERY_CHARS = Number.isFinite(Number(process.env.MAX_QUERY_CHARS))
+  ? Math.floor(Math.max(128, Math.min(Number(process.env.MAX_QUERY_CHARS), 4096)))
+  : 1024;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
 const RATE_LIMIT_MAX_KEYS = Number(process.env.RATE_LIMIT_MAX_KEYS || 10_000);
@@ -1410,6 +1413,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     const normalizedHost = getNormalizedHostHeader(req);
     const urlBaseHost = isValidIncomingHostHeader(normalizedHost) ? normalizedHost : `localhost:${PORT}`;
     const u = new URL(rawUrl, `http://${urlBaseHost}`);
+    if (u.search.length > MAX_QUERY_CHARS + 1) {
+      return json(res, 414, {
+        error: 'Request query too long',
+        maxQueryChars: MAX_QUERY_CHARS
+      });
+    }
 
   if (u.pathname.startsWith('/api/')) {
     const rateLimit = getRateLimitState(req);

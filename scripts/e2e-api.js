@@ -200,6 +200,11 @@ async function run() {
       throw new Error(`expected 414 for oversized request URL, got ${oversizedUrl.status}`);
     }
 
+    const oversizedQuery = await fetch(`${BASE}/api/health?${'x'.repeat(1200)}`);
+    if (oversizedQuery.status !== 414) {
+      throw new Error(`expected 414 for oversized query string, got ${oversizedQuery.status}`);
+    }
+
     const unauthorizedHealthDetails = await fetch(`${BASE}/api/health/details`);
     if (unauthorizedHealthDetails.status !== 401) {
       throw new Error(`expected 401 for health details without admin token, got ${unauthorizedHealthDetails.status}`);

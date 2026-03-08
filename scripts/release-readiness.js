@@ -363,6 +363,7 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.IMPORT_TIMEOUT_MS, 'IMPORT_TIMEOUT_MS', issues);
   validateIntegerEnv(env.MAX_BODY_BYTES, 'MAX_BODY_BYTES', issues);
   validateIntegerEnv(env.MAX_URL_CHARS, 'MAX_URL_CHARS', issues);
+  validateIntegerEnv(env.MAX_QUERY_CHARS, 'MAX_QUERY_CHARS', issues);
   validateIntegerEnv(env.RATE_LIMIT_WINDOW_MS, 'RATE_LIMIT_WINDOW_MS', issues);
   validateIntegerEnv(env.RATE_LIMIT_MAX_MUTATIONS, 'RATE_LIMIT_MAX_MUTATIONS', issues);
   validateIntegerEnv(env.RATE_LIMIT_MAX_KEYS, 'RATE_LIMIT_MAX_KEYS', issues);
@@ -389,6 +390,11 @@ function evaluateReadiness(env = process.env) {
   const maxUrlChars = parseIntOrDefault(env.MAX_URL_CHARS, 2048);
   if (maxUrlChars < 256 || maxUrlChars > 8192) {
     issues.push('MAX_URL_CHARS must be between 256 and 8192');
+  }
+
+  const maxQueryChars = parseIntOrDefault(env.MAX_QUERY_CHARS, 1024);
+  if (maxQueryChars < 128 || maxQueryChars > 4096) {
+    issues.push('MAX_QUERY_CHARS must be between 128 and 4096');
   }
 
   const rateLimitWindowMs = parseIntOrDefault(env.RATE_LIMIT_WINDOW_MS, 60_000);

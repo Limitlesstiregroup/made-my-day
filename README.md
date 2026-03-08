@@ -7,6 +7,7 @@ Anonymous same-day positive story platform.
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
+- Query-string hardening via query length cap (`MAX_QUERY_CHARS`, default `1024`): oversized query strings return HTTP 414 before route handling
 - Header-flood hardening via max request-header size cap (`MAX_HEADER_BYTES`, default `16384`): oversized headers are rejected at parser level with HTTP 431 (`Request Header Fields Too Large`)
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
@@ -80,6 +81,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
 - `MAX_URL_CHARS` (default `2048`, min `256`, max `8192`) caps request URL length before routing (oversized URLs return `414`).
+- `MAX_QUERY_CHARS` (default `1024`, min `128`, max `4096`) caps query-string length before route handling (oversized queries return `414`).
 - `MAX_HEADER_BYTES` (default `16384`, min `4096`, max `65536`) caps HTTP request header bytes at parser level (oversized headers return `431`).
 - `ALLOWED_HOSTS` / `ALLOWED_HOSTS_FILE` (optional comma-separated `host[:port]` or `[ipv6]:port` allowlist, with ports restricted to `1-65535`) rejects mismatched Host headers with `421` when set.
 - `MAX_STORY_CHARS` (default `5000`, min `200`) caps accepted story text length after sanitization.

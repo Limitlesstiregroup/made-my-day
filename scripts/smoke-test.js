@@ -179,6 +179,12 @@ try {
     'release readiness should reject too-small MAX_BODY_BYTES'
   );
 
+  const maxQueryIssue = evaluateReadiness({ MAX_QUERY_CHARS: '99999' });
+  assert.ok(
+    maxQueryIssue.includes('MAX_QUERY_CHARS must be between 128 and 4096'),
+    'release readiness should reject out-of-range MAX_QUERY_CHARS'
+  );
+
   const timeoutOrderIssue = evaluateReadiness({ REQUEST_TIMEOUT_MS: '10000', HEADERS_TIMEOUT_MS: '15000' });
   assert.ok(
     timeoutOrderIssue.includes('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS'),
