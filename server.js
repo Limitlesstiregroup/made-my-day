@@ -1622,7 +1622,16 @@ const server = http.createServer(async (req, res) => {
         return normalizeText(s.text) === normalizeText(incomingText);
       });
       if (duplicate) {
-        return json(res, 409, { error: 'A very similar story was already posted recently.' });
+        return json(
+          res,
+          409,
+          {
+            error: 'A very similar story was already posted recently.',
+            retryAfterSeconds: 3600,
+            duplicateWindowDays: 7
+          },
+          { headers: { 'Retry-After': '3600' } }
+        );
       }
       const story = {
         id: id('story'),

@@ -24,7 +24,7 @@ Anonymous same-day positive story platform.
 - Admin exports for weekly operations handoff protected by admin bearer token: paginated JSON (`GET /api/admin/hall-of-fame?limit=&offset=`, `GET /api/admin/gift-cards?limit=&offset=`) plus CSV (`GET /api/admin/hall-of-fame.csv?limit=&offset=`, `GET /api/admin/gift-cards.csv?limit=&offset=`)
 - CSV exports are spreadsheet-safe (formula-injection guarded by prefixing risky leading characters)
 - Sensitive admin/API responses now send stricter anti-cache headers (`Cache-Control: no-store, private, max-age=0` + `Pragma: no-cache` + `Expires: 0`) plus `Vary: Authorization` to reduce shared-proxy cache leakage risk across bearer-token contexts
-- Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability
+- Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability; duplicate submissions return HTTP 409 with `Retry-After` guidance for safer client retries
 - Runtime persistence hardening: stories store writes (including first-boot and corruption recovery paths) use atomic temp-file swaps to reduce corruption risk during crashes/restarts
 - Runtime log hygiene: local `*.log` files are ignored and no longer tracked to keep release branches clean between operator runs
 - Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)
