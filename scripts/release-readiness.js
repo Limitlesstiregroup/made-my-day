@@ -5,6 +5,27 @@ const path = require('node:path');
 
 const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
 
+function toIssueCode(issue) {
+  return String(issue || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 96);
+}
+
+function getIssueCodes(issues = []) {
+  const seen = new Set();
+  const codes = [];
+  for (const issue of issues) {
+    const code = toIssueCode(issue);
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    codes.push(code);
+  }
+  return codes;
+}
+
 function placeholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -482,20 +503,37 @@ function evaluateReadiness(env = process.env) {
 }
 
 if (require.main === module) {
+  const args = new Set(process.argv.slice(2));
+  const jsonMode = args.has('--json');
   const issues = evaluateReadiness(process.env);
 
+  if (jsonMode) {
+    process.stdout.write(`${JSON.stringify({
+      ready: issues.length === 0,
+      issues,
+      issueCodes: getIssueCodes(issues),
+      checkedAt: new Date().toISOString()
+    })}\n`);
+  }
+
   if (issues.length) {
-    console.error('made-my-day release readiness: NOT READY');
-    for (const issue of issues) {
-      console.error(`- ${issue}`);
+    if (!jsonMode) {
+      console.error('made-my-day release readiness: NOT READY');
+      for (const issue of issues) {
+        console.error(`- ${issue}`);
+      }
     }
     process.exit(1);
   }
 
-  console.log('made-my-day release readiness: READY');
+  if (!jsonMode) {
+    console.log('made-my-day release readiness: READY');
+  }
 }
 
 module.exports = {
+  toIssueCode,
+  getIssueCodes,
   placeholderSecret,
   parseIntOrDefault,
   readSecretFile,

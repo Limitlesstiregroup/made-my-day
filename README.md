@@ -61,7 +61,9 @@ cp .env.example .env
 Release readiness check:
 ```bash
 npm run release:check
+npm run release:check -- --json
 ```
+(`--json` emits machine-readable `ready` + `issueCodes` output for CI/deploy gates; command exits non-zero until readiness issues are resolved.)
 
 Fast GA bootstrap (generates secure local admin token file + `.env.ga.local`):
 ```bash
