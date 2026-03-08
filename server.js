@@ -240,6 +240,33 @@ function looksLikePlaceholderEscalationUrl(value) {
   }
 }
 
+
+function isPrivateOrLocalEscalationHost(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
+  if (normalized === '0.0.0.0') return true;
+
+  const ipVersion = net.isIP(normalized);
+  if (ipVersion === 4) {
+    const [a, b] = normalized.split('.').map((segment) => Number(segment));
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 169 && b === 254) return true;
+    return false;
+  }
+
+  if (ipVersion === 6) {
+    if (normalized === '::1') return true;
+    if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
+    if (normalized.startsWith('fe80:')) return true;
+  }
+
+  return false;
+}
+
 function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -272,6 +299,16 @@ function getConfigIssues() {
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL');
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('escalationDocUrl');
+  }
+  if (escalationDocUrl) {
+    try {
+      const parsedEscalationUrl = new URL(escalationDocUrl);
+      if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
+        issues.push('escalationDocUrl');
+      }
+    } catch {
+      // Ignored: invalid URL shape already handled by looksLikeHttpsUrl.
+    }
   }
 
   const importTimeout = parseIntOrDefault(process.env.IMPORT_TIMEOUT_MS, 10000);

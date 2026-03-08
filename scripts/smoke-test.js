@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { evaluateReadiness, isSecretFileSymlink, isSecretFileTooPermissive } = require('./release-readiness');
+const { evaluateReadiness, isSecretFileSymlink, isSecretFileTooPermissive, isPrivateOrLocalEscalationHost } = require('./release-readiness');
 
 try {
   const storiesPath = path.join(process.cwd(), 'data/stories.json');
@@ -110,6 +110,19 @@ try {
     oncallPlaceholderIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value'),
     'placeholder on-call owner should fail release readiness'
   );
+
+
+  const localEscalationIssue = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://localhost/escalation'
+  });
+  assert.ok(
+    localEscalationIssue.includes('MADE_MY_DAY_ESCALATION_DOC_URL must not target localhost/private network hosts'),
+    'release readiness should reject localhost/private-network escalation runbook URLs'
+  );
+  assert.equal(isPrivateOrLocalEscalationHost('10.1.2.3'), true, 'RFC1918 hosts should be rejected for escalation runbooks');
+  assert.equal(isPrivateOrLocalEscalationHost('runbooks.mademyday.com'), false, 'public escalation hosts should remain allowed');
 
   const maxBodyIssue = evaluateReadiness({ MAX_BODY_BYTES: '512' });
   assert.ok(

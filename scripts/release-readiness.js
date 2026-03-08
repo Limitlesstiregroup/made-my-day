@@ -144,6 +144,33 @@ function looksLikePlaceholderEscalationUrl(value) {
   }
 }
 
+
+function isPrivateOrLocalEscalationHost(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
+  if (normalized === '0.0.0.0') return true;
+
+  const ipVersion = net.isIP(normalized);
+  if (ipVersion === 4) {
+    const [a, b] = normalized.split('.').map((segment) => Number(segment));
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 169 && b === 254) return true;
+    return false;
+  }
+
+  if (ipVersion === 6) {
+    if (normalized === '::1') return true;
+    if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
+    if (normalized.startsWith('fe80:')) return true;
+  }
+
+  return false;
+}
+
 function isValidDnsHostname(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -225,6 +252,16 @@ function evaluateReadiness(env = process.env) {
   const escalationDocUrl = getTextConfigValue('MADE_MY_DAY_ESCALATION_DOC_URL', env);
   if (!looksLikeHttpsUrl(escalationDocUrl) || looksLikePlaceholderEscalationUrl(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must be set to a valid non-placeholder https URL (env or *_FILE)');
+  }
+  if (escalationDocUrl) {
+    try {
+      const parsedEscalationUrl = new URL(escalationDocUrl);
+      if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
+        issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not target localhost/private network hosts');
+      }
+    } catch {
+      // Ignored: invalid URL shape already handled by looksLikeHttpsUrl.
+    }
   }
 
   const allowedHosts = getAllowedHosts(env);
@@ -393,6 +430,7 @@ module.exports = {
   getAdminTokenCandidates,
   looksLikeHttpsUrl,
   looksLikePlaceholderEscalationUrl,
+  isPrivateOrLocalEscalationHost,
   isValidAllowedHostEntry,
   getAllowedHosts,
   evaluateReadiness
