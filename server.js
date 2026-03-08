@@ -1442,6 +1442,18 @@ function getRequestId(req) {
   return `req_${crypto.randomUUID()}`;
 }
 
+function hasDuplicateHostHeader(req) {
+  if (!Array.isArray(req.rawHeaders)) return false;
+  let hostHeaderCount = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (String(req.rawHeaders[i] || '').toLowerCase() === 'host') {
+      hostHeaderCount += 1;
+      if (hostHeaderCount > 1) return true;
+    }
+  }
+  return false;
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -1466,6 +1478,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
   res.setHeader('X-Request-Id', requestId);
 
   try {
+    if (hasDuplicateHostHeader(req)) {
+      return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
+    }
     const rawUrl = typeof req.url === 'string' ? req.url : '';
     if (!rawUrl.startsWith('/')) {
       return json(res, 400, { error: 'origin-form request-target required' });

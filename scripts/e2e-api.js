@@ -133,6 +133,18 @@ async function run() {
       throw new Error('expected 421 when host header contains invalid userinfo delimiters');
     }
 
+    const duplicateHostHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Host: 127.0.0.1:4399',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateHostHeaderResponse)) {
+      throw new Error('expected 400 when duplicate Host headers are sent');
+    }
+
     const absoluteTargetResponse = await sendRawHttp([
       'GET http://127.0.0.1:4399/api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',
