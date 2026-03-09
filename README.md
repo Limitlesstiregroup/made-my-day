@@ -18,6 +18,7 @@ Anonymous same-day positive story platform.
 - `Expect` header hardening: requests carrying `Expect` are rejected with HTTP 417 (`expect header is not allowed`) to reduce parser/state-machine ambiguity from `100-continue` flows
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
+- Proxy-chain disclosure hardening: requests carrying `Via` are rejected with HTTP 400 (`via header is not allowed`) to reduce ambiguous intermediary attribution from untrusted upstream hops
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
 - Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
