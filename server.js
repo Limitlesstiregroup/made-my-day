@@ -1074,6 +1074,17 @@ function weakEtagForPayload(payload) {
   return `W/"${hash}"`;
 }
 
+function ifNoneMatchMatches(req, etag) {
+  const header = req.headers['if-none-match'];
+  if (Array.isArray(header)) return false;
+  if (typeof header !== 'string') return false;
+  const normalized = header.trim();
+  if (!normalized) return false;
+  if (normalized === '*') return true;
+  const candidates = normalized.split(',').map((value) => value.trim()).filter(Boolean);
+  return candidates.includes(etag);
+}
+
 function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
   const etag = weakEtagForPayload(data);
   const body = JSON.stringify(data, null, 2);
@@ -1085,7 +1096,7 @@ function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
     ...(extraHeaders || {})
   };
 
-  if (String(req.headers['if-none-match'] || '').trim() === etag) {
+  if (ifNoneMatchMatches(req, etag)) {
     res.writeHead(304, headers);
     res.end();
     return;
