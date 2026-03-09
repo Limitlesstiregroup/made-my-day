@@ -2018,13 +2018,14 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
 
     if (isGetOrHead(req) && u.pathname === '/api/health/ready') {
       const readiness = getReadinessStatus();
+      const headers = readiness.ready ? undefined : { 'Retry-After': '30' };
       return json(res, readiness.ready ? 200 : 503, {
         ok: readiness.ready,
         service: 'made-my-day',
         checkedAt: new Date().toISOString(),
         checks: readiness.checks,
         issueCodes: readiness.issueCodes
-      });
+      }, { headers });
     }
 
     if (u.pathname === '/api/health/details' && !isGetOrHead(req)) {
