@@ -1808,8 +1808,20 @@ function hasAnyForwardingHeader(req) {
     'forwarded',
     'x-forwarded-host',
     'x-forwarded-proto',
-    'x-forwarded-port'
+    'x-forwarded-port',
+    'x-forwarded-prefix'
   ].some((headerName) => typeof req.headers[headerName] !== 'undefined');
+}
+
+function hasValidForwardedPrefixHeader(value) {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim();
+  if (!normalized) return false;
+  if (normalized.includes(',')) return false;
+  if (/[^\x20-\x7E]/.test(normalized)) return false;
+  if (!normalized.startsWith('/')) return false;
+  if (normalized.includes('//')) return false;
+  return true;
 }
 
 function hasTeHeader(req) {
@@ -1888,7 +1900,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (!TRUST_PROXY && hasAnyForwardingHeader(req)) {
       return json(res, 400, { error: 'forwarding headers require trusted proxy mode' });
     }
-    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port'))) {
+    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port') || hasDuplicateRawHeader(req, 'x-forwarded-prefix'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
     }
     if (TRUST_PROXY) {
@@ -1897,12 +1909,14 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const forwardedHost = req.headers['x-forwarded-host'];
       const forwardedProto = req.headers['x-forwarded-proto'];
       const forwardedPort = req.headers['x-forwarded-port'];
+      const forwardedPrefix = req.headers['x-forwarded-prefix'];
       if (
         (typeof forwardedFor === 'string' && forwardedFor.includes(',')) ||
         (typeof forwarded === 'string' && forwarded.includes(',')) ||
         (typeof forwardedHost === 'string' && forwardedHost.includes(',')) ||
         (typeof forwardedProto === 'string' && forwardedProto.includes(',')) ||
-        (typeof forwardedPort === 'string' && forwardedPort.includes(','))
+        (typeof forwardedPort === 'string' && forwardedPort.includes(',')) ||
+        (typeof forwardedPrefix === 'string' && forwardedPrefix.includes(','))
       ) {
         return json(res, 400, { error: 'Multi-hop forwarding headers are not allowed' });
       }
@@ -1926,6 +1940,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         if (!Number.isInteger(port) || port < 1 || port > 65535) {
           return json(res, 400, { error: 'invalid x-forwarded-port header' });
         }
+      }
+      if (typeof forwardedPrefix === 'string' && forwardedPrefix.trim() !== '' && !hasValidForwardedPrefixHeader(forwardedPrefix)) {
+        return json(res, 400, { error: 'invalid x-forwarded-prefix header' });
       }
     }
     const rawUrl = typeof req.url === 'string' ? req.url : '';
