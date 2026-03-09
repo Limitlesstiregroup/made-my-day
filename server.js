@@ -1817,6 +1817,12 @@ function hasViaHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasEarlyDataHeader(req) {
+  const value = req.headers['early-data'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasPathOverrideHeader(req) {
   const originalUrl = req.headers['x-original-url'];
   const rewriteUrl = req.headers['x-rewrite-url'];
@@ -1922,6 +1928,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasViaHeader(req)) {
       return json(res, 400, { error: 'via header is not allowed' });
+    }
+    if (hasEarlyDataHeader(req)) {
+      return json(res, 400, { error: 'early-data header is not allowed' });
     }
     if (hasPathOverrideHeader(req)) {
       return json(res, 400, { error: 'path override headers are not allowed' });

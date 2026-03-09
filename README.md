@@ -19,6 +19,7 @@ Anonymous same-day positive story platform.
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
 - Proxy-chain disclosure hardening: requests carrying `Via` are rejected with HTTP 400 (`via header is not allowed`) to reduce ambiguous intermediary attribution from untrusted upstream hops
+- TLS 0-RTT replay hardening: requests carrying `Early-Data` are rejected with HTTP 400 (`early-data header is not allowed`) to avoid replay-prone side effects on non-idempotent flows
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries

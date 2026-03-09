@@ -256,6 +256,18 @@ async function run() {
       throw new Error('expected 400 when proxy-connection header is present');
     }
 
+    const earlyDataHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Early-Data: 1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(earlyDataHeaderResponse)) {
+      throw new Error('expected 400 when early-data header is present');
+    }
+
     const pathOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',
