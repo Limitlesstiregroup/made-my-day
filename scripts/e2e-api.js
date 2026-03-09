@@ -245,6 +245,18 @@ async function run() {
       throw new Error('expected 400 when proxy-connection header is present');
     }
 
+    const teHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'TE: trailers',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(teHeaderResponse)) {
+      throw new Error('expected 400 when te header is present');
+    }
+
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

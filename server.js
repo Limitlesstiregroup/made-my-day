@@ -1661,6 +1661,12 @@ function hasProxyConnectionHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasTeHeader(req) {
+  const value = req.headers.te;
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
@@ -1706,6 +1712,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyConnectionHeader(req)) {
       return json(res, 400, { error: 'proxy-connection header is not allowed' });
+    }
+    if (hasTeHeader(req)) {
+      return json(res, 400, { error: 'te header is not allowed' });
     }
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
