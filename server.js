@@ -1501,7 +1501,11 @@ function sendFile(res, filePath) {
     res.writeHead(404);
     return res.end('Not found');
   }
-  res.writeHead(200, { 'Content-Type': contentType, ...securityHeaders() });
+  const headers = { 'Content-Type': contentType, ...securityHeaders() };
+  if (ext === '.html') {
+    applyNoStoreHeaders(headers);
+  }
+  res.writeHead(200, headers);
   fs.createReadStream(filePath).pipe(res);
 }
 
