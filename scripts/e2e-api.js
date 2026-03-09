@@ -572,12 +572,12 @@ async function run() {
         author: 'smoke-test'
       })
     });
-    if (invalidIdempotencyKey.status !== 201) {
-      throw new Error(`expected 201 for create with invalid idempotency key treated as non-idempotent, got ${invalidIdempotencyKey.status}`);
+    if (invalidIdempotencyKey.status !== 400) {
+      throw new Error(`expected 400 for create with malformed idempotency key, got ${invalidIdempotencyKey.status}`);
     }
     const invalidIdempotencyJson = await invalidIdempotencyKey.json();
-    if (invalidIdempotencyJson?.story?.id === storyId) {
-      throw new Error('invalid idempotency key should not reuse prior story id');
+    if (invalidIdempotencyJson?.error !== 'invalid idempotency-key header') {
+      throw new Error('malformed idempotency key should return explicit validation error');
     }
 
     const badLikeType = await fetch(`${BASE}/api/stories/${storyId}/like`, {

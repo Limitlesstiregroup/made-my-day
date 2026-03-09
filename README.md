@@ -46,8 +46,8 @@ Anonymous same-day positive story platform.
 - Duplicate-story protection (7-day normalized text check) + bounded store retention for GA stability; duplicate submissions return HTTP 409 with `Retry-After` guidance for safer client retries
 - Runtime persistence hardening: stories store writes (including first-boot and corruption recovery paths) use atomic temp-file swaps to reduce corruption risk during crashes/restarts; idempotency cache writes maintain a `.bak` fallback snapshot for restart-time corruption recovery and are force-flushed during shutdown/exit hooks for safer abrupt-restart behavior
 - Runtime log hygiene: local `*.log` files are ignored and no longer tracked to keep release branches clean between operator runs
-- Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`)
-- Optional idempotent engagement retries via `Idempotency-Key` on `POST /api/stories/:id/like`, `/api/stories/:id/share`, and `/api/stories/:id/comments` (returns prior result with `idempotent: true` when replayed inside the idempotency window)
+- Optional idempotent story creation via `Idempotency-Key` header on `POST /api/stories` (safe client retries without duplicate posts; key must be 8-128 chars using letters/numbers/`:_-.`; malformed/ambiguous keys are rejected with HTTP 400 `invalid idempotency-key header`)
+- Optional idempotent engagement retries via `Idempotency-Key` on `POST /api/stories/:id/like`, `/api/stories/:id/share`, and `/api/stories/:id/comments` (returns prior result with `idempotent: true` when replayed inside the idempotency window; malformed/ambiguous keys are rejected with HTTP 400 `invalid idempotency-key header`)
 - Like, share, comment
 - Conditional GET caching (ETag/304) for stories + hall-of-fame feeds to reduce polling load
 - Stories feed pagination (`GET /api/stories?limit=&offset=`) to cap payload size and improve GA polling stability

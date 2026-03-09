@@ -2225,7 +2225,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!incomingText || incomingText.length < 40) {
         return json(res, 400, { error: 'Story must be at least 40 characters.' });
       }
-      const idempotencyKey = getIdempotencyKey(req);
+      const parsedIdempotency = parseIdempotencyKey(req);
+      if (parsedIdempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = parsedIdempotency.key;
       const existingByIdempotency = findRecentIdempotentStory(store, idempotencyKey);
       if (existingByIdempotency) {
         return json(res, 200, { story: storyView(existingByIdempotency, store), idempotent: true });
@@ -2277,7 +2281,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
 
-      const idempotencyKey = getIdempotencyKey(req);
+      const parsedIdempotency = parseIdempotencyKey(req);
+      if (parsedIdempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = parsedIdempotency.key;
       const idempotentScope = `story-like:${storyId}`;
       const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
       if (prior) return json(res, 200, { ...prior, idempotent: true });
@@ -2301,7 +2309,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
 
-      const idempotencyKey = getIdempotencyKey(req);
+      const parsedIdempotency = parseIdempotencyKey(req);
+      if (parsedIdempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = parsedIdempotency.key;
       const idempotentScope = `story-share:${storyId}`;
       const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
       if (prior) return json(res, 200, { ...prior, idempotent: true });
@@ -2325,7 +2337,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
 
-      const idempotencyKey = getIdempotencyKey(req);
+      const parsedIdempotency = parseIdempotencyKey(req);
+      if (parsedIdempotency.malformed) {
+        return json(res, 400, { error: 'invalid idempotency-key header' });
+      }
+      const idempotencyKey = parsedIdempotency.key;
       const idempotentScope = `story-comment:${storyId}`;
       const prior = getEngagementIdempotent(idempotentScope, idempotencyKey);
       if (prior) return json(res, 200, { ...prior, idempotent: true });
