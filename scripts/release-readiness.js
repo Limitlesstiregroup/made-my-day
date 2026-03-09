@@ -579,6 +579,10 @@ function evaluateReadiness(env = process.env) {
     issues.push('KEEP_ALIVE_TIMEOUT_MS must be less than or equal to HEADERS_TIMEOUT_MS');
   }
 
+  if ((headersTimeoutMs - keepAliveTimeoutMs) < 1000) {
+    issues.push('HEADERS_TIMEOUT_MS must be at least 1000ms greater than KEEP_ALIVE_TIMEOUT_MS');
+  }
+
   return issues;
 }
 

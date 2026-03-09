@@ -266,6 +266,12 @@ try {
     'release readiness should reject keep-alive timeout values above headers timeout'
   );
 
+  const keepAliveSafetyGapIssue = evaluateReadiness({ HEADERS_TIMEOUT_MS: '10000', KEEP_ALIVE_TIMEOUT_MS: '9501' });
+  assert.ok(
+    keepAliveSafetyGapIssue.includes('HEADERS_TIMEOUT_MS must be at least 1000ms greater than KEEP_ALIVE_TIMEOUT_MS'),
+    'release readiness should enforce a 1000ms safety gap between headers and keep-alive timeouts'
+  );
+
   const idempotencyKeysIssue = evaluateReadiness({ MAX_IDEMPOTENCY_KEYS: '999999' });
   assert.ok(
     idempotencyKeysIssue.includes('MAX_IDEMPOTENCY_KEYS must be between 100 and 200000'),
