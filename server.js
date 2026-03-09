@@ -2497,5 +2497,7 @@ function handleFatalError(type, error) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('beforeExit', () => saveIdempotencyCaches());
+process.on('exit', () => saveIdempotencyCaches());
 process.on('unhandledRejection', (reason) => handleFatalError('unhandledRejection', reason));
 process.on('uncaughtException', (error) => handleFatalError('uncaughtException', error));
