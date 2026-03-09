@@ -12,6 +12,7 @@
     "start": "node server.js",
     "release:check": "node scripts/release-readiness.js",
     "ga:quickstart": "node scripts/ga-quickstart.js",
-    "ga:gate": "npm run build && npm run lint && npm test && npm run release:check"
+    "ga:gate": "npm run build && npm run lint && npm test && npm run release:check",
+    "ga:gate:local": "bash -lc 'npm run build && npm run lint && npm test && set -a; . ./.env.ga.local; set +a; npm run release:check'"
   }
 }

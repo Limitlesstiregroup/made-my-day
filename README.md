@@ -82,6 +82,10 @@ npm run ga:quickstart -- --oncall-primary=faisal --oncall-secondary=backup --esc
 set -a; . ./.env.ga.local; set +a
 npm run ga:gate
 ```
+Or run the same GA gate with local GA env auto-loaded:
+```bash
+npm run ga:gate:local
+```
 
 ## Container Deployment
 ```bash
