@@ -470,6 +470,8 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.HEADERS_TIMEOUT_MS, 'HEADERS_TIMEOUT_MS', issues);
   validateIntegerEnv(env.KEEP_ALIVE_TIMEOUT_MS, 'KEEP_ALIVE_TIMEOUT_MS', issues);
   validateIntegerEnv(env.MAX_REQUESTS_PER_SOCKET, 'MAX_REQUESTS_PER_SOCKET', issues);
+  validateIntegerEnv(env.MAX_HEADER_BYTES, 'MAX_HEADER_BYTES', issues);
+  validateIntegerEnv(env.MAX_HEADERS_COUNT, 'MAX_HEADERS_COUNT', issues);
   validateIntegerEnv(env.BODY_READ_TIMEOUT_MS, 'BODY_READ_TIMEOUT_MS', issues);
 
   const importTimeout = parseIntOrDefault(env.IMPORT_TIMEOUT_MS, 10000);
@@ -490,6 +492,16 @@ function evaluateReadiness(env = process.env) {
   const maxQueryChars = parseIntOrDefault(env.MAX_QUERY_CHARS, 1024);
   if (maxQueryChars < 128 || maxQueryChars > 4096) {
     issues.push('MAX_QUERY_CHARS must be between 128 and 4096');
+  }
+
+  const maxHeaderBytes = parseIntOrDefault(env.MAX_HEADER_BYTES, 16 * 1024);
+  if (maxHeaderBytes < 4096 || maxHeaderBytes > 65536) {
+    issues.push('MAX_HEADER_BYTES must be between 4096 and 65536');
+  }
+
+  const maxHeadersCount = parseIntOrDefault(env.MAX_HEADERS_COUNT, 200);
+  if (maxHeadersCount < 1 || maxHeadersCount > 2000) {
+    issues.push('MAX_HEADERS_COUNT must be between 1 and 2000');
   }
 
   const rateLimitWindowMs = parseIntOrDefault(env.RATE_LIMIT_WINDOW_MS, 60_000);

@@ -242,6 +242,18 @@ try {
     'release readiness should reject out-of-range MAX_QUERY_CHARS'
   );
 
+  const maxHeaderBytesIssue = evaluateReadiness({ MAX_HEADER_BYTES: '999999' });
+  assert.ok(
+    maxHeaderBytesIssue.includes('MAX_HEADER_BYTES must be between 4096 and 65536'),
+    'release readiness should reject out-of-range MAX_HEADER_BYTES'
+  );
+
+  const maxHeadersCountIssue = evaluateReadiness({ MAX_HEADERS_COUNT: '0' });
+  assert.ok(
+    maxHeadersCountIssue.includes('MAX_HEADERS_COUNT must be between 1 and 2000'),
+    'release readiness should reject out-of-range MAX_HEADERS_COUNT'
+  );
+
   const timeoutOrderIssue = evaluateReadiness({ REQUEST_TIMEOUT_MS: '10000', HEADERS_TIMEOUT_MS: '15000' });
   assert.ok(
     timeoutOrderIssue.includes('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS'),
