@@ -38,6 +38,12 @@ function placeholderToken(value) {
   return PLACEHOLDER_TOKENS.has(normalized);
 }
 
+function placeholderTokenLoose(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return [...PLACEHOLDER_TOKENS].some((token) => normalized.includes(token));
+}
+
 function hasUnsafeSecretWhitespace(value) {
   return /\s/.test(String(value || ''));
 }
@@ -334,7 +340,7 @@ function evaluateReadiness(env = process.env) {
   if (oncallPrimary.length < 3) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be set and at least 3 characters (env or *_FILE)');
   }
-  if (placeholderToken(oncallPrimary)) {
+  if (placeholderToken(oncallPrimary) || placeholderTokenLoose(oncallPrimary)) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value');
   }
   if (hasUnsafeOncallChars(oncallPrimary)) {
@@ -348,7 +354,7 @@ function evaluateReadiness(env = process.env) {
   if (oncallSecondary.length < 3) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must be set and at least 3 characters (env or *_FILE)');
   }
-  if (placeholderToken(oncallSecondary)) {
+  if (placeholderToken(oncallSecondary) || placeholderTokenLoose(oncallSecondary)) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not be a placeholder value');
   }
   if (hasUnsafeOncallChars(oncallSecondary)) {
@@ -357,7 +363,7 @@ function evaluateReadiness(env = process.env) {
   if (hasOncallWhitespace(oncallSecondary)) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not contain whitespace');
   }
-  if (oncallPrimary && oncallSecondary && oncallPrimary === oncallSecondary) {
+  if (oncallPrimary && oncallSecondary && oncallPrimary.toLowerCase() === oncallSecondary.toLowerCase()) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY and MADE_MY_DAY_ONCALL_SECONDARY must not be the same');
   }
 
