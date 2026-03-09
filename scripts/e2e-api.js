@@ -233,6 +233,17 @@ async function run() {
       throw new Error('expected 405 when TRACE method is sent');
     }
 
+    const connectMethodResponse = await sendRawHttp([
+      'CONNECT 127.0.0.1:4399 HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 405 /.test(connectMethodResponse)) {
+      throw new Error('expected 405 when CONNECT method is sent');
+    }
+
     const proxyConnectionHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

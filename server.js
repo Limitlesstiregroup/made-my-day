@@ -1856,6 +1856,10 @@ function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
 
+function hasConnectMethod(req) {
+  return String(req.method || '').toUpperCase() === 'CONNECT';
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -1907,8 +1911,8 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });
     }
-    if (hasTraceMethod(req)) {
-      return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
+    if (hasTraceMethod(req) || hasConnectMethod(req)) {
+      return json(res, 405, { error: 'TRACE/CONNECT methods are not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
     }
     if (!TRUST_PROXY && hasAnyForwardingHeader(req)) {
       return json(res, 400, { error: 'forwarding headers require trusted proxy mode' });
@@ -2575,6 +2579,24 @@ server.on('clientError', (error, socket) => {
     'Pragma: no-cache',
     'Expires: 0',
     'X-Content-Type-Options: nosniff',
+    'Content-Length: 0',
+    '',
+    ''
+  ].join('\r\n');
+  socket.end(response);
+});
+
+server.on('connect', (_req, socket) => {
+  if (!socket || !socket.writable) return;
+  const response = [
+    'HTTP/1.1 405 Method Not Allowed',
+    'Connection: close',
+    'Content-Type: application/json; charset=utf-8',
+    'Cache-Control: no-store, private, max-age=0',
+    'Pragma: no-cache',
+    'Expires: 0',
+    'X-Content-Type-Options: nosniff',
+    'Allow: GET, HEAD, POST',
     'Content-Length: 0',
     '',
     ''
