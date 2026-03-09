@@ -162,6 +162,16 @@ try {
     'on-call owners with whitespace should fail release readiness'
   );
 
+  const oversizedOncallIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: `community-oncall-${'x'.repeat(120)}`,
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oversizedOncallIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must be <= 128 characters'),
+    'overly long on-call owners should fail release readiness'
+  );
+
   const missingSecondaryOncallIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',

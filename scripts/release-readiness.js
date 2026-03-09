@@ -349,6 +349,9 @@ function evaluateReadiness(env = process.env) {
   if (hasOncallWhitespace(oncallPrimary)) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not contain whitespace');
   }
+  if (oncallPrimary.length > 128) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be <= 128 characters');
+  }
 
   const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY', env);
   if (oncallSecondary.length < 3) {
@@ -362,6 +365,9 @@ function evaluateReadiness(env = process.env) {
   }
   if (hasOncallWhitespace(oncallSecondary)) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not contain whitespace');
+  }
+  if (oncallSecondary.length > 128) {
+    issues.push('MADE_MY_DAY_ONCALL_SECONDARY must be <= 128 characters');
   }
   if (oncallPrimary && oncallSecondary && oncallPrimary.toLowerCase() === oncallSecondary.toLowerCase()) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY and MADE_MY_DAY_ONCALL_SECONDARY must not be the same');
