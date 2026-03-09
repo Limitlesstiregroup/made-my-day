@@ -1755,6 +1755,16 @@ function hasProxyConnectionHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasPathOverrideHeader(req) {
+  const originalUrl = req.headers['x-original-url'];
+  const rewriteUrl = req.headers['x-rewrite-url'];
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return hasValue(originalUrl) || hasValue(rewriteUrl);
+}
+
 function hasAnyForwardingHeader(req) {
   return [
     'x-forwarded-for',
@@ -1825,6 +1835,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyConnectionHeader(req)) {
       return json(res, 400, { error: 'proxy-connection header is not allowed' });
+    }
+    if (hasPathOverrideHeader(req)) {
+      return json(res, 400, { error: 'path override headers are not allowed' });
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });
