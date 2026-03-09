@@ -97,7 +97,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_REQUESTS_PER_SOCKET` caps keep-alive reuse per socket (default `100`, min `1`, max `1000`).
 - `MADE_MY_DAY_ONCALL_PRIMARY` (or `MADE_MY_DAY_ONCALL_PRIMARY_FILE`) required on-call owner for GA readiness (team handle/email/pager alias, >=3 chars).
 - `MADE_MY_DAY_ONCALL_SECONDARY` (or `MADE_MY_DAY_ONCALL_SECONDARY_FILE`) required backup on-call owner for GA readiness (must differ from primary).
-- `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) required escalation runbook URL for GA readiness (must be a non-placeholder `https://` URL pointing to a specific runbook path and without embedded username/password credentials; `example.com`, `localhost`, and private-network hosts are rejected).
+- `MADE_MY_DAY_ESCALATION_DOC_URL` (or `MADE_MY_DAY_ESCALATION_DOC_URL_FILE`) required escalation runbook URL for GA readiness (must be a non-placeholder `https://` URL pointing to a specific runbook path, without embedded username/password credentials, and without query parameters/fragments; `example.com`, `localhost`, and private-network hosts are rejected).
 - Secret values loaded via `*_FILE` / `*_PREVIOUS_FILE` must use absolute paths, must not be symbolic links, must be owned by the runtime user (or root), and require owner-only file permissions (`chmod 600`); release readiness fails on relative paths, symlinked/wrong-owner secret files, or when group/world permission bits are set.
 - Optional startup guardrail: set `MADE_MY_DAY_ENFORCE_LIVE_READY=1` to fail-fast on boot when readiness checks fail (prevents accidental non-GA config from serving traffic).
 - `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_MUTATIONS` tune POST mutation throttling.

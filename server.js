@@ -376,6 +376,17 @@ function hasEscalationUrlRootPath(value) {
   }
 }
 
+function hasEscalationUrlParamsOrFragment(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return Boolean(parsed.search || parsed.hash);
+  } catch {
+    return false;
+  }
+}
+
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -446,6 +457,9 @@ function getConfigIssues() {
     issues.push('escalationDocUrl');
   }
   if (hasEscalationUrlRootPath(escalationDocUrl)) {
+    issues.push('escalationDocUrl');
+  }
+  if (hasEscalationUrlParamsOrFragment(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }
   if (escalationDocUrl) {
