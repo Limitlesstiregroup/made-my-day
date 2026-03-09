@@ -412,6 +412,12 @@ function hasEscalationUrlCredentials(value) {
   }
 }
 
+function isIpLiteralHost(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return net.isIP(normalized) !== 0;
+}
+
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -499,7 +505,9 @@ function getConfigIssues() {
   if (escalationDocUrl) {
     try {
       const parsedEscalationUrl = new URL(escalationDocUrl);
-      if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
+      if (isIpLiteralHost(parsedEscalationUrl.hostname)) {
+        issues.push('escalationDocUrl');
+      } else if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
         issues.push('escalationDocUrl');
       }
     } catch {
