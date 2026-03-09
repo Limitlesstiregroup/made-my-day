@@ -1667,6 +1667,14 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       });
     }
 
+    const declaredContentLength = parseDeclaredContentLength(req.headers['content-length']);
+    if (declaredContentLength?.invalid) {
+      return json(res, 400, { error: 'invalid content-length header' });
+    }
+    if (hasTransferEncodingHeader(req.headers['transfer-encoding']) && Number.isFinite(declaredContentLength?.value)) {
+      return json(res, 400, { error: 'ambiguous request framing' });
+    }
+
     if (!isAllowedHost(req)) {
       return json(res, 421, { error: 'Request host not allowed' });
     }

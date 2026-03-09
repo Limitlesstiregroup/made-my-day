@@ -275,6 +275,18 @@ async function run() {
       throw new Error('expected 400 when transfer-encoding and content-length are both present');
     }
 
+    const invalidContentLengthOnGetResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Content-Length: two',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidContentLengthOnGetResponse)) {
+      throw new Error('expected 400 when content-length header is malformed before route handling');
+    }
+
     const oversizedHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `X-Oversized: ${'x'.repeat(20000)}`,
