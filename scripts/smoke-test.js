@@ -240,6 +240,12 @@ try {
     'release readiness should reject out-of-range MAX_REQUESTS_PER_SOCKET values'
   );
 
+  const bodyReadTimeoutIssue = evaluateReadiness({ BODY_READ_TIMEOUT_MS: '999999' });
+  assert.ok(
+    bodyReadTimeoutIssue.includes('BODY_READ_TIMEOUT_MS must be between 1000 and 120000'),
+    'release readiness should reject out-of-range BODY_READ_TIMEOUT_MS values'
+  );
+
   const maxCommentsPerStoryIssue = evaluateReadiness({ MAX_COMMENTS_PER_STORY: '4' });
   assert.ok(
     maxCommentsPerStoryIssue.includes('MAX_COMMENTS_PER_STORY must be >= 5'),

@@ -6,6 +6,7 @@ Anonymous same-day positive story platform.
 - No account required
 - Post same-day stories
 - API mutation rate-limit + request-size guardrails for abuse hardening (oversized bodies return clean HTTP 413)
+- Request body read-time hardening via `BODY_READ_TIMEOUT_MS` (default `15000`): slow/incomplete JSON uploads are aborted with HTTP 408 to reduce slowloris-style pressure
 - Request-target hardening via URL length cap (oversized request URLs return HTTP 414 before routing)
 - Query-string hardening via query length cap (`MAX_QUERY_CHARS`, default `1024`): oversized query strings return HTTP 414 before route handling
 - Header-flood hardening via max request-header size cap (`MAX_HEADER_BYTES`, default `16384`): oversized headers are rejected at parser level with HTTP 431 (`Request Header Fields Too Large`)
@@ -89,6 +90,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
+- `BODY_READ_TIMEOUT_MS` (default `15000`, min `1000`, max `120000`) bounds how long the server waits for POST request bodies before returning HTTP 408.
 - `MAX_URL_CHARS` (default `2048`, min `256`, max `8192`) caps request URL length before routing (oversized URLs return `414`).
 - `MAX_QUERY_CHARS` (default `1024`, min `128`, max `4096`) caps query-string length before route handling (oversized queries return `414`).
 - `MAX_HEADER_BYTES` (default `16384`, min `4096`, max `65536`) caps HTTP request header bytes at parser level (oversized headers return `431`).

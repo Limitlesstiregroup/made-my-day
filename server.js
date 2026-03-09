@@ -58,6 +58,9 @@ function clampMaxBodyBytes(value) {
 }
 
 const MAX_BODY_BYTES = clampMaxBodyBytes(process.env.MAX_BODY_BYTES);
+const BODY_READ_TIMEOUT_MS = Number.isFinite(Number(process.env.BODY_READ_TIMEOUT_MS))
+  ? Math.floor(Math.max(1_000, Math.min(Number(process.env.BODY_READ_TIMEOUT_MS), 120_000)))
+  : 15_000;
 const MAX_URL_CHARS = Number.isFinite(Number(process.env.MAX_URL_CHARS))
   ? Math.floor(Math.max(256, Math.min(Number(process.env.MAX_URL_CHARS), 8192)))
   : 2048;
@@ -1247,15 +1250,23 @@ function readBody(req) {
   return new Promise((resolve, reject) => {
     let settled = false;
 
+    const clearBodyReadTimeout = () => {
+      if (typeof req.setTimeout === 'function') {
+        req.setTimeout(0);
+      }
+    };
+
     const fail = (error) => {
       if (settled) return;
       settled = true;
+      clearBodyReadTimeout();
       reject(error);
     };
 
     const succeed = (value) => {
       if (settled) return;
       settled = true;
+      clearBodyReadTimeout();
       resolve(value);
     };
 
@@ -1281,6 +1292,15 @@ function readBody(req) {
 
     let body = '';
     let totalBytes = 0;
+
+    if (typeof req.setTimeout === 'function') {
+      req.setTimeout(BODY_READ_TIMEOUT_MS, () => {
+        const error = new Error('request body read timeout');
+        error.code = 'BODY_READ_TIMEOUT';
+        fail(error);
+        req.destroy();
+      });
+    }
 
     req.on('aborted', () => {
       const error = new Error('request aborted');
@@ -1323,6 +1343,18 @@ function readBody(req) {
       fail(error);
     });
   });
+}
+
+function handleBodyReadError(res, error) {
+  if (error?.code === 'BODY_TOO_LARGE') {
+    json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
+    return;
+  }
+  if (error?.code === 'BODY_READ_TIMEOUT') {
+    json(res, 408, { error: 'Request body read timeout.' });
+    return;
+  }
+  json(res, 400, { error: 'Invalid JSON body.' });
 }
 
 function sendFile(res, filePath) {
@@ -1987,11 +2019,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
       const body = await readBody(req).catch((error) => {
-        if (error?.code === 'BODY_TOO_LARGE') {
-          json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
-          return null;
-        }
-        json(res, 400, { error: 'Invalid JSON body.' });
+        handleBodyReadError(res, error);
         return null;
       });
       if (!body) return;
@@ -2105,11 +2133,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (prior) return json(res, 200, { ...prior, idempotent: true });
 
       const body = await readBody(req).catch((error) => {
-        if (error?.code === 'BODY_TOO_LARGE') {
-          json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
-          return null;
-        }
-        json(res, 400, { error: 'Invalid JSON body.' });
+        handleBodyReadError(res, error);
         return null;
       });
       if (!body) return;
@@ -2152,10 +2176,8 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       try {
         await readBody(req);
       } catch (error) {
-        if (error?.code === 'BODY_TOO_LARGE') {
-          return json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
-        }
-        return json(res, 400, { error: 'Invalid JSON body.' });
+        handleBodyReadError(res, error);
+        return;
       }
       const idempotency = parseIdempotencyKey(req);
       if (idempotency.malformed) {
@@ -2193,10 +2215,8 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       try {
         await readBody(req);
       } catch (error) {
-        if (error?.code === 'BODY_TOO_LARGE') {
-          return json(res, 413, { error: `Request body too large. Max ${MAX_BODY_BYTES} bytes.` });
-        }
-        return json(res, 400, { error: 'Invalid JSON body.' });
+        handleBodyReadError(res, error);
+        return;
       }
       const idempotency = parseIdempotencyKey(req);
       if (idempotency.malformed) {

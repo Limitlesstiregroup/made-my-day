@@ -428,6 +428,7 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.HEADERS_TIMEOUT_MS, 'HEADERS_TIMEOUT_MS', issues);
   validateIntegerEnv(env.KEEP_ALIVE_TIMEOUT_MS, 'KEEP_ALIVE_TIMEOUT_MS', issues);
   validateIntegerEnv(env.MAX_REQUESTS_PER_SOCKET, 'MAX_REQUESTS_PER_SOCKET', issues);
+  validateIntegerEnv(env.BODY_READ_TIMEOUT_MS, 'BODY_READ_TIMEOUT_MS', issues);
 
   const importTimeout = parseIntOrDefault(env.IMPORT_TIMEOUT_MS, 10000);
   if (importTimeout < 1000 || importTimeout > 60000) {
@@ -509,6 +510,11 @@ function evaluateReadiness(env = process.env) {
   const maxRequestsPerSocket = parseIntOrDefault(env.MAX_REQUESTS_PER_SOCKET, 100);
   if (maxRequestsPerSocket < 1 || maxRequestsPerSocket > 1000) {
     issues.push('MAX_REQUESTS_PER_SOCKET must be between 1 and 1000');
+  }
+
+  const bodyReadTimeoutMs = parseIntOrDefault(env.BODY_READ_TIMEOUT_MS, 15_000);
+  if (bodyReadTimeoutMs < 1_000 || bodyReadTimeoutMs > 120_000) {
+    issues.push('BODY_READ_TIMEOUT_MS must be between 1000 and 120000');
   }
 
   if (headersTimeoutMs > requestTimeoutMs) {
