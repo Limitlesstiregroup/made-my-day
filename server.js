@@ -1623,6 +1623,12 @@ function hasUpgradeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasProxyConnectionHeader(req) {
+  const value = req.headers['proxy-connection'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
@@ -1665,6 +1671,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasUpgradeHeader(req)) {
       return json(res, 400, { error: 'upgrade header is not allowed' });
+    }
+    if (hasProxyConnectionHeader(req)) {
+      return json(res, 400, { error: 'proxy-connection header is not allowed' });
     }
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });

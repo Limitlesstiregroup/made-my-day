@@ -233,6 +233,18 @@ async function run() {
       throw new Error('expected 405 when TRACE method is sent');
     }
 
+    const proxyConnectionHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Proxy-Connection: keep-alive',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(proxyConnectionHeaderResponse)) {
+      throw new Error('expected 400 when proxy-connection header is present');
+    }
+
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

@@ -15,6 +15,7 @@ Anonymous same-day positive story platform.
 - Method-override hardening: requests carrying `x-http-method-override` are rejected with HTTP 400 (`x-http-method-override header is not allowed`) to prevent proxy/client verb-tunneling bypasses
 - `Expect` header hardening: requests carrying `Expect` are rejected with HTTP 417 (`expect header is not allowed`) to reduce parser/state-machine ambiguity from `100-continue` flows
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
+- Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
 - HTTP verb hardening: `TRACE` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic surface area
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
 - Content-Length hardening: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability
