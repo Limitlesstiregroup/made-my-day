@@ -1067,6 +1067,41 @@ function csv(res, status, rows, { noStore = true, headers: extraHeaders } = {}) 
   res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
 }
 
+function isStrictJsonContentType(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+
+  const [mediaTypeRaw, ...paramParts] = normalized.split(';');
+  if (!mediaTypeRaw || mediaTypeRaw.trim().toLowerCase() !== 'application/json') {
+    return false;
+  }
+
+  let sawCharset = false;
+  for (const part of paramParts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex <= 0 || eqIndex === trimmed.length - 1) {
+      return false;
+    }
+    const key = trimmed.slice(0, eqIndex).trim().toLowerCase();
+    let val = trimmed.slice(eqIndex + 1).trim().toLowerCase();
+    if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+      val = val.slice(1, -1).trim();
+    }
+    if (!key || !val) return false;
+
+    if (key === 'charset') {
+      if (sawCharset || val !== 'utf-8') {
+        return false;
+      }
+      sawCharset = true;
+    }
+  }
+
+  return true;
+}
+
 function getJsonContentTypeStatus(req) {
   const rawHeader = req.headers['content-type'];
   if (Array.isArray(rawHeader)) {
@@ -1074,7 +1109,7 @@ function getJsonContentTypeStatus(req) {
     if (normalized.length !== 1) {
       return { ok: false, malformed: normalized.length > 1 };
     }
-    return { ok: normalized[0].toLowerCase().startsWith('application/json'), malformed: false };
+    return { ok: isStrictJsonContentType(normalized[0]), malformed: false };
   }
 
   if (typeof rawHeader !== 'string') {
@@ -1091,7 +1126,7 @@ function getJsonContentTypeStatus(req) {
     return { ok: false, malformed: values.length > 1 };
   }
 
-  return { ok: values[0].toLowerCase().startsWith('application/json'), malformed: false };
+  return { ok: isStrictJsonContentType(values[0]), malformed: false };
 }
 
 function stableStringify(value) {
