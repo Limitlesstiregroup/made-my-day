@@ -210,6 +210,18 @@ async function run() {
       throw new Error('expected 417 when expect header is present');
     }
 
+    const upgradeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Upgrade: websocket',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(upgradeHeaderResponse)) {
+      throw new Error('expected 400 when upgrade header is present');
+    }
+
     const traceMethodResponse = await sendRawHttp([
       'TRACE /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

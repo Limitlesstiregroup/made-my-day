@@ -1606,6 +1606,12 @@ function hasExpectHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasUpgradeHeader(req) {
+  const value = req.headers.upgrade;
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
@@ -1645,6 +1651,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasExpectHeader(req)) {
       return json(res, 417, { error: 'expect header is not allowed' });
+    }
+    if (hasUpgradeHeader(req)) {
+      return json(res, 400, { error: 'upgrade header is not allowed' });
     }
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
