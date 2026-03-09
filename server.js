@@ -309,6 +309,10 @@ function hasUnsafeSecretWhitespace(value) {
   return /\s/.test(String(value || ''));
 }
 
+function hasUnsafeOncallChars(value) {
+  return /[\r\n\t]/.test(String(value || ''));
+}
+
 function getConfiguredAdminToken() {
   const direct = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
   if (direct) return direct;
@@ -449,12 +453,12 @@ function getConfigIssues() {
   }
 
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
-  if (oncallPrimary.length < 3 || looksLikePlaceholderToken(oncallPrimary)) {
+  if (oncallPrimary.length < 3 || looksLikePlaceholderToken(oncallPrimary) || hasUnsafeOncallChars(oncallPrimary)) {
     issues.push('oncallPrimary');
   }
 
   const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY');
-  if (oncallSecondary.length < 3 || looksLikePlaceholderToken(oncallSecondary) || oncallSecondary.toLowerCase() === oncallPrimary.toLowerCase()) {
+  if (oncallSecondary.length < 3 || looksLikePlaceholderToken(oncallSecondary) || hasUnsafeOncallChars(oncallSecondary) || oncallSecondary.toLowerCase() === oncallPrimary.toLowerCase()) {
     issues.push('oncallSecondary');
   }
 

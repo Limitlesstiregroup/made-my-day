@@ -42,6 +42,10 @@ function hasUnsafeSecretWhitespace(value) {
   return /\s/.test(String(value || ''));
 }
 
+function hasUnsafeOncallChars(value) {
+  return /[\r\n\t]/.test(String(value || ''));
+}
+
 function parseIntOrDefault(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
@@ -323,6 +327,9 @@ function evaluateReadiness(env = process.env) {
   if (placeholderToken(oncallPrimary)) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value');
   }
+  if (hasUnsafeOncallChars(oncallPrimary)) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not contain control characters');
+  }
 
   const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY', env);
   if (oncallSecondary.length < 3) {
@@ -330,6 +337,9 @@ function evaluateReadiness(env = process.env) {
   }
   if (placeholderToken(oncallSecondary)) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not be a placeholder value');
+  }
+  if (hasUnsafeOncallChars(oncallSecondary)) {
+    issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not contain control characters');
   }
   if (oncallPrimary && oncallSecondary && oncallPrimary === oncallSecondary) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY and MADE_MY_DAY_ONCALL_SECONDARY must not be the same');

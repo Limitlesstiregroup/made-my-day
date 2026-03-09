@@ -142,6 +142,16 @@ try {
     'placeholder on-call owner should fail release readiness'
   );
 
+  const oncallControlCharIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community\noncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oncallControlCharIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not contain control characters'),
+    'on-call owners with control characters should fail release readiness'
+  );
+
   const missingSecondaryOncallIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
