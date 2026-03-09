@@ -595,6 +595,11 @@ function getConfigIssues() {
     issues.push('maxHeadersCount');
   }
 
+  const shutdownGraceRaw = parseIntOrDefault(process.env.SHUTDOWN_GRACE_MS, 10_000);
+  if (shutdownGraceRaw < 1_000 || shutdownGraceRaw > 120_000) {
+    issues.push('shutdownGraceMs');
+  }
+
   if (!issues.includes('headersTimeout') && !issues.includes('requestTimeout') && headersTimeoutRaw > requestTimeoutRaw) {
     issues.push('headersTimeoutOrder');
   }
@@ -669,7 +674,8 @@ function getReadinessStatus() {
       headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : ((issues.includes('headersTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
       keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : ((issues.includes('keepAliveTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
       maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass',
-      maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass'
+      maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass',
+      shutdownGraceMs: issues.includes('shutdownGraceMs') ? 'fail' : 'pass'
     }
   };
 }
