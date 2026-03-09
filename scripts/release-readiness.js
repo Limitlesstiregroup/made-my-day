@@ -160,6 +160,12 @@ function getTextConfigValue(key, env = process.env) {
   ].find(Boolean) || '';
 }
 
+function hasBothDirectAndFileConfigured(key, env = process.env) {
+  const direct = String(env[key] || '').trim();
+  const filePath = String(env[`${key}_FILE`] || '').trim();
+  return direct !== '' && filePath !== '';
+}
+
 function looksLikeHttpsUrl(value) {
   const normalized = String(value || '').trim();
   if (!normalized) return false;
@@ -313,6 +319,20 @@ function evaluateReadiness(env = process.env) {
   const configuredToken = getConfiguredAdminToken(env);
   const previousToken = getPreviousAdminToken(env);
   const adminTokenCandidates = getAdminTokenCandidates(env);
+
+  const mutuallyExclusiveEnvFileKeys = [
+    'MADE_MY_DAY_ADMIN_TOKEN',
+    'MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS',
+    'MADE_MY_DAY_ONCALL_PRIMARY',
+    'MADE_MY_DAY_ONCALL_SECONDARY',
+    'MADE_MY_DAY_ESCALATION_DOC_URL',
+    'ALLOWED_HOSTS'
+  ];
+  mutuallyExclusiveEnvFileKeys.forEach((key) => {
+    if (hasBothDirectAndFileConfigured(key, env)) {
+      issues.push(`${key} and ${key}_FILE must not both be set`);
+    }
+  });
 
   if (!configuredToken) {
     issues.push('MADE_MY_DAY_ADMIN_TOKEN must be set via env or MADE_MY_DAY_ADMIN_TOKEN_FILE for GA readiness');
