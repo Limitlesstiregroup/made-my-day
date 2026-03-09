@@ -86,6 +86,9 @@ async function run() {
     if (healthVersionJson?.ok !== true || typeof healthVersionJson?.version !== 'string') {
       throw new Error('health version endpoint missing ok/version payload');
     }
+    if (typeof healthVersionJson?.nodeVersion !== 'string' || typeof healthVersionJson?.startedAt !== 'string') {
+      throw new Error('health version endpoint missing nodeVersion/startedAt payload');
+    }
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {

@@ -669,7 +669,9 @@ function getVersionSnapshot() {
     service: 'made-my-day',
     version: packageMeta.version,
     gitSha,
-    buildId
+    buildId,
+    nodeVersion: process.version,
+    startedAt: new Date(Date.now() - Math.floor(process.uptime() * 1000)).toISOString()
   };
 }
 
