@@ -603,6 +603,14 @@ function getConfigIssues() {
     issues.push('keepAliveTimeoutOrder');
   }
 
+  if (
+    !issues.includes('keepAliveTimeout')
+    && !issues.includes('headersTimeout')
+    && (headersTimeoutRaw - keepAliveTimeoutRaw) < 1000
+  ) {
+    issues.push('keepAliveSafetyGap');
+  }
+
   const secretFileKeys = [
     'MADE_MY_DAY_ADMIN_TOKEN',
     'MADE_MY_DAY_ONCALL_PRIMARY',
@@ -658,8 +666,8 @@ function getReadinessStatus() {
       maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
       trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass',
       requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
-      headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : (issues.includes('headersTimeoutOrder') ? 'fail' : 'pass'),
-      keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : (issues.includes('keepAliveTimeoutOrder') ? 'fail' : 'pass'),
+      headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : ((issues.includes('headersTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
+      keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : ((issues.includes('keepAliveTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
       maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass',
       maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass'
     }
@@ -2528,8 +2536,16 @@ function resolveServerTimeouts(env = process.env) {
     ? Math.floor(keepAliveTimeoutRaw)
     : 5_000;
 
-  const headersTimeout = Math.min(headersTimeoutCandidate, requestTimeout);
-  const keepAliveTimeout = Math.min(keepAliveTimeoutCandidate, headersTimeout);
+  let headersTimeout = Math.min(headersTimeoutCandidate, requestTimeout);
+  let keepAliveTimeout = Math.min(keepAliveTimeoutCandidate, headersTimeout);
+
+  if ((headersTimeout - keepAliveTimeout) < 1000) {
+    if ((requestTimeout - keepAliveTimeout) >= 1000) {
+      headersTimeout = keepAliveTimeout + 1000;
+    } else {
+      keepAliveTimeout = Math.max(1000, headersTimeout - 1000);
+    }
+  }
 
   return {
     requestTimeout,
