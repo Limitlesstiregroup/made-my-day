@@ -281,6 +281,43 @@ async function run() {
       throw new Error('expected 400 when x-forwarded-proto is not http/https while TRUST_PROXY=true');
     }
 
+    const multiHopForwardedPortHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Port: 443,80',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardedPortHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop x-forwarded-port headers are sent while TRUST_PROXY=true');
+    }
+
+    const duplicateForwardedPortHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Port: 443',
+      'X-Forwarded-Port: 80',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateForwardedPortHeaderResponse)) {
+      throw new Error('expected 400 when duplicate x-forwarded-port headers are sent while TRUST_PROXY=true');
+    }
+
+    const invalidForwardedPortHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-Port: 70000',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedPortHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-port is out of range while TRUST_PROXY=true');
+    }
+
     const invalidForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

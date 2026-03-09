@@ -1731,7 +1731,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
     }
-    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto'))) {
+    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
     }
     if (TRUST_PROXY) {
@@ -1739,11 +1739,13 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const forwarded = req.headers.forwarded;
       const forwardedHost = req.headers['x-forwarded-host'];
       const forwardedProto = req.headers['x-forwarded-proto'];
+      const forwardedPort = req.headers['x-forwarded-port'];
       if (
         (typeof forwardedFor === 'string' && forwardedFor.includes(',')) ||
         (typeof forwarded === 'string' && forwarded.includes(',')) ||
         (typeof forwardedHost === 'string' && forwardedHost.includes(',')) ||
-        (typeof forwardedProto === 'string' && forwardedProto.includes(','))
+        (typeof forwardedProto === 'string' && forwardedProto.includes(',')) ||
+        (typeof forwardedPort === 'string' && forwardedPort.includes(','))
       ) {
         return json(res, 400, { error: 'Multi-hop forwarding headers are not allowed' });
       }
@@ -1752,6 +1754,15 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       }
       if (typeof forwardedProto === 'string' && forwardedProto.trim() !== '' && !/^https?$/i.test(forwardedProto.trim())) {
         return json(res, 400, { error: 'invalid x-forwarded-proto header' });
+      }
+      if (typeof forwardedPort === 'string' && forwardedPort.trim() !== '' && !/^\d{1,5}$/.test(forwardedPort.trim())) {
+        return json(res, 400, { error: 'invalid x-forwarded-port header' });
+      }
+      if (typeof forwardedPort === 'string' && forwardedPort.trim() !== '') {
+        const port = Number(forwardedPort.trim());
+        if (!Number.isInteger(port) || port < 1 || port > 65535) {
+          return json(res, 400, { error: 'invalid x-forwarded-port header' });
+        }
       }
     }
     const rawUrl = typeof req.url === 'string' ? req.url : '';
