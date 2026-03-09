@@ -2586,6 +2586,10 @@ server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
 });
 
+const SHUTDOWN_GRACE_MS = Number.isFinite(Number(process.env.SHUTDOWN_GRACE_MS))
+  ? Math.floor(Math.max(1_000, Math.min(Number(process.env.SHUTDOWN_GRACE_MS), 120_000)))
+  : 10_000;
+
 let shuttingDown = false;
 
 function shutdown(signal, exitCode = 0) {
@@ -2597,10 +2601,21 @@ function shutdown(signal, exitCode = 0) {
   clearTimeout(winnerBootTimeout);
   clearInterval(winnerInterval);
   saveIdempotencyCaches();
+
+  if (typeof server.closeIdleConnections === 'function') {
+    server.closeIdleConnections();
+  }
+
   server.close(() => {
     process.exit(exitCode);
   });
-  setTimeout(() => process.exit(1), 10_000).unref();
+
+  setTimeout(() => {
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    }
+    process.exit(1);
+  }, SHUTDOWN_GRACE_MS).unref();
 }
 
 function handleFatalError(type, error) {
