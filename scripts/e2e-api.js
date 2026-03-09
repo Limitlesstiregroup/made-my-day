@@ -330,6 +330,30 @@ async function run() {
       throw new Error('expected 400 when x-forwarded-host is malformed while TRUST_PROXY=true');
     }
 
+    const invalidForwardedForHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'X-Forwarded-For: not-an-ip',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedForHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-for is malformed while TRUST_PROXY=true');
+    }
+
+    const invalidForwardedHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Forwarded: for=_hidden',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedHeaderResponse)) {
+      throw new Error('expected 400 when forwarded is malformed while TRUST_PROXY=true');
+    }
+
     const absoluteTargetResponse = await sendRawHttp([
       'GET http://127.0.0.1:4399/api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

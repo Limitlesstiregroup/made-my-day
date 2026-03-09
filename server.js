@@ -1186,6 +1186,20 @@ function parseForwardedHeaderIp(headerValue) {
   return null;
 }
 
+function hasValidSingleForwardedForHeader(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes(',') || trimmed.length > 512) return false;
+  return Boolean(normalizeIp(trimmed));
+}
+
+function hasValidSingleForwardedHeader(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes(',') || trimmed.length > 1024) return false;
+  return Boolean(parseForwardedHeaderIp(trimmed));
+}
+
 function getRequestIp(req) {
   if (TRUST_PROXY) {
     const forwardedFor = req.headers['x-forwarded-for'];
@@ -1783,6 +1797,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         (typeof forwardedPort === 'string' && forwardedPort.includes(','))
       ) {
         return json(res, 400, { error: 'Multi-hop forwarding headers are not allowed' });
+      }
+      if (typeof forwardedFor === 'string' && forwardedFor.trim() !== '' && !hasValidSingleForwardedForHeader(forwardedFor)) {
+        return json(res, 400, { error: 'invalid x-forwarded-for header' });
+      }
+      if (typeof forwarded === 'string' && forwarded.trim() !== '' && !hasValidSingleForwardedHeader(forwarded)) {
+        return json(res, 400, { error: 'invalid forwarded header' });
       }
       if (typeof forwardedHost === 'string' && forwardedHost.trim() !== '' && !isValidIncomingHostHeader(forwardedHost.trim().toLowerCase())) {
         return json(res, 400, { error: 'invalid x-forwarded-host header' });
