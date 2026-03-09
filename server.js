@@ -1032,7 +1032,7 @@ function securityHeaders() {
     'Origin-Agent-Cluster': '?1',
     'X-Robots-Tag': 'noindex, nofollow',
     'Content-Security-Policy': "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
   };
 }
 
