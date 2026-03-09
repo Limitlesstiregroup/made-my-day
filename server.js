@@ -502,6 +502,9 @@ function getConfigIssues() {
   }
 
   if (ALLOWED_HOSTS.length > 0) {
+    if (ALLOWED_HOSTS.length > 32) {
+      issues.push('allowedHosts');
+    }
     if (ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {
       issues.push('allowedHosts');
     }

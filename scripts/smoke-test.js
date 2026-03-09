@@ -283,6 +283,14 @@ try {
     privateAllowedHostIssue.includes('ALLOWED_HOSTS must not include localhost/private network hosts in GA mode'),
     'release readiness should reject localhost/private hosts in ALLOWED_HOSTS for GA mode'
   );
+
+  const oversizedAllowedHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: Array.from({ length: 33 }, (_, i) => `app${i + 1}.mademyday.com`).join(',')
+  });
+  assert.ok(
+    oversizedAllowedHostIssue.includes('ALLOWED_HOSTS must include at most 32 entries'),
+    'release readiness should reject oversized ALLOWED_HOSTS lists'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);

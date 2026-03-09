@@ -361,6 +361,10 @@ function evaluateReadiness(env = process.env) {
 
   const allowedHosts = getAllowedHosts(env);
   if (allowedHosts.length > 0) {
+    if (allowedHosts.length > 32) {
+      issues.push('ALLOWED_HOSTS must include at most 32 entries');
+    }
+
     const invalidAllowedHost = allowedHosts.find((host) => !isValidAllowedHostEntry(host));
     if (invalidAllowedHost) {
       issues.push('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)');
