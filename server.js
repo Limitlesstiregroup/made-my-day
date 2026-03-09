@@ -1196,6 +1196,7 @@ function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
     ...securityHeaders(),
     ...(extraHeaders || {})
   };
+  headers.Vary = headers.Vary ? `${headers.Vary}, Authorization` : 'Authorization';
 
   if (ifNoneMatchMatches(req, etag)) {
     res.writeHead(304, headers);

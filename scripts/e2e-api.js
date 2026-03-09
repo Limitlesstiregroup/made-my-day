@@ -561,6 +561,14 @@ async function run() {
       throw new Error('idempotent retry did not return original story payload');
     }
 
+    const storiesFeed = await fetch(`${BASE}/api/stories?limit=1&offset=0`);
+    if (storiesFeed.status !== 200) {
+      throw new Error(`expected 200 for stories feed, got ${storiesFeed.status}`);
+    }
+    if (!(storiesFeed.headers.get('vary') || '').toLowerCase().includes('authorization')) {
+      throw new Error('expected Vary: Authorization on cached stories feed responses');
+    }
+
     const invalidIdempotencyKey = await fetch(`${BASE}/api/stories`, {
       method: 'POST',
       headers: {
