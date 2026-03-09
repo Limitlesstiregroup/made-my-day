@@ -507,6 +507,18 @@ async function run() {
       throw new Error(`expected 415 for invalid content-type, got ${badContentType.status}`);
     }
 
+    const badContentEncoding = await fetch(`${BASE}/api/stories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Encoding': 'gzip'
+      },
+      body: JSON.stringify({ text: 'This encoded payload should be rejected for unsupported content encoding.' })
+    });
+    if (badContentEncoding.status !== 415) {
+      throw new Error(`expected 415 for unsupported content-encoding, got ${badContentEncoding.status}`);
+    }
+
     const uniqueSuffix = Date.now();
     const idempotencyKey = `create-story-${uniqueSuffix}`;
     const createStory = await fetch(`${BASE}/api/stories`, {

@@ -1340,6 +1340,15 @@ function hasTransferEncodingHeader(rawHeader) {
   return String(rawHeader).trim().length > 0;
 }
 
+function hasUnsupportedContentEncoding(rawHeader) {
+  if (rawHeader == null) return false;
+  const values = Array.isArray(rawHeader)
+    ? rawHeader.map((value) => String(value).trim()).filter(Boolean)
+    : String(rawHeader).split(',').map((value) => value.trim()).filter(Boolean);
+  if (values.length === 0) return false;
+  return values.some((value) => value.toLowerCase() !== 'identity');
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -1374,6 +1383,12 @@ function readBody(req) {
     if (hasTransferEncodingHeader(req.headers['transfer-encoding']) && Number.isFinite(declaredContentLength?.value)) {
       const error = new Error('ambiguous request framing');
       error.code = 'AMBIGUOUS_REQUEST_FRAMING';
+      fail(error);
+      return;
+    }
+    if (hasUnsupportedContentEncoding(req.headers['content-encoding'])) {
+      const error = new Error('content-encoding not supported');
+      error.code = 'UNSUPPORTED_CONTENT_ENCODING';
       fail(error);
       return;
     }
@@ -1446,6 +1461,10 @@ function handleBodyReadError(res, error) {
   }
   if (error?.code === 'BODY_READ_TIMEOUT') {
     json(res, 408, { error: 'Request body read timeout.' });
+    return;
+  }
+  if (error?.code === 'UNSUPPORTED_CONTENT_ENCODING') {
+    json(res, 415, { error: 'Content-Encoding must be identity when provided.' });
     return;
   }
   json(res, 400, { error: 'Invalid JSON body.' });
