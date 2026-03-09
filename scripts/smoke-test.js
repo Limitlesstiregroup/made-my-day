@@ -152,6 +152,16 @@ try {
     'on-call owners with control characters should fail release readiness'
   );
 
+  const oncallWhitespaceIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oncallWhitespaceIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not contain whitespace'),
+    'on-call owners with whitespace should fail release readiness'
+  );
+
   const missingSecondaryOncallIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_primary_1234',
     MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',

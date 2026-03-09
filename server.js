@@ -313,6 +313,10 @@ function hasUnsafeOncallChars(value) {
   return /[\r\n\t]/.test(String(value || ''));
 }
 
+function hasOncallWhitespace(value) {
+  return /\s/.test(String(value || ''));
+}
+
 function getConfiguredAdminToken() {
   const direct = String(process.env.MADE_MY_DAY_ADMIN_TOKEN || '').trim();
   if (direct) return direct;
@@ -397,6 +401,17 @@ function hasEscalationUrlParamsOrFragment(value) {
   }
 }
 
+function hasEscalationUrlCredentials(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    return Boolean(parsed.username || parsed.password);
+  } catch {
+    return false;
+  }
+}
+
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -459,12 +474,12 @@ function getConfigIssues() {
   }
 
   const oncallPrimary = getTextConfigValue('MADE_MY_DAY_ONCALL_PRIMARY');
-  if (oncallPrimary.length < 3 || looksLikePlaceholderToken(oncallPrimary) || hasUnsafeOncallChars(oncallPrimary)) {
+  if (oncallPrimary.length < 3 || looksLikePlaceholderToken(oncallPrimary) || hasUnsafeOncallChars(oncallPrimary) || hasOncallWhitespace(oncallPrimary)) {
     issues.push('oncallPrimary');
   }
 
   const oncallSecondary = getTextConfigValue('MADE_MY_DAY_ONCALL_SECONDARY');
-  if (oncallSecondary.length < 3 || looksLikePlaceholderToken(oncallSecondary) || hasUnsafeOncallChars(oncallSecondary) || oncallSecondary.toLowerCase() === oncallPrimary.toLowerCase()) {
+  if (oncallSecondary.length < 3 || looksLikePlaceholderToken(oncallSecondary) || hasUnsafeOncallChars(oncallSecondary) || hasOncallWhitespace(oncallSecondary) || oncallSecondary.toLowerCase() === oncallPrimary.toLowerCase()) {
     issues.push('oncallSecondary');
   }
 
@@ -476,6 +491,9 @@ function getConfigIssues() {
     issues.push('escalationDocUrl');
   }
   if (hasEscalationUrlParamsOrFragment(escalationDocUrl)) {
+    issues.push('escalationDocUrl');
+  }
+  if (hasEscalationUrlCredentials(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }
   if (escalationDocUrl) {
