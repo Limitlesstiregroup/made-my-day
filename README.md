@@ -18,6 +18,7 @@ Anonymous same-day positive story platform.
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
+- Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
 - HTTP verb hardening: `TRACE` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic surface area
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
 - Content-Length hardening: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability

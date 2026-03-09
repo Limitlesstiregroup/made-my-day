@@ -1667,6 +1667,15 @@ function hasTeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasUnsupportedConnectionHeader(req) {
+  const value = req.headers.connection;
+  const raw = Array.isArray(value) ? value.join(',') : value;
+  if (typeof raw !== 'string' || raw.trim() === '') return false;
+  const allowedTokens = new Set(['keep-alive', 'close']);
+  const tokens = raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean);
+  return tokens.some((token) => !allowedTokens.has(token));
+}
+
 function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
@@ -1715,6 +1724,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });
+    }
+    if (hasUnsupportedConnectionHeader(req)) {
+      return json(res, 400, { error: 'connection header contains unsupported tokens' });
     }
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
