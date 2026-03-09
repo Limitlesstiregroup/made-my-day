@@ -11,6 +11,7 @@ Anonymous same-day positive story platform.
 - Query-string hardening via query length cap (`MAX_QUERY_CHARS`, default `1024`): oversized query strings return HTTP 414 before route handling
 - Header-flood hardening via max request-header size cap (`MAX_HEADER_BYTES`, default `16384`): oversized headers are rejected at parser level with HTTP 431 (`Request Header Fields Too Large`)
 - Keep-alive socket churn hardening via per-socket request cap (`MAX_REQUESTS_PER_SOCKET`, default `100`): sockets are recycled after bounded request counts to reduce long-lived abuse risk
+- Header-count hardening via max header count cap (`MAX_HEADERS_COUNT`, default `200`): connections with excessive header field counts are rejected at parser level to reduce header-flood pressure
 - Request correlation hardening: `x-request-id` must be a single token (`8-128` chars, `[a-zA-Z0-9:_-.]`); malformed, duplicate, or comma-joined values are rejected with HTTP 400 (`invalid x-request-id header`) to avoid log correlation ambiguity
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
 - Method-override hardening: requests carrying `x-http-method-override` are rejected with HTTP 400 (`x-http-method-override header is not allowed`) to prevent proxy/client verb-tunneling bypasses

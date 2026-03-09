@@ -73,6 +73,9 @@ const MAX_QUERY_CHARS = Number.isFinite(Number(process.env.MAX_QUERY_CHARS))
 const MAX_REQUESTS_PER_SOCKET = Number.isFinite(Number(process.env.MAX_REQUESTS_PER_SOCKET))
   ? Math.floor(Math.max(1, Math.min(Number(process.env.MAX_REQUESTS_PER_SOCKET), 1000)))
   : 100;
+const MAX_HEADERS_COUNT = Number.isFinite(Number(process.env.MAX_HEADERS_COUNT))
+  ? Math.floor(Math.max(1, Math.min(Number(process.env.MAX_HEADERS_COUNT), 2000)))
+  : 200;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_MUTATIONS = Number(process.env.RATE_LIMIT_MAX_MUTATIONS || 45);
 const RATE_LIMIT_MAX_KEYS = Number(process.env.RATE_LIMIT_MAX_KEYS || 10_000);
@@ -559,6 +562,11 @@ function getConfigIssues() {
     issues.push('maxRequestsPerSocket');
   }
 
+  const maxHeadersCountRaw = parseIntOrDefault(process.env.MAX_HEADERS_COUNT, 200);
+  if (maxHeadersCountRaw < 1 || maxHeadersCountRaw > 2000) {
+    issues.push('maxHeadersCount');
+  }
+
   if (!issues.includes('headersTimeout') && !issues.includes('requestTimeout') && headersTimeoutRaw > requestTimeoutRaw) {
     issues.push('headersTimeoutOrder');
   }
@@ -624,7 +632,8 @@ function getReadinessStatus() {
       requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
       headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : (issues.includes('headersTimeoutOrder') ? 'fail' : 'pass'),
       keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : (issues.includes('keepAliveTimeoutOrder') ? 'fail' : 'pass'),
-      maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass'
+      maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass',
+      maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass'
     }
   };
 }
@@ -2334,7 +2343,8 @@ function resolveServerTimeouts(env = process.env) {
     requestTimeout,
     headersTimeout,
     keepAliveTimeout,
-    maxRequestsPerSocket: MAX_REQUESTS_PER_SOCKET
+    maxRequestsPerSocket: MAX_REQUESTS_PER_SOCKET,
+    maxHeadersCount: MAX_HEADERS_COUNT
   };
 }
 
@@ -2343,6 +2353,7 @@ server.requestTimeout = resolvedTimeouts.requestTimeout;
 server.headersTimeout = resolvedTimeouts.headersTimeout;
 server.keepAliveTimeout = resolvedTimeouts.keepAliveTimeout;
 server.maxRequestsPerSocket = resolvedTimeouts.maxRequestsPerSocket;
+server.maxHeadersCount = resolvedTimeouts.maxHeadersCount;
 
 server.on('clientError', (error, socket) => {
   if (!socket || !socket.writable) return;
