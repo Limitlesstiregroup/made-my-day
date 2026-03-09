@@ -162,6 +162,16 @@ try {
     'on-call owners with whitespace should fail release readiness'
   );
 
+  const oncallUrlIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'https://pager.mademyday.test/community',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oncallUrlIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must be an owner handle/email/pager alias (URLs are not allowed)'),
+    'URL-like on-call owners should fail release readiness'
+  );
+
   const oversizedOncallIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: `community-oncall-${'x'.repeat(120)}`,
     MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
