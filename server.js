@@ -638,9 +638,11 @@ function getReadinessStatus() {
   };
 }
 
-function getOperationalSnapshot(store) {
+function getOperationalSnapshot(store, { windowHours = 0 } = {}) {
   const importedStories = store.stories.filter((s) => s.autoImported).length;
   const manualStories = store.stories.length - importedStories;
+  const nowMs = Date.now();
+  const windowMs = windowHours > 0 ? windowHours * 60 * 60 * 1000 : null;
   const activeHall = store.hallOfFame.find((h) => Date.now() - new Date(h.publishedAt).getTime() < 7 * 24 * 60 * 60 * 1000) || null;
   const latestStory = store.stories[0] || null;
   const rateLimitKeysUsed = mutationLog.size;
@@ -653,6 +655,27 @@ function getOperationalSnapshot(store) {
       hallOfFame: store.hallOfFame.length,
       giftCards: store.giftCards.length
     },
+    recentWindow: windowMs
+      ? {
+          windowHours,
+          stories: store.stories.filter((story) => {
+            const ts = Date.parse(story?.createdAt || '');
+            return Number.isFinite(ts) && nowMs - ts <= windowMs;
+          }).length,
+          comments: store.comments.filter((comment) => {
+            const ts = Date.parse(comment?.createdAt || '');
+            return Number.isFinite(ts) && nowMs - ts <= windowMs;
+          }).length,
+          hallOfFame: store.hallOfFame.filter((entry) => {
+            const ts = Date.parse(entry?.publishedAt || '');
+            return Number.isFinite(ts) && nowMs - ts <= windowMs;
+          }).length,
+          giftCards: store.giftCards.filter((card) => {
+            const ts = Date.parse(card?.createdAt || card?.issuedAt || '');
+            return Number.isFinite(ts) && nowMs - ts <= windowMs;
+          }).length
+        }
+      : null,
     ingestion: {
       importedStories,
       manualStories,
@@ -1900,11 +1923,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (isGetOrHead(req) && u.pathname === '/api/health/details') {
       if (!requireAdminAuth(req, res)) return;
       const readiness = getReadinessStatus();
+      const windowHours = parseBoundedInt(u.searchParams.get('windowHours'), 0, { min: 0, max: 24 * 90 });
       return json(res, 200, {
         ok: true,
         service: 'made-my-day',
         readiness,
-        operations: getOperationalSnapshot(store),
+        operations: getOperationalSnapshot(store, { windowHours }),
         escalation: getEscalationSnapshot()
       });
     }
