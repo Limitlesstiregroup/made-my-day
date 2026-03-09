@@ -1745,6 +1745,16 @@ function hasProxyConnectionHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasAnyForwardingHeader(req) {
+  return [
+    'x-forwarded-for',
+    'forwarded',
+    'x-forwarded-host',
+    'x-forwarded-proto',
+    'x-forwarded-port'
+  ].some((headerName) => typeof req.headers[headerName] !== 'undefined');
+}
+
 function hasTeHeader(req) {
   const value = req.headers.te;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -1814,6 +1824,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTraceMethod(req)) {
       return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
+    }
+    if (!TRUST_PROXY && hasAnyForwardingHeader(req)) {
+      return json(res, 400, { error: 'forwarding headers require trusted proxy mode' });
     }
     if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
