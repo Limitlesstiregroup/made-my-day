@@ -665,13 +665,17 @@ function getEscalationSnapshot() {
 function getVersionSnapshot() {
   const gitSha = String(process.env.MADE_MY_DAY_GIT_SHA || process.env.GIT_COMMIT_SHA || '').trim() || null;
   const buildId = String(process.env.MADE_MY_DAY_BUILD_ID || '').trim() || null;
+  const uptimeSeconds = Math.floor(process.uptime());
+  const instanceId = String(process.env.MADE_MY_DAY_INSTANCE_ID || process.env.HOSTNAME || '').trim() || null;
   return {
     service: 'made-my-day',
     version: packageMeta.version,
     gitSha,
     buildId,
+    instanceId,
     nodeVersion: process.version,
-    startedAt: new Date(Date.now() - Math.floor(process.uptime() * 1000)).toISOString()
+    startedAt: new Date(Date.now() - (uptimeSeconds * 1000)).toISOString(),
+    uptimeSeconds
   };
 }
 
