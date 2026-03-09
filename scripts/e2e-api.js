@@ -280,6 +280,18 @@ async function run() {
       throw new Error('expected 400 when te header is present');
     }
 
+    const trailerHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4399',
+      'Trailer: x-signature',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(trailerHeaderResponse)) {
+      throw new Error('expected 400 when trailer header is present');
+    }
+
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: 127.0.0.1:4399',

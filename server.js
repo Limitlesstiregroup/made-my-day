@@ -1849,6 +1849,12 @@ function hasTeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasTrailerHeader(req) {
+  const value = req.headers.trailer;
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasUnsupportedConnectionHeader(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -1916,6 +1922,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });
+    }
+    if (hasTrailerHeader(req)) {
+      return json(res, 400, { error: 'trailer header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });
