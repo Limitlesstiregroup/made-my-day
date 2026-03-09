@@ -1606,6 +1606,10 @@ function hasExpectHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasTraceMethod(req) {
+  return String(req.method || '').toUpperCase() === 'TRACE';
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -1641,6 +1645,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasExpectHeader(req)) {
       return json(res, 417, { error: 'expect header is not allowed' });
+    }
+    if (hasTraceMethod(req)) {
+      return json(res, 405, { error: 'TRACE method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
     }
     if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto'))) {
       return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
