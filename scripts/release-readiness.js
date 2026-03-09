@@ -215,18 +215,24 @@ function isPrivateOrLocalEscalationHost(hostname) {
   const ipVersion = net.isIP(normalized);
   if (ipVersion === 4) {
     const [a, b] = normalized.split('.').map((segment) => Number(segment));
+    if (a === 0) return true;
     if (a === 10) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;
     if (a === 127) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 172 && b >= 16 && b <= 31) return true;
     if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 0) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 198 && (b === 18 || b === 19)) return true;
+    if (a === 224 || a >= 240) return true;
     return false;
   }
 
   if (ipVersion === 6) {
-    if (normalized === '::1') return true;
+    if (normalized === '::' || normalized === '::1') return true;
     if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
-    if (normalized.startsWith('fe80:')) return true;
+    if (normalized.startsWith('fe8') || normalized.startsWith('fe9') || normalized.startsWith('fea') || normalized.startsWith('feb')) return true;
+    return false;
   }
 
   return false;
