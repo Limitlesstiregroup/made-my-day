@@ -2021,6 +2021,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       return json(res, readiness.ready ? 200 : 503, {
         ok: readiness.ready,
         service: 'made-my-day',
+        checkedAt: new Date().toISOString(),
         checks: readiness.checks,
         issueCodes: readiness.issueCodes
       });
