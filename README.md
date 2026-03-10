@@ -119,6 +119,10 @@ docker run --rm -p 4300:4300 made-my-day:latest
 ```
 Detailed runbook: `docs/DEPLOYMENT.md`
 
+## GA Milestone Status
+- 100%: Production handoff complete (`docs/milestones.md`)
+- 105% sustainment kickoff: incident replay fixture expansion for malformed intermediary traffic
+
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
