@@ -2,7 +2,7 @@
 const { spawn } = require('child_process');
 const net = require('node:net');
 
-const PORT = 4399;
+const PORT = Number(process.env.MADE_MY_DAY_E2E_PORT || (4300 + Math.floor(Math.random() * 1000)));
 const BASE = `http://127.0.0.1:${PORT}`;
 
 function wait(ms) {
@@ -105,7 +105,7 @@ async function run() {
 
     const healthHeadRaw = await sendRawHttp([
       'HEAD /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
@@ -139,8 +139,8 @@ async function run() {
 
     const duplicateHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
@@ -151,7 +151,7 @@ async function run() {
 
     const multiHopForwardingHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-For: 203.0.113.10, 198.51.100.11',
       'Connection: close',
       '',
@@ -163,7 +163,7 @@ async function run() {
 
     const multiHopForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Host: edge.mademyday.app, origin.mademyday.app',
       'Connection: close',
       '',
@@ -175,7 +175,7 @@ async function run() {
 
     const duplicateForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Host: edge.mademyday.app',
       'X-Forwarded-Host: origin.mademyday.app',
       'Connection: close',
@@ -188,7 +188,7 @@ async function run() {
 
     const methodOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-HTTP-Method-Override: DELETE',
       'Connection: close',
       '',
@@ -200,7 +200,7 @@ async function run() {
 
     const expectHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Expect: 100-continue',
       'Connection: close',
       '',
@@ -212,7 +212,7 @@ async function run() {
 
     const upgradeHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Upgrade: websocket',
       'Connection: close',
       '',
@@ -224,7 +224,7 @@ async function run() {
 
     const traceMethodResponse = await sendRawHttp([
       'TRACE /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
@@ -234,8 +234,8 @@ async function run() {
     }
 
     const connectMethodResponse = await sendRawHttp([
-      'CONNECT 127.0.0.1:4399 HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `CONNECT 127.0.0.1:${PORT} HTTP/1.1`,
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
@@ -246,7 +246,7 @@ async function run() {
 
     const proxyConnectionHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Proxy-Connection: keep-alive',
       'Connection: close',
       '',
@@ -258,7 +258,7 @@ async function run() {
 
     const earlyDataHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Early-Data: 1',
       'Connection: close',
       '',
@@ -270,7 +270,7 @@ async function run() {
 
     const pathOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Original-URL: /api/admin/gift-cards',
       'Connection: close',
       '',
@@ -282,7 +282,7 @@ async function run() {
 
     const teHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'TE: trailers',
       'Connection: close',
       '',
@@ -294,7 +294,7 @@ async function run() {
 
     const trailerHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Trailer: x-signature',
       'Connection: close',
       '',
@@ -306,7 +306,7 @@ async function run() {
 
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Proto: https,http',
       'Connection: close',
       '',
@@ -318,7 +318,7 @@ async function run() {
 
     const invalidForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Proto: websocket',
       'Connection: close',
       '',
@@ -330,7 +330,7 @@ async function run() {
 
     const multiHopForwardedPortHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Port: 443,80',
       'Connection: close',
       '',
@@ -342,7 +342,7 @@ async function run() {
 
     const duplicateForwardedPortHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Port: 443',
       'X-Forwarded-Port: 80',
       'Connection: close',
@@ -355,7 +355,7 @@ async function run() {
 
     const invalidForwardedPortHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Port: 70000',
       'Connection: close',
       '',
@@ -367,7 +367,7 @@ async function run() {
 
     const invalidForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-Host: bad host',
       'Connection: close',
       '',
@@ -379,7 +379,7 @@ async function run() {
 
     const invalidForwardedForHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'X-Forwarded-For: not-an-ip',
       'Connection: close',
       '',
@@ -391,7 +391,7 @@ async function run() {
 
     const invalidForwardedHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Forwarded: for=_hidden',
       'Connection: close',
       '',
@@ -402,8 +402,8 @@ async function run() {
     }
 
     const absoluteTargetResponse = await sendRawHttp([
-      'GET http://127.0.0.1:4399/api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `GET http://127.0.0.1:${PORT}/api/health HTTP/1.1`,
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
@@ -414,7 +414,7 @@ async function run() {
 
     const conflictingContentLengthResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Content-Type: application/json',
       'Content-Length: 2',
       'Content-Length: 3',
@@ -428,7 +428,7 @@ async function run() {
 
     const ambiguousFramingResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Content-Type: application/json',
       'Transfer-Encoding: chunked',
       'Content-Length: 4',
@@ -444,7 +444,7 @@ async function run() {
 
     const invalidContentLengthOnGetResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Content-Length: two',
       'Connection: close',
       '',
@@ -457,7 +457,7 @@ async function run() {
     const oversizedHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `X-Oversized: ${'x'.repeat(20000)}`,
-      'Host: 127.0.0.1:4399',
+      `Host: 127.0.0.1:${PORT}`,
       'Connection: close',
       '',
       ''
