@@ -1920,6 +1920,12 @@ function hasAltUsedHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasHttp2SettingsHeader(req) {
+  const value = req.headers['http2-settings'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasPathOverrideHeader(req) {
   const originalUrl = req.headers['x-original-url'];
   const rewriteUrl = req.headers['x-rewrite-url'];
@@ -2065,6 +2071,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasAltUsedHeader(req)) {
       return json(res, 400, { error: 'alt-used header is not allowed' });
+    }
+    if (hasHttp2SettingsHeader(req)) {
+      return json(res, 400, { error: 'http2-settings header is not allowed' });
     }
     if (hasPathOverrideHeader(req)) {
       return json(res, 400, { error: 'path override headers are not allowed' });

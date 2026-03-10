@@ -292,6 +292,18 @@ async function run() {
       throw new Error('expected 400 when alt-used header is present');
     }
 
+    const http2SettingsHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'HTTP2-Settings: AAMAAABkAAQAAP__',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(http2SettingsHeaderResponse)) {
+      throw new Error('expected 400 when http2-settings header is present');
+    }
+
     const pathOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
