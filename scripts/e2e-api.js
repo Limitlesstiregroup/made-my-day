@@ -89,6 +89,9 @@ async function run() {
     if (typeof healthVersionJson?.nodeVersion !== 'string' || typeof healthVersionJson?.startedAt !== 'string') {
       throw new Error('health version endpoint missing nodeVersion/startedAt payload');
     }
+    if (typeof healthVersionJson?.memoryRssBytes !== 'number' || typeof healthVersionJson?.heapUsedBytes !== 'number') {
+      throw new Error('health version endpoint missing memoryRssBytes/heapUsedBytes payload');
+    }
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {

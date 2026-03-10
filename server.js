@@ -845,6 +845,7 @@ function getVersionSnapshot() {
   const buildId = String(process.env.MADE_MY_DAY_BUILD_ID || '').trim() || null;
   const uptimeSeconds = Math.floor(process.uptime());
   const instanceId = String(process.env.MADE_MY_DAY_INSTANCE_ID || process.env.HOSTNAME || '').trim() || null;
+  const memoryUsage = process.memoryUsage();
   return {
     service: 'made-my-day',
     version: packageMeta.version,
@@ -853,7 +854,9 @@ function getVersionSnapshot() {
     instanceId,
     nodeVersion: process.version,
     startedAt: new Date(Date.now() - (uptimeSeconds * 1000)).toISOString(),
-    uptimeSeconds
+    uptimeSeconds,
+    memoryRssBytes: Number.isFinite(memoryUsage.rss) ? memoryUsage.rss : 0,
+    heapUsedBytes: Number.isFinite(memoryUsage.heapUsed) ? memoryUsage.heapUsed : 0
   };
 }
 
