@@ -239,6 +239,7 @@ try {
   assert.equal(isPrivateOrLocalEscalationHost('10.1.2.3'), true, 'RFC1918 hosts should be rejected for escalation runbooks');
   assert.equal(isPrivateOrLocalEscalationHost('100.64.1.20'), true, 'carrier-grade NAT hosts should be rejected for escalation runbooks');
   assert.equal(isPrivateOrLocalEscalationHost('198.19.3.7'), true, 'benchmark-network hosts should be rejected for escalation runbooks');
+  assert.equal(isPrivateOrLocalEscalationHost('runbooks.ops.internal'), true, 'internal suffix escalation hosts should be rejected for escalation runbooks');
   assert.equal(isPrivateOrLocalEscalationHost('runbooks.mademyday.com'), false, 'public escalation hosts should remain allowed');
 
   const credentialedEscalationIssue = evaluateReadiness({

@@ -253,6 +253,15 @@ function isPrivateOrLocalEscalationHost(hostname) {
   if (normalized === '0.0.0.0') return true;
 
   const ipVersion = net.isIP(normalized);
+  if (ipVersion === 0) {
+    if (
+      normalized.endsWith('.local')
+      || normalized.endsWith('.internal')
+      || normalized.endsWith('.home.arpa')
+    ) {
+      return true;
+    }
+  }
   if (ipVersion === 4) {
     const [a, b] = normalized.split('.').map((segment) => Number(segment));
     if (a === 0) return true;
