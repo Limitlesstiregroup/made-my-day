@@ -18,6 +18,7 @@ Anonymous same-day positive story platform.
 - Method-override hardening: requests carrying `x-http-method-override`, `x-method-override`, `x-http-method`, or `x-method` are rejected with HTTP 400 (`x-http-method-override header is not allowed` / `legacy method override headers are not allowed`) to prevent proxy/client verb-tunneling bypasses
 - `Expect` header hardening: requests carrying `Expect` are rejected with HTTP 417 (`expect header is not allowed`) to reduce parser/state-machine ambiguity from `100-continue` flows
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
+- WebSocket handshake hardening: requests carrying `Sec-WebSocket-*` handshake headers are rejected with HTTP 400 (`websocket handshake headers are not allowed`) to reduce unsupported protocol negotiation ambiguity
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
 - Proxy credential-leak hardening: requests carrying `Proxy-Authorization` are rejected with HTTP 400 (`proxy-authorization header is not allowed`) to avoid accidental intermediary credential forwarding into app logs/surfaces
 - Proxy-auth challenge injection hardening: requests carrying `Proxy-Authenticate` are rejected with HTTP 400 (`proxy-authenticate header is not allowed`) to reduce intermediary auth-challenge confusion through upstream hops

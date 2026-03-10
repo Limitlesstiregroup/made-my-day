@@ -1935,6 +1935,15 @@ function hasUpgradeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasWebSocketHandshakeHeaders(req) {
+  const handshakeHeaderNames = ['sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-protocol', 'sec-websocket-accept'];
+  return handshakeHeaderNames.some((headerName) => {
+    const value = req.headers[headerName];
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  });
+}
+
 function hasProxyConnectionHeader(req) {
   const value = req.headers['proxy-connection'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2128,6 +2137,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasUpgradeHeader(req)) {
       return json(res, 400, { error: 'upgrade header is not allowed' });
+    }
+    if (hasWebSocketHandshakeHeaders(req)) {
+      return json(res, 400, { error: 'websocket handshake headers are not allowed' });
     }
     if (hasProxyConnectionHeader(req)) {
       return json(res, 400, { error: 'proxy-connection header is not allowed' });
