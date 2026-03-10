@@ -1867,6 +1867,12 @@ function hasEarlyDataHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasAltUsedHeader(req) {
+  const value = req.headers['alt-used'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasPathOverrideHeader(req) {
   const originalUrl = req.headers['x-original-url'];
   const rewriteUrl = req.headers['x-rewrite-url'];
@@ -1991,6 +1997,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasEarlyDataHeader(req)) {
       return json(res, 400, { error: 'early-data header is not allowed' });
+    }
+    if (hasAltUsedHeader(req)) {
+      return json(res, 400, { error: 'alt-used header is not allowed' });
     }
     if (hasPathOverrideHeader(req)) {
       return json(res, 400, { error: 'path override headers are not allowed' });

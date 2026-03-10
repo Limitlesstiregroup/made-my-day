@@ -21,6 +21,7 @@ Anonymous same-day positive story platform.
 - Proxy credential-leak hardening: requests carrying `Proxy-Authorization` are rejected with HTTP 400 (`proxy-authorization header is not allowed`) to avoid accidental intermediary credential forwarding into app logs/surfaces
 - Proxy-chain disclosure hardening: requests carrying `Via` are rejected with HTTP 400 (`via header is not allowed`) to reduce ambiguous intermediary attribution from untrusted upstream hops
 - TLS 0-RTT replay hardening: requests carrying `Early-Data` are rejected with HTTP 400 (`early-data header is not allowed`) to avoid replay-prone side effects on non-idempotent flows
+- Alternative-service routing hardening: requests carrying `Alt-Used` are rejected with HTTP 400 (`alt-used header is not allowed`) to reduce ambiguous upstream authority overrides through intermediaries
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries

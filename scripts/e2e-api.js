@@ -280,6 +280,18 @@ async function run() {
       throw new Error('expected 400 when early-data header is present');
     }
 
+    const altUsedHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Alt-Used: made-my-day.example',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(altUsedHeaderResponse)) {
+      throw new Error('expected 400 when alt-used header is present');
+    }
+
     const pathOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
