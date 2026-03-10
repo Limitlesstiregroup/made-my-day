@@ -1222,6 +1222,7 @@ function getJsonContentTypeStatus(req) {
 }
 
 function acceptsJsonResponse(req) {
+  if (hasDuplicateRawHeader(req, 'accept')) return { ok: false, malformed: true };
   const rawHeader = req.headers.accept;
   if (rawHeader == null) return { ok: true, malformed: false };
   if (Array.isArray(rawHeader)) {
