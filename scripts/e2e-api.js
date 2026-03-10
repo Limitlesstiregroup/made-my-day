@@ -340,6 +340,18 @@ async function run() {
       throw new Error('expected 400 when http2-settings header is present');
     }
 
+    const maxForwardsHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Max-Forwards: 0',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(maxForwardsHeaderResponse)) {
+      throw new Error('expected 400 when max-forwards header is present');
+    }
+
     const pathOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
