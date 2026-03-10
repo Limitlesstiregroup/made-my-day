@@ -1872,6 +1872,16 @@ function getRequestId(req) {
   return { requestId: `req_${crypto.randomUUID()}`, malformed: false };
 }
 
+function hasMissingRequiredHostHeader(req) {
+  const major = Number.parseInt(req?.httpVersionMajor, 10);
+  const minor = Number.parseInt(req?.httpVersionMinor, 10);
+  const isHttp11OrNewer = Number.isFinite(major) && (major > 1 || (major === 1 && Number.isFinite(minor) && minor >= 1));
+  if (!isHttp11OrNewer) return false;
+  const value = req?.headers?.host;
+  if (Array.isArray(value)) return value.every((entry) => String(entry || '').trim() === '');
+  return typeof value !== 'string' || value.trim() === '';
+}
+
 function hasDuplicateHostHeader(req) {
   if (!Array.isArray(req.rawHeaders)) return false;
   let hostHeaderCount = 0;
@@ -2100,6 +2110,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (malformedRequestId) {
       return json(res, 400, { error: 'invalid x-request-id header' });
+    }
+    if (hasMissingRequiredHostHeader(req)) {
+      return json(res, 400, { error: 'host header is required for http/1.1 requests' });
     }
     if (hasDuplicateHostHeader(req)) {
       return json(res, 400, { error: 'Duplicate Host headers are not allowed' });

@@ -115,6 +115,16 @@ async function run() {
       throw new Error('expected no payload body for HEAD /api/health');
     }
 
+    const missingHostResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(missingHostResponse)) {
+      throw new Error('expected 400 when host header is missing on HTTP/1.1 requests');
+    }
+
     const malformedHostResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       'Host: good.example,bad.example',
