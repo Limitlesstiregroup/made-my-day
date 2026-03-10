@@ -26,3 +26,4 @@
 - 110%: Idempotency cache schema versioning + deploy-time auto-migration guard ✅
 
 - 115%: Incident replay fixture expansion for malformed `x-request-id` + `x-forwarded-prefix` patterns ✅
+- 120%: Error-response cache hardening (cached JSON helpers disable ETag/304 + force no-store on 4xx/5xx) ✅

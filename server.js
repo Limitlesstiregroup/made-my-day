@@ -1311,18 +1311,24 @@ function ifNoneMatchMatches(req, etag) {
 }
 
 function jsonCached(req, res, status, data, { headers: extraHeaders } = {}) {
-  const etag = weakEtagForPayload(data);
   const body = JSON.stringify(data, null, 2);
+  const cacheable = status < 400;
+  const etag = cacheable ? weakEtagForPayload(data) : null;
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'private, max-age=0, must-revalidate',
-    ETag: etag,
     ...securityHeaders(),
     ...(extraHeaders || {})
   };
-  headers.Vary = headers.Vary ? `${headers.Vary}, Authorization` : 'Authorization';
+  if (cacheable) {
+    headers['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    headers.ETag = etag;
+    headers.Vary = headers.Vary ? `${headers.Vary}, Authorization` : 'Authorization';
+  } else {
+    applyNoStoreHeaders(headers);
+    delete headers.ETag;
+  }
 
-  if (ifNoneMatchMatches(req, etag)) {
+  if (cacheable && ifNoneMatchMatches(req, etag)) {
     res.writeHead(304, headers);
     res.end();
     return;
