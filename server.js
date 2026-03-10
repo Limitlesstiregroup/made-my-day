@@ -478,9 +478,21 @@ function parseBoundedInt(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEG
   return Math.max(min, Math.min(max, Math.floor(parsed)));
 }
 
-function buildPaginationLink(pathname, limit, nextOffset) {
-  if (!Number.isFinite(nextOffset) || nextOffset < 0) return undefined;
-  return `</${pathname.replace(/^\//, '')}?limit=${limit}&offset=${nextOffset}>; rel="next"`;
+function buildPaginationLinks(pathname, limit, offset, pageSize, total) {
+  const base = `/${pathname.replace(/^\//, '')}`;
+  const links = [];
+
+  const nextOffset = offset + pageSize < total ? offset + pageSize : null;
+  if (Number.isFinite(nextOffset) && nextOffset >= 0) {
+    links.push(`<${base}?limit=${limit}&offset=${nextOffset}>; rel="next"`);
+  }
+
+  const previousOffset = offset > 0 ? Math.max(0, offset - limit) : null;
+  if (Number.isFinite(previousOffset) && previousOffset >= 0 && offset > 0) {
+    links.push(`<${base}?limit=${limit}&offset=${previousOffset}>; rel="prev"`);
+  }
+
+  return links.length ? links.join(', ') : undefined;
 }
 
 function getConfigIssues() {
@@ -2275,12 +2287,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const records = store.hallOfFame.slice(offset, offset + limit);
       const total = store.hallOfFame.length;
-      const nextOffset = offset + records.length < total ? offset + records.length : null;
-      const nextLink = buildPaginationLink('api/admin/hall-of-fame.csv', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/admin/hall-of-fame.csv', limit, offset, records.length, total);
       const rows = [['storyId', 'publishedAt', 'score', 'giftCardCode', 'notifiedAt']].concat(
         records.map((entry) => [entry.storyId, entry.publishedAt, entry.score, entry.giftCardCode, entry.notifiedAt])
       );
-      return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
+      return csv(res, 200, rows, { headers: linkHeader ? { Link: linkHeader } : undefined });
     }
 
     if (isGetOrHead(req) && u.pathname === '/api/admin/gift-cards.csv') {
@@ -2289,12 +2300,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const offset = parseBoundedInt(u.searchParams.get('offset'), 0, { min: 0, max: 1000000 });
       const records = store.giftCards.slice(offset, offset + limit);
       const total = store.giftCards.length;
-      const nextOffset = offset + records.length < total ? offset + records.length : null;
-      const nextLink = buildPaginationLink('api/admin/gift-cards.csv', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/admin/gift-cards.csv', limit, offset, records.length, total);
       const rows = [['storyId', 'code', 'status', 'amountUsd', 'queuedAt', 'issuedAt']].concat(
         records.map((entry) => [entry.storyId, entry.code, entry.status, entry.amountUsd, entry.queuedAt, entry.issuedAt])
       );
-      return csv(res, 200, rows, { headers: nextLink ? { Link: nextLink } : undefined });
+      return csv(res, 200, rows, { headers: linkHeader ? { Link: linkHeader } : undefined });
     }
 
     if (isGetOrHead(req) && u.pathname === '/api/admin/hall-of-fame') {
@@ -2304,7 +2314,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const total = store.hallOfFame.length;
       const records = store.hallOfFame.slice(offset, offset + limit);
       const nextOffset = offset + records.length < total ? offset + records.length : null;
-      const nextLink = buildPaginationLink('api/admin/hall-of-fame', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/admin/hall-of-fame', limit, offset, records.length, total);
       return json(res, 200, {
         records,
         pagination: {
@@ -2315,7 +2325,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
           nextOffset
         }
       }, {
-        headers: nextLink ? { Link: nextLink } : undefined
+        headers: linkHeader ? { Link: linkHeader } : undefined
       });
     }
 
@@ -2326,7 +2336,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const total = store.giftCards.length;
       const records = store.giftCards.slice(offset, offset + limit);
       const nextOffset = offset + records.length < total ? offset + records.length : null;
-      const nextLink = buildPaginationLink('api/admin/gift-cards', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/admin/gift-cards', limit, offset, records.length, total);
       return json(res, 200, {
         records,
         pagination: {
@@ -2337,7 +2347,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
           nextOffset
         }
       }, {
-        headers: nextLink ? { Link: nextLink } : undefined
+        headers: linkHeader ? { Link: linkHeader } : undefined
       });
     }
 
@@ -2362,7 +2372,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         .map((s) => storyView(s, store));
 
       const nextOffset = offset + pagedStories.length < totalStories ? offset + pagedStories.length : null;
-      const nextLink = buildPaginationLink('api/stories', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/stories', limit, offset, pagedStories.length, totalStories);
       return jsonCached(req, res, 200, {
         stories: pagedStories,
         pagination: {
@@ -2374,7 +2384,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         },
         activeHallOfFameStoryId: activeHall?.storyId || null
       }, {
-        headers: nextLink ? { Link: nextLink } : undefined
+        headers: linkHeader ? { Link: linkHeader } : undefined
       });
     }
 
@@ -2386,7 +2396,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const total = store.hallOfFame.length;
       const hallSlice = store.hallOfFame.slice(offset, offset + limit);
       const nextOffset = offset + hallSlice.length < total ? offset + hallSlice.length : null;
-      const nextLink = buildPaginationLink('api/hall-of-fame', limit, nextOffset);
+      const linkHeader = buildPaginationLinks('api/hall-of-fame', limit, offset, hallSlice.length, total);
       return jsonCached(req, res, 200, {
         hallOfFame: hallSlice,
         pagination: {
@@ -2398,7 +2408,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         },
         pendingWinner: store.pendingWinner
       }, {
-        headers: nextLink ? { Link: nextLink } : undefined
+        headers: linkHeader ? { Link: linkHeader } : undefined
       });
     }
 
