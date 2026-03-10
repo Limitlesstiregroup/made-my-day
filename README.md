@@ -43,6 +43,7 @@ Anonymous same-day positive story platform.
 - Admin bearer-token protection for automation endpoints (`POST /api/import/run`, `POST /api/hall-of-fame/run`) when `MADE_MY_DAY_ADMIN_TOKEN`/`MADE_MY_DAY_ADMIN_TOKEN_FILE` is set (minimum 16 chars; placeholder/weak tokens are treated as invalid; whitespace characters are rejected to prevent copy/paste auth drift)
 - Unauthorized admin responses include `WWW-Authenticate: Bearer realm="made-my-day"` for standards-compliant client challenge handling
 - Automation concurrency hardening: import and hall-of-fame manual triggers return HTTP 409 when a run is already in progress to avoid duplicate writes
+- Import scheduler hardening: auto-imported stories are now distributed across bounded time slots within the active hour window (with small cryptographic jitter) to avoid bursty publish clumps during GA traffic
 - Optional idempotent automation retries via `Idempotency-Key` on `POST /api/import/run` and `POST /api/hall-of-fame/run` (returns prior successful response with `idempotent: true` during the idempotency window); malformed/ambiguous keys are rejected with HTTP 400 (`invalid idempotency-key header`)
 - Zero-downtime admin token rotation via `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS` (or `MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS_FILE`) so old and new tokens can overlap during cutover (rotation fallback token must differ from the primary token)
 - Authorization header hardening for admin APIs: duplicate/comma-joined or malformed Bearer headers are rejected with HTTP 400 before token comparison

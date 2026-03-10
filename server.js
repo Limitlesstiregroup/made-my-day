@@ -1746,15 +1746,27 @@ async function ingestPositiveStories() {
 
   if (!candidates.length) return { added: 0, source: 'reddit/r/MadeMeSmile' };
 
-  // 5 per hour at random times inside the hour window.
+  // Spread imports across the current hour window with deterministic spacing.
   const selected = candidates.slice(0, 5);
   const now = Date.now();
   const hourEnd = new Date();
   hourEnd.setMinutes(59, 59, 999);
   const windowMs = Math.max(5 * 60 * 1000, hourEnd.getTime() - now);
 
+  const slotMs = Math.max(1, Math.floor(windowMs / selected.length));
+  const maxJitterMs = Math.max(0, Math.min(Math.floor(slotMs / 3), 30 * 1000));
   const offsets = selected
-    .map(() => Math.floor(Math.random() * windowMs))
+    .map((_, index) => {
+      const slotStart = index * slotMs;
+      const slotEnd = index === selected.length - 1
+        ? windowMs
+        : Math.min(windowMs, (index + 1) * slotMs);
+      const available = Math.max(1, slotEnd - slotStart);
+      const jitter = maxJitterMs > 0
+        ? crypto.randomInt(0, Math.min(maxJitterMs, available))
+        : 0;
+      return Math.min(windowMs - 1, slotStart + jitter);
+    })
     .sort((a, b) => a - b);
 
   selected.forEach((item, index) => {
