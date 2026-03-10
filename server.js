@@ -1901,6 +1901,12 @@ function hasContentRangeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasKeepAliveHeader(req) {
+  const value = req.headers['keep-alive'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasUnsupportedConnectionHeader(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -1977,6 +1983,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasContentRangeHeader(req)) {
       return json(res, 400, { error: 'content-range header is not allowed' });
+    }
+    if (hasKeepAliveHeader(req)) {
+      return json(res, 400, { error: 'keep-alive header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

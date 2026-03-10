@@ -24,6 +24,7 @@ Anonymous same-day positive story platform.
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries
 - Content-Range header hardening: requests carrying `Content-Range` are rejected with HTTP 400 (`content-range header is not allowed`) to prevent partial-upload semantic confusion on non-range APIs
+- Keep-Alive header hardening: requests carrying `Keep-Alive` are rejected with HTTP 400 (`keep-alive header is not allowed`) to reduce hop-by-hop timeout negotiation ambiguity through intermediaries
 - Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
 - HTTP verb hardening: `TRACE` and `CONNECT` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic and proxy-tunnel surface area
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods

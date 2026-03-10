@@ -304,6 +304,18 @@ async function run() {
       throw new Error('expected 400 when trailer header is present');
     }
 
+    const keepAliveHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Keep-Alive: timeout=5, max=1000',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(keepAliveHeaderResponse)) {
+      throw new Error('expected 400 when keep-alive header is present');
+    }
+
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
