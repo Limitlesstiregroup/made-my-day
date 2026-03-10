@@ -329,6 +329,12 @@ try {
     'release readiness should reject out-of-range BODY_READ_TIMEOUT_MS values'
   );
 
+  const shutdownGraceIssue = evaluateReadiness({ SHUTDOWN_GRACE_MS: '999999' });
+  assert.ok(
+    shutdownGraceIssue.includes('SHUTDOWN_GRACE_MS must be between 1000 and 120000'),
+    'release readiness should reject out-of-range SHUTDOWN_GRACE_MS values'
+  );
+
   const maxCommentsPerStoryIssue = evaluateReadiness({ MAX_COMMENTS_PER_STORY: '4' });
   assert.ok(
     maxCommentsPerStoryIssue.includes('MAX_COMMENTS_PER_STORY must be >= 5'),

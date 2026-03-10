@@ -644,6 +644,11 @@ function evaluateReadiness(env = process.env) {
     issues.push('BODY_READ_TIMEOUT_MS must be between 1000 and 120000');
   }
 
+  const shutdownGraceMs = parseIntOrDefault(env.SHUTDOWN_GRACE_MS, 10_000);
+  if (shutdownGraceMs < 1_000 || shutdownGraceMs > 120_000) {
+    issues.push('SHUTDOWN_GRACE_MS must be between 1000 and 120000');
+  }
+
   if (headersTimeoutMs > requestTimeoutMs) {
     issues.push('HEADERS_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS');
   }
