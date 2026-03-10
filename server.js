@@ -1926,6 +1926,12 @@ function hasProxyAuthenticateHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasXForwardedClientCertHeader(req) {
+  const value = req.headers['x-forwarded-client-cert'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasProxyHeader(req) {
   const value = req.headers.proxy;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2092,6 +2098,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyAuthenticateHeader(req)) {
       return json(res, 400, { error: 'proxy-authenticate header is not allowed' });
+    }
+    if (hasXForwardedClientCertHeader(req)) {
+      return json(res, 400, { error: 'x-forwarded-client-cert header is not allowed' });
     }
     if (hasProxyHeader(req)) {
       return json(res, 400, { error: 'proxy header is not allowed' });

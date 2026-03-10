@@ -280,6 +280,18 @@ async function run() {
       throw new Error('expected 400 when proxy-authenticate header is present');
     }
 
+    const xForwardedClientCertHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Client-Cert: By=spiffe://edge-proxy;Hash=abc123;Subject="";URI=spiffe://client/workload',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(xForwardedClientCertHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-client-cert header is present');
+    }
+
     const proxyHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
