@@ -458,6 +458,8 @@ function evaluateReadiness(env = process.env) {
         issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must use a DNS hostname (IP literals are not allowed)');
       } else if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
         issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not target localhost/private network hosts');
+      } else if (!parsedEscalationUrl.hostname.includes('.')) {
+        issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must use a fully-qualified DNS hostname (single-label hosts are not allowed)');
       }
     } catch {
       // Ignored: invalid URL shape already handled by looksLikeHttpsUrl.
