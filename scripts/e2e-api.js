@@ -701,6 +701,15 @@ async function run() {
       throw new Error(`expected 200 for like mutation, got ${goodLike.status}`);
     }
 
+    const badLikeAccept = await fetch(`${BASE}/api/stories/${storyId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'text/plain' },
+      body: '{}'
+    });
+    if (badLikeAccept.status !== 406) {
+      throw new Error(`expected 406 for invalid like accept header, got ${badLikeAccept.status}`);
+    }
+
     const badShareType = await fetch(`${BASE}/api/stories/${storyId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
@@ -777,6 +786,19 @@ async function run() {
     });
     if (unauthorizedImportRun.status !== 401) {
       throw new Error(`expected 401 for missing admin token, got ${unauthorizedImportRun.status}`);
+    }
+
+    const badImportAccept = await fetch(`${BASE}/api/import/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin_token_live_primary_1234',
+        Accept: 'text/plain'
+      },
+      body: JSON.stringify({})
+    });
+    if (badImportAccept.status !== 406) {
+      throw new Error(`expected 406 for invalid import accept header, got ${badImportAccept.status}`);
     }
 
     const authorizedWithPreviousToken = await fetch(`${BASE}/api/import/run`, {

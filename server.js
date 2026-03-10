@@ -1209,6 +1209,31 @@ function getJsonContentTypeStatus(req) {
   return { ok: isStrictJsonContentType(values[0]), malformed: false };
 }
 
+function acceptsJsonResponse(req) {
+  const rawHeader = req.headers.accept;
+  if (rawHeader == null) return { ok: true, malformed: false };
+  if (Array.isArray(rawHeader)) {
+    const normalized = rawHeader.map((value) => String(value).trim()).filter(Boolean);
+    if (normalized.length !== 1) return { ok: false, malformed: normalized.length > 1 };
+    return acceptsJsonResponseValue(normalized[0]);
+  }
+  const normalized = String(rawHeader).trim();
+  if (!normalized) return { ok: true, malformed: false };
+  return acceptsJsonResponseValue(normalized);
+}
+
+function acceptsJsonResponseValue(value) {
+  const ranges = String(value)
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.split(';')[0].trim().toLowerCase())
+    .filter(Boolean);
+  if (ranges.length === 0) return { ok: true, malformed: false };
+  const allowsJson = ranges.some((range) => range === '*/*' || range === 'application/*' || range === 'application/json');
+  return { ok: allowsJson, malformed: false };
+}
+
 function stableStringify(value) {
   if (Array.isArray(value)) {
     return `[${value.map((item) => stableStringify(item)).join(',')}]`;
@@ -2385,6 +2410,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       const body = await readBody(req).catch((error) => {
         handleBodyReadError(res, error);
         return null;
@@ -2446,6 +2474,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
@@ -2474,6 +2505,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
@@ -2502,6 +2536,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       const storyId = u.pathname.split('/')[3];
       const story = store.stories.find((s) => s.id === storyId);
       if (!story) return json(res, 404, { error: 'Story not found' });
@@ -2555,6 +2592,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       if (!requireAdminAuth(req, res)) return;
       try {
         await readBody(req);
@@ -2594,6 +2634,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (!jsonContentType.ok) {
         return json(res, 415, { error: 'Content-Type must be application/json.' });
       }
+      const acceptStatus = acceptsJsonResponse(req);
+      if (acceptStatus.malformed) return json(res, 400, { error: 'invalid accept header' });
+      if (!acceptStatus.ok) return json(res, 406, { error: 'Accept must allow application/json.' });
       if (!requireAdminAuth(req, res)) return;
       try {
         await readBody(req);
