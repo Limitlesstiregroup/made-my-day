@@ -88,6 +88,11 @@ npm run release:check -- --json
 ```
 (`--json` emits machine-readable `ready` + `issueCodes` output for CI/deploy gates; command exits non-zero until readiness issues are resolved.)
 
+GA verification pass (build + lint + test; no live secrets required):
+```bash
+npm run ga:verify
+```
+
 Fast GA bootstrap (generates secure local admin token file + `.env.ga.local`):
 ```bash
 npm run ga:quickstart -- --oncall-primary=faisal --oncall-secondary=backup --escalation-url=https://your-runbook-url
