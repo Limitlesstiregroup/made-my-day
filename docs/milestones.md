@@ -24,3 +24,5 @@
 ## Post-GA Sustainment
 - 105%: Incident replay fixture expansion for malformed intermediary traffic ✅
 - 110%: Idempotency cache schema versioning + deploy-time auto-migration guard ✅
+
+- 115%: Incident replay fixture expansion for malformed `x-request-id` + `x-forwarded-prefix` patterns ✅

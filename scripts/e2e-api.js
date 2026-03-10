@@ -159,6 +159,18 @@ async function run() {
       throw new Error('expected 400 when duplicate Host headers are sent');
     }
 
+const malformedRequestIdHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Request-Id: invalid request id',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedRequestIdHeaderResponse)) {
+      throw new Error('expected 400 when x-request-id header is malformed');
+    }
+
     const multiHopForwardingHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
@@ -493,6 +505,30 @@ async function run() {
     ].join('\r\n'));
     if (!/^HTTP\/1\.1 400 /.test(duplicateForwardedPortHeaderResponse)) {
       throw new Error('expected 400 when duplicate x-forwarded-port headers are sent while TRUST_PROXY=true');
+    }
+
+const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Prefix: /edge,/origin',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardedPrefixHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop x-forwarded-prefix headers are sent while TRUST_PROXY=true');
+    }
+
+    const invalidForwardedPrefixHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Prefix: edge',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedPrefixHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-prefix is malformed while TRUST_PROXY=true');
     }
 
     const invalidForwardedPortHeaderResponse = await sendRawHttp([
