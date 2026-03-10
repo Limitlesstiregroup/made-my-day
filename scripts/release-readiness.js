@@ -476,6 +476,15 @@ function evaluateReadiness(env = process.env) {
     if (ipLiteralAllowedHost) {
       issues.push('ALLOWED_HOSTS must use DNS hostnames only (IP literals are not allowed)');
     }
+
+    const singleLabelAllowedHost = allowedHosts.find((host) => {
+      const parsed = parseAllowedHostEntry(host);
+      if (!parsed || parsed.isIp) return false;
+      return !parsed.host.includes('.');
+    });
+    if (singleLabelAllowedHost) {
+      issues.push('ALLOWED_HOSTS entries must be fully-qualified DNS hostnames (single-label hosts are not allowed)');
+    }
   }
 
   const secretFileKeys = ['MADE_MY_DAY_ADMIN_TOKEN', 'MADE_MY_DAY_ONCALL_PRIMARY', 'MADE_MY_DAY_ONCALL_SECONDARY', 'MADE_MY_DAY_ESCALATION_DOC_URL', 'ALLOWED_HOSTS'];

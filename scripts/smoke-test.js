@@ -374,6 +374,14 @@ try {
     oversizedAllowedHostIssue.includes('ALLOWED_HOSTS must include at most 32 entries'),
     'release readiness should reject oversized ALLOWED_HOSTS lists'
   );
+
+  const singleLabelAllowedHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: 'app'
+  });
+  assert.ok(
+    singleLabelAllowedHostIssue.includes('ALLOWED_HOSTS entries must be fully-qualified DNS hostnames (single-label hosts are not allowed)'),
+    'release readiness should reject single-label ALLOWED_HOSTS entries in GA mode'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);
