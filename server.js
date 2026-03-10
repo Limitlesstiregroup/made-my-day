@@ -453,6 +453,18 @@ function hasEscalationUrlCredentials(value) {
   }
 }
 
+function hasEscalationUrlNonDefaultPort(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    if (!parsed.port) return false;
+    return parsed.port !== '443';
+  } catch {
+    return false;
+  }
+}
+
 function isIpLiteralHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -572,6 +584,9 @@ function getConfigIssues() {
     issues.push('escalationDocUrl');
   }
   if (hasEscalationUrlCredentials(escalationDocUrl)) {
+    issues.push('escalationDocUrl');
+  }
+  if (hasEscalationUrlNonDefaultPort(escalationDocUrl)) {
     issues.push('escalationDocUrl');
   }
   if (escalationDocUrl) {
