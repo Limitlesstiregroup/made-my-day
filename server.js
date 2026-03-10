@@ -2868,6 +2868,16 @@ server.keepAliveTimeout = resolvedTimeouts.keepAliveTimeout;
 server.maxRequestsPerSocket = resolvedTimeouts.maxRequestsPerSocket;
 server.maxHeadersCount = resolvedTimeouts.maxHeadersCount;
 
+server.on('checkContinue', (_req, res) => {
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    Connection: 'close'
+  };
+  applyNoStoreHeaders(headers);
+  Object.assign(headers, securityHeaders());
+  return json(res, 417, { error: 'expect header is not allowed' }, { noStore: true, headers });
+});
+
 server.on('clientError', (error, socket) => {
   if (!socket || !socket.writable) return;
   const statusCode = error?.code === 'HPE_HEADER_OVERFLOW' ? 431 : 400;
