@@ -239,6 +239,12 @@ function hasEscalationUrlParamsOrFragment(value) {
   }
 }
 
+function isIpLiteralHost(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return net.isIP(normalized) !== 0;
+}
+
 function isPrivateOrLocalEscalationHost(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -432,7 +438,9 @@ function evaluateReadiness(env = process.env) {
   if (escalationDocUrl) {
     try {
       const parsedEscalationUrl = new URL(escalationDocUrl);
-      if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
+      if (isIpLiteralHost(parsedEscalationUrl.hostname)) {
+        issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must use a DNS hostname (IP literals are not allowed)');
+      } else if (isPrivateOrLocalEscalationHost(parsedEscalationUrl.hostname)) {
         issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not target localhost/private network hosts');
       }
     } catch {
@@ -458,6 +466,15 @@ function evaluateReadiness(env = process.env) {
     });
     if (privateAllowedHost) {
       issues.push('ALLOWED_HOSTS must not include localhost/private network hosts in GA mode');
+    }
+
+    const ipLiteralAllowedHost = allowedHosts.find((host) => {
+      const parsed = parseAllowedHostEntry(host);
+      if (!parsed) return false;
+      return parsed.isIp;
+    });
+    if (ipLiteralAllowedHost) {
+      issues.push('ALLOWED_HOSTS must use DNS hostnames only (IP literals are not allowed)');
     }
   }
 
@@ -680,6 +697,7 @@ module.exports = {
   getAdminTokenCandidates,
   looksLikeHttpsUrl,
   looksLikePlaceholderEscalationUrl,
+  isIpLiteralHost,
   isPrivateOrLocalEscalationHost,
   isValidAllowedHostEntry,
   getAllowedHosts,
