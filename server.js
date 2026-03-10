@@ -8,6 +8,7 @@ const packageMeta = require('./package.json');
 
 const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
+const MAX_SECRET_FILE_BYTES = 8 * 1024;
 const STORE_FILE = path.join(DATA_DIR, 'stories.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
@@ -273,6 +274,17 @@ function isSecretFileTooPermissive(filePath) {
     if (!stats.isFile()) return true;
     const mode = stats.mode & 0o777;
     return (mode & 0o077) !== 0;
+  } catch {
+    return false;
+  }
+}
+
+function isSecretFileTooLarge(filePath, maxBytes = MAX_SECRET_FILE_BYTES) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    const stats = fs.statSync(String(filePath));
+    if (!stats.isFile()) return true;
+    return stats.size > maxBytes;
   } catch {
     return false;
   }
@@ -651,6 +663,10 @@ function getConfigIssues() {
     issues.push('secretFilePermissions');
   }
 
+  if (secretFileKeys.some((key) => isSecretFileTooLarge(process.env[`${key}_FILE`]) || isSecretFileTooLarge(process.env[`${key}_PREVIOUS_FILE`]))) {
+    issues.push('secretFileSize');
+  }
+
   if (secretFileKeys.some((key) => isSecretFileWrongOwner(process.env[`${key}_FILE`]) || isSecretFileWrongOwner(process.env[`${key}_PREVIOUS_FILE`]))) {
     issues.push('secretFileOwnership');
   }
@@ -669,7 +685,7 @@ function getReadinessStatus() {
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       oncallSecondary: issues.includes('oncallSecondary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
-      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileOwnership')) ? 'fail' : 'pass',
+      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileSize') || issues.includes('secretFileOwnership')) ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',

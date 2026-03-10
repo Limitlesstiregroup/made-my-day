@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const net = require('node:net');
 const path = require('node:path');
 
+const MAX_SECRET_FILE_BYTES = 8 * 1024;
+
 const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
 
 function toIssueCode(issue) {
@@ -117,6 +119,17 @@ function isSecretFileTooPermissive(filePath) {
     if (!stats.isFile()) return true;
     const mode = stats.mode & 0o777;
     return (mode & 0o077) !== 0;
+  } catch {
+    return false;
+  }
+}
+
+function isSecretFileTooLarge(filePath, maxBytes = MAX_SECRET_FILE_BYTES) {
+  if (!filePath || String(filePath).trim() === '') return false;
+  try {
+    const stats = fs.statSync(String(filePath));
+    if (!stats.isFile()) return true;
+    return stats.size > maxBytes;
   } catch {
     return false;
   }
@@ -459,6 +472,8 @@ function evaluateReadiness(env = process.env) {
       issues.push(`${key}_FILE must not be a symbolic link`);
     } else if (isSecretFileTooPermissive(currentFile)) {
       issues.push(`${key}_FILE permissions are too open (require chmod 600 owner-only)`);
+    } else if (isSecretFileTooLarge(currentFile)) {
+      issues.push(`${key}_FILE is too large (max ${MAX_SECRET_FILE_BYTES} bytes)`);
     } else if (isSecretFileWrongOwner(currentFile)) {
       issues.push(`${key}_FILE must be owned by current runtime user (or root)`);
     }
@@ -471,6 +486,8 @@ function evaluateReadiness(env = process.env) {
       issues.push(`${key}_PREVIOUS_FILE must not be a symbolic link`);
     } else if (isSecretFileTooPermissive(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE permissions are too open (require chmod 600 owner-only)`);
+    } else if (isSecretFileTooLarge(previousFile)) {
+      issues.push(`${key}_PREVIOUS_FILE is too large (max ${MAX_SECRET_FILE_BYTES} bytes)`);
     } else if (isSecretFileWrongOwner(previousFile)) {
       issues.push(`${key}_PREVIOUS_FILE must be owned by current runtime user (or root)`);
     }
@@ -650,10 +667,12 @@ module.exports = {
   getIssueCodes,
   placeholderSecret,
   parseIntOrDefault,
+  MAX_SECRET_FILE_BYTES,
   readSecretFile,
   hasSecretFileReadError,
   isSecretFileSymlink,
   isSecretFileTooPermissive,
+  isSecretFileTooLarge,
   isSecretFileWrongOwner,
   isSecretFilePathInvalid,
   getConfiguredAdminToken,

@@ -2,7 +2,14 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { evaluateReadiness, isSecretFileSymlink, isSecretFileTooPermissive, isPrivateOrLocalEscalationHost } = require('./release-readiness');
+const {
+  evaluateReadiness,
+  isSecretFileSymlink,
+  isSecretFileTooPermissive,
+  isSecretFileTooLarge,
+  MAX_SECRET_FILE_BYTES,
+  isPrivateOrLocalEscalationHost
+} = require('./release-readiness');
 
 try {
   const storiesPath = path.join(process.cwd(), 'data/stories.json');
@@ -112,6 +119,22 @@ try {
   fs.chmodSync(tmpPermissiveTokenFile, 0o600);
   assert.equal(isSecretFileTooPermissive(tmpPermissiveTokenFile), false, 'owner-only secret files should pass permission checks');
   fs.unlinkSync(tmpPermissiveTokenFile);
+
+  const tmpLargeTokenFile = path.join(process.cwd(), 'data', `.tmp-admin-token-large-${Date.now()}`);
+  fs.writeFileSync(tmpLargeTokenFile, 'x'.repeat(MAX_SECRET_FILE_BYTES + 1));
+  fs.chmodSync(tmpLargeTokenFile, 0o600);
+  assert.equal(isSecretFileTooLarge(tmpLargeTokenFile), true, 'oversized secret files should be flagged');
+  const oversizedSecretFileIssues = evaluateReadiness({
+    MADE_MY_DAY_ADMIN_TOKEN_FILE: tmpLargeTokenFile,
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    oversizedSecretFileIssues.includes(`MADE_MY_DAY_ADMIN_TOKEN_FILE is too large (max ${MAX_SECRET_FILE_BYTES} bytes)`),
+    'oversized *_FILE paths should surface explicit max-size guidance'
+  );
+  fs.unlinkSync(tmpLargeTokenFile);
 
   const placeholderIssues = evaluateReadiness({
     MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS: 'change-me-previous-token-1234'
