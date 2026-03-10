@@ -352,6 +352,30 @@ async function run() {
       throw new Error('expected 400 when x-forwarded-proto is not http/https while TRUST_PROXY=true');
     }
 
+    const multiHopForwardedServerHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Server: edge-01,origin-01',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(multiHopForwardedServerHeaderResponse)) {
+      throw new Error('expected 400 when multi-hop x-forwarded-server headers are sent while TRUST_PROXY=true');
+    }
+
+    const invalidForwardedServerHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Server: edge node',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(invalidForwardedServerHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-server is malformed while TRUST_PROXY=true');
+    }
+
     const multiHopForwardedPortHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
