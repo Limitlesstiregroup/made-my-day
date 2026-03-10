@@ -1908,6 +1908,12 @@ function hasProxyAuthorizationHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasProxyHeader(req) {
+  const value = req.headers.proxy;
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasEarlyDataHeader(req) {
   const value = req.headers['early-data'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2065,6 +2071,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyAuthorizationHeader(req)) {
       return json(res, 400, { error: 'proxy-authorization header is not allowed' });
+    }
+    if (hasProxyHeader(req)) {
+      return json(res, 400, { error: 'proxy header is not allowed' });
     }
     if (hasEarlyDataHeader(req)) {
       return json(res, 400, { error: 'early-data header is not allowed' });

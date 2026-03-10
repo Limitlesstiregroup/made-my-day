@@ -268,6 +268,18 @@ async function run() {
       throw new Error('expected 400 when proxy-authorization header is present');
     }
 
+    const proxyHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Proxy: http://proxy.example:8080',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(proxyHeaderResponse)) {
+      throw new Error('expected 400 when proxy header is present');
+    }
+
     const earlyDataHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
