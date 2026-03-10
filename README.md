@@ -30,6 +30,7 @@ Anonymous same-day positive story platform.
 - Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
 - HTTP verb hardening: `TRACE` and `CONNECT` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic and proxy-tunnel surface area
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
+- Graceful-drain hardening: once shutdown starts (`SIGTERM`/`SIGINT`), new requests fail fast with HTTP 503 + `Retry-After: 5` + `Connection: close` so load balancers/probes back off cleanly during GA rollouts
 - Content-Length hardening: conflicting multi-value `Content-Length` headers are rejected with HTTP 400; duplicate matching values are tolerated for proxy interoperability
 - Content-Encoding hardening for JSON mutation/admin POST APIs: `Content-Encoding` must be omitted or `identity`; compressed/unsupported encodings are rejected with HTTP 415
 - Request-smuggling hardening: requests carrying both `Transfer-Encoding` and `Content-Length` are rejected with HTTP 400 (`ambiguous request framing`) before route handling

@@ -1966,11 +1966,26 @@ function isAllowedHost(req) {
   return ALLOWED_HOSTS.includes(incomingHost);
 }
 
+let shuttingDown = false;
+
 const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req, res) => {
   const { requestId, malformed: malformedRequestId } = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
   try {
+    if (shuttingDown) {
+      return json(
+        res,
+        503,
+        { error: 'server is shutting down' },
+        {
+          headers: {
+            'Retry-After': '5',
+            Connection: 'close'
+          }
+        }
+      );
+    }
     if (malformedRequestId) {
       return json(res, 400, { error: 'invalid x-request-id header' });
     }
@@ -2747,8 +2762,6 @@ server.listen(PORT, () => {
 const SHUTDOWN_GRACE_MS = Number.isFinite(Number(process.env.SHUTDOWN_GRACE_MS))
   ? Math.floor(Math.max(1_000, Math.min(Number(process.env.SHUTDOWN_GRACE_MS), 120_000)))
   : 10_000;
-
-let shuttingDown = false;
 
 function shutdown(signal, exitCode = 0) {
   if (shuttingDown) return;
