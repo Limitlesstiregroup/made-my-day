@@ -14,6 +14,4 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run build
-      - run: npm run lint
-      - run: npm test
+      - run: npm run ga:verify
