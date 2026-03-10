@@ -1920,6 +1920,12 @@ function hasProxyAuthorizationHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasProxyAuthenticateHeader(req) {
+  const value = req.headers['proxy-authenticate'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasProxyHeader(req) {
   const value = req.headers.proxy;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2083,6 +2089,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyAuthorizationHeader(req)) {
       return json(res, 400, { error: 'proxy-authorization header is not allowed' });
+    }
+    if (hasProxyAuthenticateHeader(req)) {
+      return json(res, 400, { error: 'proxy-authenticate header is not allowed' });
     }
     if (hasProxyHeader(req)) {
       return json(res, 400, { error: 'proxy header is not allowed' });

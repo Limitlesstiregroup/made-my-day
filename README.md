@@ -19,6 +19,7 @@ Anonymous same-day positive story platform.
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior
 - Proxy credential-leak hardening: requests carrying `Proxy-Authorization` are rejected with HTTP 400 (`proxy-authorization header is not allowed`) to avoid accidental intermediary credential forwarding into app logs/surfaces
+- Proxy-auth challenge injection hardening: requests carrying `Proxy-Authenticate` are rejected with HTTP 400 (`proxy-authenticate header is not allowed`) to reduce intermediary auth-challenge confusion through upstream hops
 - Proxy directive hardening: requests carrying legacy `Proxy` directives are rejected with HTTP 400 (`proxy header is not allowed`) to reduce ambiguous intermediary behavior and request-routing confusion
 - Proxy-chain disclosure hardening: requests carrying `Via` are rejected with HTTP 400 (`via header is not allowed`) to reduce ambiguous intermediary attribution from untrusted upstream hops
 - TLS 0-RTT replay hardening: requests carrying `Early-Data` are rejected with HTTP 400 (`early-data header is not allowed`) to avoid replay-prone side effects on non-idempotent flows
