@@ -362,6 +362,12 @@ function getTextConfigValue(key) {
   return readSecretFile(process.env[`${key}_FILE`]);
 }
 
+function hasBothDirectAndFileConfigured(key) {
+  const direct = String(process.env[key] || '').trim();
+  const filePath = String(process.env[`${key}_FILE`] || '').trim();
+  return Boolean(direct && filePath);
+}
+
 function hasStrongAdminToken() {
   const configuredToken = getConfiguredAdminToken();
   return configuredToken.length >= 16 && !looksLikePlaceholderSecret(configuredToken);
@@ -488,6 +494,10 @@ function getConfigIssues() {
   const previousToken = getPreviousAdminToken();
   if (configuredToken && previousToken && configuredToken === previousToken) {
     issues.push('adminTokenRotation');
+  }
+
+  if (hasBothDirectAndFileConfigured('MADE_MY_DAY_ADMIN_TOKEN') || hasBothDirectAndFileConfigured('MADE_MY_DAY_ADMIN_TOKEN_PREVIOUS')) {
+    issues.push('secretSources');
   }
 
   const adminTokenCandidates = getAdminTokenCandidates();
@@ -685,7 +695,7 @@ function getReadinessStatus() {
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       oncallSecondary: issues.includes('oncallSecondary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
-      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileSize') || issues.includes('secretFileOwnership')) ? 'fail' : 'pass',
+      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileSize') || issues.includes('secretFileOwnership') || issues.includes('secretSources')) ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',
