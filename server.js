@@ -303,7 +303,7 @@ function isSecretFileWrongOwner(filePath) {
   }
 }
 
-const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo'];
+const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password'];
 
 function looksLikePlaceholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
