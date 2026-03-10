@@ -14,7 +14,7 @@ Anonymous same-day positive story platform.
 - Header-count hardening via max header count cap (`MAX_HEADERS_COUNT`, default `200`): connections with excessive header field counts are rejected at parser level to reduce header-flood pressure
 - Request correlation hardening: `x-request-id` must be a single token (`8-128` chars, `[a-zA-Z0-9:_-.]`); malformed, duplicate, or comma-joined values are rejected with HTTP 400 (`invalid x-request-id header`) to avoid log correlation ambiguity
 - Request-target form hardening: absolute-form request targets (`GET http://...`) are rejected with HTTP 400 (`origin-form request-target required`) to reduce proxy/request-routing ambiguity
-- Method-override hardening: requests carrying `x-http-method-override` are rejected with HTTP 400 (`x-http-method-override header is not allowed`) to prevent proxy/client verb-tunneling bypasses
+- Method-override hardening: requests carrying `x-http-method-override`, `x-method-override`, `x-http-method`, or `x-method` are rejected with HTTP 400 (`x-http-method-override header is not allowed` / `legacy method override headers are not allowed`) to prevent proxy/client verb-tunneling bypasses
 - `Expect` header hardening: requests carrying `Expect` are rejected with HTTP 417 (`expect header is not allowed`) to reduce parser/state-machine ambiguity from `100-continue` flows
 - Protocol-upgrade hardening: requests carrying `Upgrade` are rejected with HTTP 400 (`upgrade header is not allowed`) to reduce unsupported protocol-switch attack surface
 - Legacy proxy-tunnel hardening: requests carrying `Proxy-Connection` are rejected with HTTP 400 (`proxy-connection header is not allowed`) to reduce ambiguous intermediary behavior

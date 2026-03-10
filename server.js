@@ -1869,6 +1869,15 @@ function hasMethodOverrideHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasLegacyMethodOverrideHeader(req) {
+  const legacyHeaderNames = ['x-method-override', 'x-http-method', 'x-method'];
+  return legacyHeaderNames.some((headerName) => {
+    const value = req.headers[headerName];
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  });
+}
+
 function hasExpectHeader(req) {
   const value = req.headers.expect;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2032,6 +2041,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
+    }
+    if (hasLegacyMethodOverrideHeader(req)) {
+      return json(res, 400, { error: 'legacy method override headers are not allowed' });
     }
     if (hasExpectHeader(req)) {
       return json(res, 417, { error: 'expect header is not allowed' });
