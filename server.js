@@ -168,6 +168,7 @@ const adminRunIdempotencyCache = new Map();
 const engagementIdempotencyCache = new Map();
 const IDEMPOTENCY_CACHE_FILE = String(process.env.IDEMPOTENCY_CACHE_FILE || path.join(DATA_DIR, 'idempotency-cache.json'));
 const IDEMPOTENCY_CACHE_BACKUP_FILE = `${IDEMPOTENCY_CACHE_FILE}.bak`;
+const IDEMPOTENCY_CACHE_SCHEMA_VERSION = 2;
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
@@ -186,18 +187,32 @@ function restoreIdempotencyEntries(targetMap, entries, now = Date.now()) {
   return restored;
 }
 
+function normalizeIdempotencyCachePayload(parsed) {
+  if (!parsed || typeof parsed !== 'object') return { payload: null, needsMigration: false };
+  const schemaVersion = Number(parsed.schemaVersion || 1);
+  return {
+    payload: {
+      adminRun: parsed.adminRun,
+      engagement: parsed.engagement
+    },
+    needsMigration: schemaVersion < IDEMPOTENCY_CACHE_SCHEMA_VERSION
+  };
+}
+
 function restoreIdempotencyCaches(parsed) {
-  if (!parsed || typeof parsed !== 'object') return false;
+  const normalized = normalizeIdempotencyCachePayload(parsed);
+  if (!normalized.payload) return { restored: false, needsMigration: false };
   const now = Date.now();
-  const restoredAdmin = restoreIdempotencyEntries(adminRunIdempotencyCache, parsed.adminRun, now);
-  const restoredEngagement = restoreIdempotencyEntries(engagementIdempotencyCache, parsed.engagement, now);
-  return restoredAdmin || restoredEngagement;
+  const restoredAdmin = restoreIdempotencyEntries(adminRunIdempotencyCache, normalized.payload.adminRun, now);
+  const restoredEngagement = restoreIdempotencyEntries(engagementIdempotencyCache, normalized.payload.engagement, now);
+  return { restored: restoredAdmin || restoredEngagement, needsMigration: normalized.needsMigration };
 }
 
 function saveIdempotencyCaches() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     const payload = {
+      schemaVersion: IDEMPOTENCY_CACHE_SCHEMA_VERSION,
       adminRun: [...adminRunIdempotencyCache.entries()],
       engagement: [...engagementIdempotencyCache.entries()]
     };
@@ -215,11 +230,14 @@ function loadIdempotencyCaches() {
   try {
     if (fs.existsSync(IDEMPOTENCY_CACHE_FILE)) {
       const parsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_FILE, 'utf8'));
-      if (restoreIdempotencyCaches(parsed)) return;
+      const restored = restoreIdempotencyCaches(parsed);
+      if (restored.needsMigration) saveIdempotencyCaches();
+      if (restored.restored) return;
     }
     if (fs.existsSync(IDEMPOTENCY_CACHE_BACKUP_FILE)) {
       const backupParsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_BACKUP_FILE, 'utf8'));
-      restoreIdempotencyCaches(backupParsed);
+      const restoredBackup = restoreIdempotencyCaches(backupParsed);
+      if (restoredBackup.needsMigration) saveIdempotencyCaches();
     }
   } catch {
     // best-effort persistence only
