@@ -304,6 +304,7 @@ function isSecretFileWrongOwner(filePath) {
 }
 
 const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password'];
+const ROTATABLE_SECRET_KEYS = new Set(['MADE_MY_DAY_ADMIN_TOKEN']);
 
 function looksLikePlaceholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
@@ -512,6 +513,21 @@ function getConfigIssues() {
     issues.push('secretSources');
   }
 
+  const unsupportedRotationKeys = [
+    'MADE_MY_DAY_ONCALL_PRIMARY',
+    'MADE_MY_DAY_ONCALL_SECONDARY',
+    'MADE_MY_DAY_ESCALATION_DOC_URL',
+    'ALLOWED_HOSTS'
+  ];
+  if (unsupportedRotationKeys.some((key) => {
+    if (ROTATABLE_SECRET_KEYS.has(key)) return false;
+    const previousValue = String(process.env[`${key}_PREVIOUS`] || '').trim();
+    const previousFile = String(process.env[`${key}_PREVIOUS_FILE`] || '').trim();
+    return Boolean(previousValue || previousFile);
+  })) {
+    issues.push('unsupportedRotationFields');
+  }
+
   const adminTokenCandidates = getAdminTokenCandidates();
   if (adminTokenCandidates.some((token) => hasUnsafeSecretWhitespace(token))) {
     issues.push('adminTokenFormat');
@@ -707,7 +723,7 @@ function getReadinessStatus() {
       oncallPrimary: issues.includes('oncallPrimary') ? 'fail' : 'pass',
       oncallSecondary: issues.includes('oncallSecondary') ? 'fail' : 'pass',
       escalationDocUrl: issues.includes('escalationDocUrl') ? 'fail' : 'pass',
-      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileSize') || issues.includes('secretFileOwnership') || issues.includes('secretSources')) ? 'fail' : 'pass',
+      secretFiles: (issues.includes('secretFiles') || issues.includes('secretFilePermissions') || issues.includes('secretFileSize') || issues.includes('secretFileOwnership') || issues.includes('secretSources') || issues.includes('unsupportedRotationFields')) ? 'fail' : 'pass',
       importTimeoutMs: issues.includes('importTimeout') ? 'fail' : 'pass',
       maxBodyBytes: issues.includes('maxBodyBytes') ? 'fail' : 'pass',
       maxUrlChars: issues.includes('maxUrlChars') ? 'fail' : 'pass',

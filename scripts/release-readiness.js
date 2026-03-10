@@ -6,6 +6,7 @@ const path = require('node:path');
 const MAX_SECRET_FILE_BYTES = 8 * 1024;
 
 const PLACEHOLDER_TOKENS = new Set(['changeme', 'change-me', 'replace-me', 'placeholder', 'example', 'sample', 'dummy', 'todo']);
+const ROTATABLE_SECRET_KEYS = new Set(['MADE_MY_DAY_ADMIN_TOKEN']);
 
 function toIssueCode(issue) {
   return String(issue || '')
@@ -354,6 +355,21 @@ function evaluateReadiness(env = process.env) {
   mutuallyExclusiveEnvFileKeys.forEach((key) => {
     if (hasBothDirectAndFileConfigured(key, env)) {
       issues.push(`${key} and ${key}_FILE must not both be set`);
+    }
+  });
+
+  const unsupportedRotationKeys = [
+    'MADE_MY_DAY_ONCALL_PRIMARY',
+    'MADE_MY_DAY_ONCALL_SECONDARY',
+    'MADE_MY_DAY_ESCALATION_DOC_URL',
+    'ALLOWED_HOSTS'
+  ];
+  unsupportedRotationKeys.forEach((key) => {
+    if (ROTATABLE_SECRET_KEYS.has(key)) return;
+    const previousValue = String(env[`${key}_PREVIOUS`] || '').trim();
+    const previousFile = String(env[`${key}_PREVIOUS_FILE`] || '').trim();
+    if (previousValue || previousFile) {
+      issues.push(`${key}_PREVIOUS/_FILE is not supported; remove previous fallback for this key`);
     }
   });
 
