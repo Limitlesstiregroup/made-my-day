@@ -1605,8 +1605,15 @@ function sendFile(res, filePath) {
   };
   const contentType = types[ext] || 'application/octet-stream';
   if (!fs.existsSync(filePath)) {
-    res.writeHead(404);
-    return res.end('Not found');
+    const headers = {
+      'Content-Type': 'text/plain; charset=utf-8',
+      ...securityHeaders()
+    };
+    applyNoStoreHeaders(headers);
+    const body = 'Not found';
+    headers['Content-Length'] = Buffer.byteLength(body);
+    res.writeHead(404, headers);
+    return res.end(shouldSuppressBodyForMethod(res) ? undefined : body);
   }
   const headers = { 'Content-Type': contentType, ...securityHeaders() };
   if (ext === '.html') {
@@ -2787,8 +2794,15 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     return sendFile(res, path.join(PUBLIC_DIR, 'styles.css'));
   }
 
-  res.writeHead(404);
-  res.end('Not found');
+  const notFoundHeaders = {
+    'Content-Type': 'text/plain; charset=utf-8',
+    ...securityHeaders()
+  };
+  applyNoStoreHeaders(notFoundHeaders);
+  const notFoundBody = 'Not found';
+  notFoundHeaders['Content-Length'] = Buffer.byteLength(notFoundBody);
+  res.writeHead(404, notFoundHeaders);
+  res.end(shouldSuppressBodyForMethod(res) ? undefined : notFoundBody);
   } catch (error) {
     console.error(`[${requestId}] unhandled request error`, error);
     if (!res.headersSent) {
@@ -2853,6 +2867,9 @@ server.on('clientError', (error, socket) => {
     'Pragma: no-cache',
     'Expires: 0',
     'X-Content-Type-Options: nosniff',
+    'X-Frame-Options: DENY',
+    'Referrer-Policy: no-referrer',
+    'X-Permitted-Cross-Domain-Policies: none',
     'Content-Length: 0',
     '',
     ''
@@ -2870,6 +2887,9 @@ server.on('connect', (_req, socket) => {
     'Pragma: no-cache',
     'Expires: 0',
     'X-Content-Type-Options: nosniff',
+    'X-Frame-Options: DENY',
+    'Referrer-Policy: no-referrer',
+    'X-Permitted-Cross-Domain-Policies: none',
     'Allow: GET, HEAD, POST',
     'Content-Length: 0',
     '',
