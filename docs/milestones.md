@@ -56,3 +56,4 @@
 - 250%: Range-request hardening now rejects `Range` headers with HTTP 400 (`range header is not allowed`) before route handling to prevent unsupported partial-content semantics from crossing intermediary/proxy paths ✅
 - 255%: Origin duplication hardening now rejects duplicate raw `Origin` header lines with HTTP 400 (`invalid origin header`) before route handling to prevent intermediary/header-fold ambiguity in CORS/request-origin attribution ✅
 - 260%: Referer duplication hardening now rejects duplicate raw `Referer` header lines with HTTP 400 (`invalid referer header`) before route handling to prevent intermediary/header-fold ambiguity in upstream navigation attribution ✅
+- 265%: Conditional-cache validator duplication hardening now rejects duplicate raw `If-None-Match` header lines with HTTP 400 (`invalid if-none-match header`) before route handling to prevent ambiguous conditional cache validators across intermediaries ✅
