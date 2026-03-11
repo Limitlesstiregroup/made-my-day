@@ -229,12 +229,37 @@ function hasEscalationUrlRootPath(value) {
   }
 }
 
+function hasEscalationUrlDirectoryPath(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    const pathValue = parsed.pathname || '';
+    if (!pathValue || pathValue === '/') return false;
+    return pathValue.endsWith('/');
+  } catch {
+    return false;
+  }
+}
+
 function hasEscalationUrlParamsOrFragment(value) {
   const normalized = String(value || '').trim();
   if (!normalized) return false;
   try {
     const parsed = new URL(normalized);
     return Boolean(parsed.search || parsed.hash);
+  } catch {
+    return false;
+  }
+}
+
+function hasEscalationUrlNonDefaultPort(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    if (!parsed.port) return false;
+    return parsed.port !== '443';
   } catch {
     return false;
   }
@@ -457,8 +482,14 @@ function evaluateReadiness(env = process.env) {
   if (hasEscalationUrlRootPath(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must point to a specific runbook path (not site root)');
   }
+  if (hasEscalationUrlDirectoryPath(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must point to a specific document path (trailing slash paths are not allowed)');
+  }
   if (hasEscalationUrlParamsOrFragment(escalationDocUrl)) {
     issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not include query parameters or fragments');
+  }
+  if (hasEscalationUrlNonDefaultPort(escalationDocUrl)) {
+    issues.push('MADE_MY_DAY_ESCALATION_DOC_URL must not use non-default HTTPS ports');
   }
   if (escalationDocUrl) {
     try {
@@ -757,6 +788,8 @@ module.exports = {
   getAdminTokenCandidates,
   looksLikeHttpsUrl,
   looksLikePlaceholderEscalationUrl,
+  hasEscalationUrlDirectoryPath,
+  hasEscalationUrlNonDefaultPort,
   isIpLiteralHost,
   isPrivateOrLocalEscalationHost,
   isValidAllowedHostEntry,
