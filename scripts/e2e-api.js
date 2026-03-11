@@ -261,6 +261,19 @@ async function run() {
       throw new Error('expected 400 when duplicate content-type headers are sent');
     }
 
+    const duplicateContentEncodingHealthHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Encoding: identity',
+      'Content-Encoding: gzip',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateContentEncodingHealthHeaderResponse)) {
+      throw new Error('expected 400 when duplicate content-encoding headers are sent');
+    }
+
     const duplicateOriginHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
