@@ -2260,10 +2260,16 @@ function hasAmbiguousConditionalValidators(req) {
   const ifNoneMatch = req.headers['if-none-match'];
   const ifModifiedSince = req.headers['if-modified-since'];
   const ifMatch = req.headers['if-match'];
+  const ifUnmodifiedSince = req.headers['if-unmodified-since'];
   const hasIfNoneMatch = typeof ifNoneMatch === 'string' && ifNoneMatch.trim() !== '';
   const hasIfModifiedSince = typeof ifModifiedSince === 'string' && ifModifiedSince.trim() !== '';
   const hasIfMatch = typeof ifMatch === 'string' && ifMatch.trim() !== '';
-  return (hasIfNoneMatch && hasIfModifiedSince) || (hasIfNoneMatch && hasIfMatch);
+  const hasIfUnmodifiedSince = typeof ifUnmodifiedSince === 'string' && ifUnmodifiedSince.trim() !== '';
+  return (
+    (hasIfNoneMatch && hasIfModifiedSince)
+    || (hasIfNoneMatch && hasIfMatch)
+    || (hasIfModifiedSince && hasIfUnmodifiedSince)
+  );
 }
 
 function hasTraceMethod(req) {

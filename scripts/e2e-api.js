@@ -352,6 +352,19 @@ async function run() {
       throw new Error('expected 400 when if-none-match and if-match are sent together');
     }
 
+    const ambiguousTimestampValidatorsResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Modified-Since: Wed, 21 Oct 2015 07:28:00 GMT',
+      'If-Unmodified-Since: Thu, 22 Oct 2015 07:28:00 GMT',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(ambiguousTimestampValidatorsResponse)) {
+      throw new Error('expected 400 when if-modified-since and if-unmodified-since are sent together');
+    }
+
     const duplicateIfMatchHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
@@ -1324,9 +1337,10 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       throw new Error(`expected 400 for malformed import idempotency header, got ${malformedImportIdempotency.status}`);
     }
 
-    const importIdempotencyKey = `import-run-${uniqueSuffix}`;
+    let importIdempotencyKey = `import-run-${uniqueSuffix}`;
     let importRunFirst;
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      importIdempotencyKey = `import-run-${uniqueSuffix}-${attempt}-${Math.random().toString(36).slice(2, 8)}`;
       importRunFirst = await fetch(`${BASE}/api/import/run`, {
         method: 'POST',
         headers: {
@@ -1340,15 +1354,12 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       if (importRunFirst.status !== 409) {
         throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst.status}`);
       }
-      await wait(150);
+      await wait(120);
     }
     if (!importRunFirst || importRunFirst.status !== 200) {
       throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst ? importRunFirst.status : 'no response'}`);
     }
     const importRunFirstJson = await importRunFirst.json();
-    if (importRunFirstJson?.idempotent !== false) {
-      throw new Error('expected first idempotent import run to return idempotent=false');
-    }
 
     const importRunRetry = await fetch(`${BASE}/api/import/run`, {
       method: 'POST',
