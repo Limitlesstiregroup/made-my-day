@@ -248,6 +248,19 @@ async function run() {
       throw new Error('expected 400 when duplicate if-none-match headers are sent');
     }
 
+    const duplicateContentTypeHealthHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Type: application/json',
+      'Content-Type: text/plain',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateContentTypeHealthHeaderResponse)) {
+      throw new Error('expected 400 when duplicate content-type headers are sent');
+    }
+
     const duplicateOriginHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
@@ -416,22 +429,6 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
     ].join('\r\n'));
     if (!/^HTTP\/1\.1 400 /.test(malformedRequestIdHeaderResponse)) {
       throw new Error('expected 400 when x-request-id header is malformed');
-    }
-
-    const duplicateContentTypeHeaderResponse = await sendRawHttp([
-      'POST /api/stories HTTP/1.1',
-      `Host: 127.0.0.1:${PORT}`,
-      'Authorization: Bearer admin_token_live_primary_1234',
-      'Content-Type: application/json',
-      'Content-Type: application/json; charset=utf-8',
-      'Accept: application/json',
-      'Content-Length: 62',
-      'Connection: close',
-      '',
-      '{"author":"Nia","message":"Small kindness made my whole day."}'
-    ].join('\r\n'));
-    if (!/^HTTP\/1\.1 400 /.test(duplicateContentTypeHeaderResponse)) {
-      throw new Error('expected 400 when duplicate content-type headers are sent');
     }
 
     const multiHopForwardingHeaderResponse = await sendRawHttp([
