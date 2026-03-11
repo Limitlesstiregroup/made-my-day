@@ -107,6 +107,9 @@ async function run() {
       typeof healthVersionJson?.eventLoopUtilization !== 'number'
       || typeof healthVersionJson?.eventLoopActiveMillis !== 'number'
       || typeof healthVersionJson?.eventLoopIdleMillis !== 'number'
+      || typeof healthVersionJson?.eventLoopDelayMeanMillis !== 'number'
+      || typeof healthVersionJson?.eventLoopDelayP99Millis !== 'number'
+      || typeof healthVersionJson?.eventLoopDelayMaxMillis !== 'number'
     ) {
       throw new Error('health version endpoint missing event-loop telemetry payload');
     }

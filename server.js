@@ -3,11 +3,13 @@ const crypto = require('crypto');
 const fs = require('fs');
 const net = require('net');
 const path = require('path');
-const { performance } = require('perf_hooks');
+const { performance, monitorEventLoopDelay } = require('perf_hooks');
 const { URL } = require('url');
 const packageMeta = require('./package.json');
 
 let previousEventLoopUtilization = performance.eventLoopUtilization();
+const eventLoopDelayHistogram = monitorEventLoopDelay({ resolution: 20 });
+eventLoopDelayHistogram.enable();
 
 const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
@@ -921,6 +923,15 @@ function getVersionSnapshot() {
       : 0,
     eventLoopIdleMillis: Number.isFinite(eventLoopUtilizationSample.idle)
       ? Number(eventLoopUtilizationSample.idle.toFixed(3))
+      : 0,
+    eventLoopDelayMeanMillis: Number.isFinite(eventLoopDelayHistogram.mean)
+      ? Number((eventLoopDelayHistogram.mean / 1e6).toFixed(3))
+      : 0,
+    eventLoopDelayP99Millis: Number.isFinite(eventLoopDelayHistogram.percentile(99))
+      ? Number((eventLoopDelayHistogram.percentile(99) / 1e6).toFixed(3))
+      : 0,
+    eventLoopDelayMaxMillis: Number.isFinite(eventLoopDelayHistogram.max)
+      ? Number((eventLoopDelayHistogram.max / 1e6).toFixed(3))
       : 0
   };
 }
