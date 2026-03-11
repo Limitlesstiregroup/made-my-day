@@ -35,3 +35,4 @@
 - 150%: Safe-method body-framing hardening rejects `GET`/`HEAD` requests carrying request-body framing (`Content-Length > 0` or any `Transfer-Encoding`) to reduce request-smuggling/cache ambiguity on safe routes ✅
 - 155%: Timeout-ordering hardening now fails GA readiness when `BODY_READ_TIMEOUT_MS` exceeds `REQUEST_TIMEOUT_MS`, preventing slow-body timeout drift beyond intended request lifetime bounds ✅
 - 160%: Body-read safety-gap hardening now fails GA readiness when `REQUEST_TIMEOUT_MS` is less than 1000ms above `BODY_READ_TIMEOUT_MS`, preserving deterministic post-body processing headroom during load spikes ✅
+- 165%: Header-timeout safety-gap hardening now fails GA readiness when `REQUEST_TIMEOUT_MS` is less than 1000ms above `HEADERS_TIMEOUT_MS`, preserving deterministic response flush headroom during slow-header and keep-alive churn ✅

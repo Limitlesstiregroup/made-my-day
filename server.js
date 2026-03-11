@@ -719,6 +719,10 @@ function getConfigIssues() {
     issues.push('headersTimeoutOrder');
   }
 
+  if (!issues.includes('headersTimeout') && !issues.includes('requestTimeout') && (requestTimeoutRaw - headersTimeoutRaw) < 1000) {
+    issues.push('headersSafetyGap');
+  }
+
   if (!issues.includes('keepAliveTimeout') && !issues.includes('headersTimeout') && keepAliveTimeoutRaw > headersTimeoutRaw) {
     issues.push('keepAliveTimeoutOrder');
   }
@@ -733,6 +737,10 @@ function getConfigIssues() {
 
   if (!issues.includes('bodyReadTimeout') && !issues.includes('requestTimeout') && bodyReadTimeoutRaw > requestTimeoutRaw) {
     issues.push('bodyReadTimeoutOrder');
+  }
+
+  if (!issues.includes('bodyReadTimeout') && !issues.includes('requestTimeout') && (requestTimeoutRaw - bodyReadTimeoutRaw) < 1000) {
+    issues.push('bodyReadSafetyGap');
   }
 
   const secretFileKeys = [
@@ -794,9 +802,9 @@ function getReadinessStatus() {
       maxAuthorChars: issues.includes('maxAuthorChars') ? 'fail' : 'pass',
       trustProxy: issues.includes('trustProxy') ? 'fail' : 'pass',
       requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
-      headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : ((issues.includes('headersTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
+      headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : ((issues.includes('headersTimeoutOrder') || issues.includes('headersSafetyGap') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
       keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : ((issues.includes('keepAliveTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
-      bodyReadTimeoutMs: issues.includes('bodyReadTimeout') ? 'fail' : (issues.includes('bodyReadTimeoutOrder') ? 'fail' : 'pass'),
+      bodyReadTimeoutMs: issues.includes('bodyReadTimeout') ? 'fail' : ((issues.includes('bodyReadTimeoutOrder') || issues.includes('bodyReadSafetyGap')) ? 'fail' : 'pass'),
       maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass',
       maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass',
       shutdownGraceMs: issues.includes('shutdownGraceMs') ? 'fail' : 'pass'

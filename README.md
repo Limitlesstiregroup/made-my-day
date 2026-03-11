@@ -128,7 +128,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
 - `MAX_BODY_BYTES` (default `16384`, min `1024`, max `262144`) caps JSON payload size for mutation/admin POST routes.
-- `BODY_READ_TIMEOUT_MS` (default `15000`, min `1000`, max `120000`) bounds how long the server waits for POST request bodies before returning HTTP 408.
+- `BODY_READ_TIMEOUT_MS` (default `15000`, min `1000`, max `120000`) bounds how long the server waits for POST request bodies before returning HTTP 408; GA readiness also requires `REQUEST_TIMEOUT_MS >= BODY_READ_TIMEOUT_MS + 1000ms`.
 - `MAX_URL_CHARS` (default `2048`, min `256`, max `8192`) caps request URL length before routing (oversized URLs return `414`).
 - `MAX_QUERY_CHARS` (default `1024`, min `128`, max `4096`) caps query-string length before route handling (oversized queries return `414`).
 - `MAX_HEADER_BYTES` (default `16384`, min `4096`, max `65536`) caps HTTP request header bytes at parser level (oversized headers return `431`).
@@ -137,7 +137,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `MAX_COMMENT_CHARS` (default `300`, min `20`) caps accepted comment text length after sanitization.
 - `MAX_COMMENTS_PER_STORY` (default `500`, min `5`) caps comments accepted per story to prevent hotspot abuse from exhausting storage.
 - `MAX_AUTHOR_CHARS` (default `60`, min `10`) caps accepted author/display name length after sanitization.
-- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS + 1000ms <= HEADERS_TIMEOUT_MS`).
+- `REQUEST_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` / `KEEP_ALIVE_TIMEOUT_MS` harden inbound HTTP connection timeouts (defaults: `30000` / `15000` / `5000`, each must stay between `1000` and `120000`; `HEADERS_TIMEOUT_MS <= REQUEST_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS >= HEADERS_TIMEOUT_MS + 1000ms`, `KEEP_ALIVE_TIMEOUT_MS + 1000ms <= HEADERS_TIMEOUT_MS`).
 - `SHUTDOWN_GRACE_MS` (default `10000`, min `1000`, max `120000`) bounds graceful shutdown drain time before forced connection close/exit during restarts.
 - `MAX_REQUESTS_PER_SOCKET` caps keep-alive reuse per socket (default `100`, min `1`, max `1000`).
 - `MADE_MY_DAY_ONCALL_PRIMARY` (or `MADE_MY_DAY_ONCALL_PRIMARY_FILE`) required on-call owner for GA readiness (team handle/email/pager alias, 3-128 chars; no whitespace/control characters; URLs are rejected).
