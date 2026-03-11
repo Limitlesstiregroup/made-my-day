@@ -1326,6 +1326,10 @@ function isStrictJsonContentType(value) {
 }
 
 function getJsonContentTypeStatus(req) {
+  if (hasDuplicateRawHeader(req, 'content-type')) {
+    return { ok: false, malformed: true };
+  }
+
   const rawHeader = req.headers['content-type'];
   if (Array.isArray(rawHeader)) {
     const normalized = rawHeader.map((value) => String(value).trim()).filter(Boolean);
