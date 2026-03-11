@@ -27,3 +27,4 @@
 
 - 115%: Incident replay fixture expansion for malformed `x-request-id` + `x-forwarded-prefix` patterns ✅
 - 120%: Error-response cache hardening (cached JSON helpers disable ETag/304 + force no-store on 4xx/5xx) ✅
+- 125%: Allowed-host policy hardening (GA readiness now fails duplicate host entries to prevent drifted ingress allowlists) ✅

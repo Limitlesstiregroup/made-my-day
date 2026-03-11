@@ -627,8 +627,18 @@ function getConfigIssues() {
     issues.push('maxQueryChars');
   }
 
+  const directAllowedHosts = String(process.env.ALLOWED_HOSTS || '').trim();
+  const fileAllowedHosts = readSecretFile(process.env.ALLOWED_HOSTS_FILE);
+  const allowedHostsRaw = (directAllowedHosts || fileAllowedHosts)
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
   if (ALLOWED_HOSTS.length > 0) {
     if (ALLOWED_HOSTS.length > 32) {
+      issues.push('allowedHosts');
+    }
+    if (allowedHostsRaw.length !== ALLOWED_HOSTS.length) {
       issues.push('allowedHosts');
     }
     if (ALLOWED_HOSTS.some((host) => !isValidAllowedHostEntry(host))) {

@@ -475,10 +475,21 @@ function evaluateReadiness(env = process.env) {
     }
   }
 
+  const directAllowedHosts = String(env.ALLOWED_HOSTS || '').trim();
+  const fileAllowedHosts = readSecretFile(env.ALLOWED_HOSTS_FILE);
+  const allowedHostsRaw = (directAllowedHosts || fileAllowedHosts)
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
   const allowedHosts = getAllowedHosts(env);
   if (allowedHosts.length > 0) {
     if (allowedHosts.length > 32) {
       issues.push('ALLOWED_HOSTS must include at most 32 entries');
+    }
+
+    if (allowedHostsRaw.length !== allowedHosts.length) {
+      issues.push('ALLOWED_HOSTS must not include duplicate host entries');
     }
 
     const invalidAllowedHost = allowedHosts.find((host) => !isValidAllowedHostEntry(host));

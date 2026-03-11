@@ -400,6 +400,14 @@ try {
     singleLabelAllowedHostIssue.includes('ALLOWED_HOSTS entries must be fully-qualified DNS hostnames (single-label hosts are not allowed)'),
     'release readiness should reject single-label ALLOWED_HOSTS entries in GA mode'
   );
+
+  const duplicateAllowedHostsIssue = evaluateReadiness({
+    ALLOWED_HOSTS: 'app.mademyday.com,app.mademyday.com'
+  });
+  assert.ok(
+    duplicateAllowedHostsIssue.includes('ALLOWED_HOSTS must not include duplicate host entries'),
+    'release readiness should reject duplicate ALLOWED_HOSTS entries in GA mode'
+  );
 } catch (err) {
   console.error(`smoke test failed: ${err.message}`);
   process.exit(1);
