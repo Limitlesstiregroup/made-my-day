@@ -2269,6 +2269,7 @@ function hasAmbiguousConditionalValidators(req) {
     (hasIfNoneMatch && hasIfModifiedSince)
     || (hasIfNoneMatch && hasIfMatch)
     || (hasIfModifiedSince && hasIfUnmodifiedSince)
+    || (hasIfMatch && hasIfUnmodifiedSince)
   );
 }
 
