@@ -474,6 +474,17 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when keep-alive header is present');
     }
 
+    const conflictingConnectionHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Connection: keep-alive, close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(conflictingConnectionHeaderResponse)) {
+      throw new Error('expected 400 when connection header has conflicting persistence directives');
+    }
+
     const multiHopForwardedProtoHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

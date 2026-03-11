@@ -2212,13 +2212,22 @@ function hasKeepAliveHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
-function hasUnsupportedConnectionHeader(req) {
+function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
-  if (typeof raw !== 'string' || raw.trim() === '') return false;
+  if (typeof raw !== 'string' || raw.trim() === '') return [];
+  return raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean);
+}
+
+function hasUnsupportedConnectionHeader(req) {
   const allowedTokens = new Set(['keep-alive', 'close']);
-  const tokens = raw.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean);
+  const tokens = parseConnectionHeaderTokens(req);
   return tokens.some((token) => !allowedTokens.has(token));
+}
+
+function hasAmbiguousConnectionPersistenceHeader(req) {
+  const tokens = parseConnectionHeaderTokens(req);
+  return tokens.includes('keep-alive') && tokens.includes('close');
 }
 
 function hasTraceMethod(req) {
@@ -2349,6 +2358,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });
+    }
+    if (hasAmbiguousConnectionPersistenceHeader(req)) {
+      return json(res, 400, { error: 'connection header contains conflicting persistence directives' });
     }
     if (hasTraceMethod(req) || hasConnectMethod(req)) {
       return json(res, 405, { error: 'TRACE/CONNECT methods are not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
