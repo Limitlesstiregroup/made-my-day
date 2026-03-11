@@ -962,6 +962,7 @@ function secureTokenEquals(incomingToken, configuredToken) {
 }
 
 function parseAuthorizationBearer(req) {
+  if (hasDuplicateRawHeader(req, 'authorization')) return { malformed: true, token: '' };
   const header = req.headers.authorization;
   if (Array.isArray(header)) return { malformed: true, token: '' };
   if (typeof header !== 'string') return { malformed: false, token: '' };
@@ -1081,6 +1082,7 @@ function sanitizeSourceName(value) {
 }
 
 function parseIdempotencyKey(req) {
+  if (hasDuplicateRawHeader(req, 'idempotency-key')) return { malformed: true, key: '' };
   const header = req.headers['idempotency-key'];
   if (Array.isArray(header)) return { malformed: true, key: '' };
   if (typeof header !== 'string') return { malformed: false, key: '' };

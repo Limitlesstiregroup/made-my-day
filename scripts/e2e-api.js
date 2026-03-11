@@ -744,6 +744,19 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       throw new Error(`expected 400 for malformed authorization header, got ${malformedHealthDetails.status}`);
     }
 
+    const duplicateAuthorizationHealthDetails = await sendRawHttp([
+      `GET /api/health/details HTTP/1.1`,
+      `Host: 127.0.0.1:${PORT}`,
+      'Authorization: Bearer admin_token_live_primary_1234',
+      'Authorization: Bearer admin_token_live_primary_1234',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateAuthorizationHealthDetails)) {
+      throw new Error('expected 400 for duplicate authorization headers on admin endpoint');
+    }
+
     const healthDetails = await fetch(`${BASE}/api/health/details`, {
       headers: { Authorization: 'Bearer admin_token_live_primary_1234' }
     });
@@ -865,6 +878,25 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
     const invalidIdempotencyJson = await invalidIdempotencyKey.json();
     if (invalidIdempotencyJson?.error !== 'invalid idempotency-key header') {
       throw new Error('malformed idempotency key should return explicit validation error');
+    }
+
+    const duplicateIdempotencyPayload = JSON.stringify({
+      text: `Today I brought coffee to my neighbor and it made their morning brighter. ${uniqueSuffix}`,
+      author: 'smoke-test'
+    });
+    const duplicateIdempotencyCreateStory = await sendRawHttp([
+      'POST /api/stories HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Type: application/json; charset=utf-8',
+      'Idempotency-Key: idem_story_dup',
+      'Idempotency-Key: idem_story_dup',
+      `Content-Length: ${Buffer.byteLength(duplicateIdempotencyPayload)}`,
+      'Connection: close',
+      '',
+      duplicateIdempotencyPayload
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateIdempotencyCreateStory)) {
+      throw new Error('expected 400 for duplicate idempotency-key headers on story create');
     }
 
     const badLikeType = await fetch(`${BASE}/api/stories/${storyId}/like`, {
