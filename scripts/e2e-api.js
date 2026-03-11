@@ -274,6 +274,19 @@ async function run() {
       throw new Error('expected 400 when duplicate if-match headers are sent');
     }
 
+    const duplicateIfUnmodifiedSinceHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Unmodified-Since: Wed, 21 Oct 2015 07:28:00 GMT',
+      'If-Unmodified-Since: Thu, 22 Oct 2015 07:28:00 GMT',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateIfUnmodifiedSinceHeaderResponse)) {
+      throw new Error('expected 400 when duplicate if-unmodified-since headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
