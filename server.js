@@ -2367,6 +2367,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'cache-control')) {
       return json(res, 400, { error: 'invalid cache-control header' });
     }
+    if (hasDuplicateRawHeader(req, 'pragma')) {
+      return json(res, 400, { error: 'invalid pragma header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });

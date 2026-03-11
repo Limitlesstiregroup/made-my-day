@@ -339,6 +339,19 @@ async function run() {
       throw new Error('expected 400 when duplicate cache-control headers are sent');
     }
 
+    const duplicatePragmaHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Pragma: no-cache',
+      'Pragma: no-store',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicatePragmaHeaderResponse)) {
+      throw new Error('expected 400 when duplicate pragma headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
@@ -1250,17 +1263,25 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
     }
 
     const importIdempotencyKey = `import-run-${uniqueSuffix}`;
-    const importRunFirst = await fetch(`${BASE}/api/import/run`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer admin_token_live_primary_1234',
-        'Idempotency-Key': importIdempotencyKey
-      },
-      body: JSON.stringify({})
-    });
-    if (importRunFirst.status !== 200) {
-      throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst.status}`);
+    let importRunFirst;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      importRunFirst = await fetch(`${BASE}/api/import/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer admin_token_live_primary_1234',
+          'Idempotency-Key': importIdempotencyKey
+        },
+        body: JSON.stringify({})
+      });
+      if (importRunFirst.status === 200) break;
+      if (importRunFirst.status !== 409) {
+        throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst.status}`);
+      }
+      await wait(150);
+    }
+    if (!importRunFirst || importRunFirst.status !== 200) {
+      throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst ? importRunFirst.status : 'no response'}`);
     }
     const importRunFirstJson = await importRunFirst.json();
     if (importRunFirstJson?.idempotent !== false) {
