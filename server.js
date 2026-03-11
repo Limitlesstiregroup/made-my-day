@@ -838,10 +838,20 @@ function getOperationalSnapshot(store, { windowHours = 0 } = {}) {
       latestHallOfFameEntry: store.hallOfFame[0] || null
     },
     runtimeGuards: {
+      storiesUsed: store.stories.length,
+      storiesCapacity: clampLimit(MAX_STORIES, 5000),
+      commentsUsed: store.comments.length,
+      commentsCapacity: clampLimit(MAX_COMMENTS, 20000),
       rateLimitKeysUsed,
       rateLimitKeysCapacity: SAFE_RATE_LIMIT_MAX_KEYS,
       idempotencyKeysPersisted,
-      idempotencyKeysCapacity: clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
+      idempotencyKeysCapacity: clampLimit(MAX_IDEMPOTENCY_KEYS, 5000),
+      storiesUsageRatio: clampLimit(MAX_STORIES, 5000) > 0 ? store.stories.length / clampLimit(MAX_STORIES, 5000) : 0,
+      commentsUsageRatio: clampLimit(MAX_COMMENTS, 20000) > 0 ? store.comments.length / clampLimit(MAX_COMMENTS, 20000) : 0,
+      rateLimitUsageRatio: SAFE_RATE_LIMIT_MAX_KEYS > 0 ? rateLimitKeysUsed / SAFE_RATE_LIMIT_MAX_KEYS : 0,
+      idempotencyUsageRatio: clampLimit(MAX_IDEMPOTENCY_KEYS, 5000) > 0
+        ? idempotencyKeysPersisted / clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
+        : 0
     },
     latestStory: latestStory
       ? {

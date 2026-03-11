@@ -155,7 +155,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - `GET|HEAD /api/health/live` (always `200` + process uptime for liveness probes)
 - `GET|HEAD /api/health/version` (deploy identity snapshot with app version + optional `MADE_MY_DAY_GIT_SHA`/`GIT_COMMIT_SHA` + `MADE_MY_DAY_BUILD_ID` + optional `MADE_MY_DAY_INSTANCE_ID`/`HOSTNAME`, plus runtime `nodeVersion`, process `startedAt`, `uptimeSeconds`, and memory telemetry (`memoryRssBytes`, `heapUsedBytes`) for GA incident triage)
 - `GET|HEAD /api/health/ready` (`200` when GA-ready config checks pass, else `503`; `503` responses include `Retry-After: 30` for safer probe/client backoff; response includes `checkedAt`, `checks`, and `issueCodes` for quick runbook triage)
-- `GET|HEAD /api/health/details` (operational totals + import/winner automation snapshot + on-call/escalation snapshot for GA runbooks; requires admin auth when configured)
+- `GET|HEAD /api/health/details` (operational totals + import/winner automation snapshot + on-call/escalation snapshot + runtime capacity usage ratios (`storiesUsageRatio`, `commentsUsageRatio`, `rateLimitUsageRatio`, `idempotencyUsageRatio`) for GA runbooks; requires admin auth when configured)
 - `GET /api/admin/hall-of-fame` (admin-only paginated JSON export)
 - `GET /api/admin/hall-of-fame.csv` (admin-only CSV export)
 - `GET /api/admin/gift-cards` (admin-only paginated JSON export)
