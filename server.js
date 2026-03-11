@@ -2256,6 +2256,14 @@ function hasAmbiguousConnectionPersistenceHeader(req) {
   return tokens.includes('keep-alive') && tokens.includes('close');
 }
 
+function hasAmbiguousConditionalCacheValidators(req) {
+  const ifNoneMatch = req.headers['if-none-match'];
+  const ifModifiedSince = req.headers['if-modified-since'];
+  const hasIfNoneMatch = typeof ifNoneMatch === 'string' && ifNoneMatch.trim() !== '';
+  const hasIfModifiedSince = typeof ifModifiedSince === 'string' && ifModifiedSince.trim() !== '';
+  return hasIfNoneMatch && hasIfModifiedSince;
+}
+
 function hasTraceMethod(req) {
   return String(req.method || '').toUpperCase() === 'TRACE';
 }
@@ -2375,6 +2383,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasDuplicateRawHeader(req, 'if-range')) {
       return json(res, 400, { error: 'invalid if-range header' });
+    }
+    if (hasAmbiguousConditionalCacheValidators(req)) {
+      return json(res, 400, { error: 'ambiguous conditional cache validators are not allowed' });
     }
     if (hasDuplicateRawHeader(req, 'cache-control')) {
       return json(res, 400, { error: 'invalid cache-control header' });

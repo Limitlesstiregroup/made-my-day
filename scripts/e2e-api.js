@@ -326,6 +326,19 @@ async function run() {
       throw new Error('expected 400 when duplicate if-modified-since headers are sent');
     }
 
+    const ambiguousConditionalValidatorsResponse = await sendRawHttp([
+      'GET /health HTTP/1.1',
+      'Host: 127.0.0.1:3210',
+      'If-None-Match: "etag-a"',
+      'If-Modified-Since: Wed, 21 Oct 2015 07:28:00 GMT',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(ambiguousConditionalValidatorsResponse)) {
+      throw new Error('expected 400 when if-none-match and if-modified-since are sent together');
+    }
+
     const duplicateIfMatchHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
