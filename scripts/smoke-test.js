@@ -389,6 +389,15 @@ try {
     'release readiness should reject hostnames with empty labels'
   );
 
+  const overlongAllowedHost = `${'a'.repeat(64)}.${'b'.repeat(64)}.${'c'.repeat(64)}.${'d'.repeat(64)}`;
+  const overlongAllowedHostIssue = evaluateReadiness({
+    ALLOWED_HOSTS: overlongAllowedHost
+  });
+  assert.ok(
+    overlongAllowedHostIssue.includes('ALLOWED_HOSTS must be a comma-separated list of hosts (`host[:port]` or `[ipv6]:port`, port 1-65535)'),
+    'release readiness should reject overlong DNS hostnames in ALLOWED_HOSTS'
+  );
+
   const privateAllowedHostIssue = evaluateReadiness({
     ALLOWED_HOSTS: 'app.mademyday.com,127.0.0.1'
   });

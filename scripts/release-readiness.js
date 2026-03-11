@@ -315,6 +315,7 @@ function isPrivateOrLocalEscalationHost(hostname) {
 function isValidDnsHostname(hostname) {
   const normalized = String(hostname || '').trim().toLowerCase();
   if (!normalized) return false;
+  if (normalized.length > 253) return false;
   if (normalized.includes('..')) return false;
   if (normalized.startsWith('.') || normalized.endsWith('.')) return false;
   const labels = normalized.split('.');
