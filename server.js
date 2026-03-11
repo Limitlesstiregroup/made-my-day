@@ -2337,6 +2337,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'cookie')) {
       return json(res, 400, { error: 'invalid cookie header' });
     }
+    if (hasDuplicateRawHeader(req, 'if-none-match')) {
+      return json(res, 400, { error: 'invalid if-none-match header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });

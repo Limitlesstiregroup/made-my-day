@@ -235,6 +235,19 @@ async function run() {
       throw new Error('expected 400 when duplicate cookie headers are sent');
     }
 
+    const duplicateIfNoneMatchHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-None-Match: "etag-a"',
+      'If-None-Match: "etag-b"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateIfNoneMatchHeaderResponse)) {
+      throw new Error('expected 400 when duplicate if-none-match headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
