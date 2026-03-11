@@ -48,3 +48,4 @@
 - 215%: Accept-Language duplication hardening now rejects duplicate raw `Accept-Language` header lines with HTTP 400 (`invalid accept-language header`) before route handling to prevent intermediary/header-fold ambiguity across proxies/CDNs ✅
 - 220%: Accept-Charset duplication hardening now rejects duplicate raw `Accept-Charset` header lines with HTTP 400 (`invalid accept-charset header`) before route handling to prevent intermediary/header-fold ambiguity across charset-negotiation paths ✅
 - 225%: Cookie duplication hardening now rejects duplicate raw `Cookie` header lines with HTTP 400 (`invalid cookie header`) before route handling to prevent intermediary/header-fold ambiguity in session/auth attribution ✅
+- 230%: Conditional revalidation hardening now rejects duplicate raw `If-Modified-Since` header lines with HTTP 400 (`invalid if-modified-since header`) before route handling to prevent intermediary/header-fold ambiguity in cache validator parsing ✅
