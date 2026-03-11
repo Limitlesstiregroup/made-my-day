@@ -92,6 +92,9 @@ async function run() {
     if (typeof healthVersionJson?.memoryRssBytes !== 'number' || typeof healthVersionJson?.heapUsedBytes !== 'number') {
       throw new Error('health version endpoint missing memoryRssBytes/heapUsedBytes payload');
     }
+    if (typeof healthVersionJson?.cpuUserMicros !== 'number' || typeof healthVersionJson?.cpuSystemMicros !== 'number') {
+      throw new Error('health version endpoint missing cpuUserMicros/cpuSystemMicros payload');
+    }
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {
