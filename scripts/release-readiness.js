@@ -703,6 +703,10 @@ function evaluateReadiness(env = process.env) {
     issues.push('BODY_READ_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS');
   }
 
+  if ((requestTimeoutMs - bodyReadTimeoutMs) < 1000) {
+    issues.push('REQUEST_TIMEOUT_MS must be at least 1000ms greater than BODY_READ_TIMEOUT_MS');
+  }
+
   return issues;
 }
 

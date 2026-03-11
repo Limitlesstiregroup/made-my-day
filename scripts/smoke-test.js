@@ -347,6 +347,12 @@ try {
     'release readiness should reject body read timeout values above request timeout'
   );
 
+  const bodyReadTimeoutGapIssue = evaluateReadiness({ REQUEST_TIMEOUT_MS: '10000', BODY_READ_TIMEOUT_MS: '9501' });
+  assert.ok(
+    bodyReadTimeoutGapIssue.includes('REQUEST_TIMEOUT_MS must be at least 1000ms greater than BODY_READ_TIMEOUT_MS'),
+    'release readiness should enforce a minimum safety gap between request timeout and body read timeout'
+  );
+
   const shutdownGraceIssue = evaluateReadiness({ SHUTDOWN_GRACE_MS: '999999' });
   assert.ok(
     shutdownGraceIssue.includes('SHUTDOWN_GRACE_MS must be between 1000 and 120000'),
