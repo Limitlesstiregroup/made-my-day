@@ -261,6 +261,19 @@ async function run() {
       throw new Error('expected 400 when duplicate if-modified-since headers are sent');
     }
 
+    const duplicateIfMatchHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Match: "etag-a"',
+      'If-Match: "etag-b"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateIfMatchHeaderResponse)) {
+      throw new Error('expected 400 when duplicate if-match headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
