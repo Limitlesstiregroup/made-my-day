@@ -53,4 +53,5 @@
 - 240%: Precondition timestamp hardening now rejects duplicate raw `If-Unmodified-Since` header lines with HTTP 400 (`invalid if-unmodified-since header`) before route handling to prevent intermediary/header-fold ambiguity in conditional-write timestamp parsing ✅
 - 245%: Conditional range-validator hardening now rejects duplicate raw `If-Range` header lines with HTTP 400 (`invalid if-range header`) before route handling to prevent intermediary/header-fold ambiguity in partial-content/cache revalidation flows ✅
 
-- 250- 250%: Range-request hardening now rejects `Range` headers with HTTP 400 (`range header is not allowed`) before route handling to prevent unsupported partial-content semantics from crossing intermediary/proxy paths ✅
+- 250%: Range-request hardening now rejects `Range` headers with HTTP 400 (`range header is not allowed`) before route handling to prevent unsupported partial-content semantics from crossing intermediary/proxy paths ✅
+- 255%: Origin duplication hardening now rejects duplicate raw `Origin` header lines with HTTP 400 (`invalid origin header`) before route handling to prevent intermediary/header-fold ambiguity in CORS/request-origin attribution ✅

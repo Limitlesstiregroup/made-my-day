@@ -248,6 +248,19 @@ async function run() {
       throw new Error('expected 400 when duplicate if-none-match headers are sent');
     }
 
+    const duplicateOriginHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Origin: https://made-my-day.app',
+      'Origin: https://spoofed.example',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateOriginHeaderResponse)) {
+      throw new Error('expected 400 when duplicate origin headers are sent');
+    }
+
     const duplicateIfModifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
