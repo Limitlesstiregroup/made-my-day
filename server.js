@@ -2349,6 +2349,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'if-unmodified-since')) {
       return json(res, 400, { error: 'invalid if-unmodified-since header' });
     }
+    if (hasDuplicateRawHeader(req, 'if-range')) {
+      return json(res, 400, { error: 'invalid if-range header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });
