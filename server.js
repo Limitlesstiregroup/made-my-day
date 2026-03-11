@@ -695,6 +695,11 @@ function getConfigIssues() {
     issues.push('keepAliveTimeout');
   }
 
+  const bodyReadTimeoutRaw = parseIntOrDefault(process.env.BODY_READ_TIMEOUT_MS, 15_000);
+  if (bodyReadTimeoutRaw < 1_000 || bodyReadTimeoutRaw > 120_000) {
+    issues.push('bodyReadTimeout');
+  }
+
   const maxRequestsPerSocketRaw = parseIntOrDefault(process.env.MAX_REQUESTS_PER_SOCKET, 100);
   if (maxRequestsPerSocketRaw < 1 || maxRequestsPerSocketRaw > 1000) {
     issues.push('maxRequestsPerSocket');
@@ -724,6 +729,10 @@ function getConfigIssues() {
     && (headersTimeoutRaw - keepAliveTimeoutRaw) < 1000
   ) {
     issues.push('keepAliveSafetyGap');
+  }
+
+  if (!issues.includes('bodyReadTimeout') && !issues.includes('requestTimeout') && bodyReadTimeoutRaw > requestTimeoutRaw) {
+    issues.push('bodyReadTimeoutOrder');
   }
 
   const secretFileKeys = [
@@ -787,6 +796,7 @@ function getReadinessStatus() {
       requestTimeoutMs: issues.includes('requestTimeout') ? 'fail' : 'pass',
       headersTimeoutMs: issues.includes('headersTimeout') ? 'fail' : ((issues.includes('headersTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
       keepAliveTimeoutMs: issues.includes('keepAliveTimeout') ? 'fail' : ((issues.includes('keepAliveTimeoutOrder') || issues.includes('keepAliveSafetyGap')) ? 'fail' : 'pass'),
+      bodyReadTimeoutMs: issues.includes('bodyReadTimeout') ? 'fail' : (issues.includes('bodyReadTimeoutOrder') ? 'fail' : 'pass'),
       maxRequestsPerSocket: issues.includes('maxRequestsPerSocket') ? 'fail' : 'pass',
       maxHeadersCount: issues.includes('maxHeadersCount') ? 'fail' : 'pass',
       shutdownGraceMs: issues.includes('shutdownGraceMs') ? 'fail' : 'pass'

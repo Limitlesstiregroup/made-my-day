@@ -341,6 +341,12 @@ try {
     'release readiness should reject out-of-range BODY_READ_TIMEOUT_MS values'
   );
 
+  const bodyReadTimeoutOrderIssue = evaluateReadiness({ REQUEST_TIMEOUT_MS: '10000', BODY_READ_TIMEOUT_MS: '12000' });
+  assert.ok(
+    bodyReadTimeoutOrderIssue.includes('BODY_READ_TIMEOUT_MS must be less than or equal to REQUEST_TIMEOUT_MS'),
+    'release readiness should reject body read timeout values above request timeout'
+  );
+
   const shutdownGraceIssue = evaluateReadiness({ SHUTDOWN_GRACE_MS: '999999' });
   assert.ok(
     shutdownGraceIssue.includes('SHUTDOWN_GRACE_MS must be between 1000 and 120000'),
