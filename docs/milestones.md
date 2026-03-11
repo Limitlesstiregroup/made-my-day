@@ -41,3 +41,4 @@
 - 180%: Authorization + idempotency header-duplication hardening now rejects duplicate raw `Authorization` headers on admin endpoints and duplicate raw `Idempotency-Key` headers on JSON mutation/admin POST APIs with HTTP 400 to prevent intermediary/header-fold ambiguity ✅
 - 185%: Connection persistence hardening now rejects conflicting `Connection: keep-alive, close` directives with HTTP 400 to prevent ambiguous hop-by-hop persistence negotiation through intermediaries ✅
 - 190%: Accept header duplication hardening now rejects duplicate raw `Accept` header lines with HTTP 400 (`invalid accept header`) before route handling to prevent intermediary/header-fold ambiguity across all endpoints ✅
+- 195%: Content-Length duplication hardening now rejects duplicate raw `Content-Length` header lines with HTTP 400 (`invalid content-length header`) before route handling to eliminate same-value duplicate framing ambiguity across intermediaries ✅

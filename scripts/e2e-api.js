@@ -209,6 +209,21 @@ async function run() {
       throw new Error('expected 400 when duplicate x-request-id headers are sent');
     }
 
+    const duplicateMatchingContentLengthHeaderResponse = await sendRawHttp([
+      'POST /api/stories HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Authorization: Bearer admin_token_live_primary_1234',
+      'Content-Type: application/json',
+      'Content-Length: 62',
+      'Content-Length: 62',
+      'Connection: close',
+      '',
+      '{"author":"Nia","message":"Small kindness made my whole day."}'
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateMatchingContentLengthHeaderResponse)) {
+      throw new Error('expected 400 when duplicate content-length headers are sent, even when values match');
+    }
+
 const malformedRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

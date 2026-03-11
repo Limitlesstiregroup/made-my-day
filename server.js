@@ -2299,6 +2299,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'accept')) {
       return json(res, 400, { error: 'invalid accept header' });
     }
+    if (hasDuplicateRawHeader(req, 'content-length')) {
+      return json(res, 400, { error: 'invalid content-length header' });
+    }
     if (hasDuplicateRawHeader(req, 'x-request-id')) {
       return json(res, 400, { error: 'invalid x-request-id header' });
     }
