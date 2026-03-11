@@ -875,11 +875,19 @@ function getEscalationSnapshot() {
   };
 }
 
+function getSafeIdentityValue(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  if (value.length > 128) return null;
+  if (!/^[a-zA-Z0-9._:-]+$/.test(value)) return null;
+  return value;
+}
+
 function getVersionSnapshot() {
-  const gitSha = String(process.env.MADE_MY_DAY_GIT_SHA || process.env.GIT_COMMIT_SHA || '').trim() || null;
-  const buildId = String(process.env.MADE_MY_DAY_BUILD_ID || '').trim() || null;
+  const gitSha = getSafeIdentityValue(process.env.MADE_MY_DAY_GIT_SHA || process.env.GIT_COMMIT_SHA);
+  const buildId = getSafeIdentityValue(process.env.MADE_MY_DAY_BUILD_ID);
   const uptimeSeconds = Math.floor(process.uptime());
-  const instanceId = String(process.env.MADE_MY_DAY_INSTANCE_ID || process.env.HOSTNAME || '').trim() || null;
+  const instanceId = getSafeIdentityValue(process.env.MADE_MY_DAY_INSTANCE_ID || process.env.HOSTNAME);
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
   return {
