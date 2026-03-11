@@ -1586,10 +1586,29 @@ function parseDeclaredContentLength(rawHeader) {
   return { invalid: false, value };
 }
 
+function parseTransferEncodingHeader(rawHeader) {
+  if (rawHeader == null) return { present: false, invalid: false };
+
+  const rawValues = Array.isArray(rawHeader)
+    ? rawHeader.map((value) => String(value).trim()).filter(Boolean)
+    : [String(rawHeader).trim()].filter(Boolean);
+
+  if (rawValues.length === 0) return { present: false, invalid: false };
+  if (rawValues.length > 1) return { present: true, invalid: true };
+
+  const tokens = rawValues[0].split(',').map((value) => value.trim()).filter(Boolean);
+  if (tokens.length === 0) return { present: false, invalid: false };
+  if (tokens.length !== 1) return { present: true, invalid: true };
+
+  return {
+    present: true,
+    invalid: tokens[0].toLowerCase() !== 'chunked'
+  };
+}
+
 function hasTransferEncodingHeader(rawHeader) {
-  if (rawHeader == null) return false;
-  if (Array.isArray(rawHeader)) return rawHeader.some((value) => String(value).trim().length > 0);
-  return String(rawHeader).trim().length > 0;
+  const parsed = parseTransferEncodingHeader(rawHeader);
+  return parsed.present && !parsed.invalid;
 }
 
 function parseContentEncodingHeader(rawHeader) {
@@ -2301,6 +2320,13 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasDuplicateRawHeader(req, 'content-length')) {
       return json(res, 400, { error: 'invalid content-length header' });
+    }
+    if (hasDuplicateRawHeader(req, 'transfer-encoding')) {
+      return json(res, 400, { error: 'invalid transfer-encoding header' });
+    }
+    const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
+    if (parsedTransferEncoding.invalid) {
+      return json(res, 400, { error: 'invalid transfer-encoding header' });
     }
     if (hasDuplicateRawHeader(req, 'x-request-id')) {
       return json(res, 400, { error: 'invalid x-request-id header' });

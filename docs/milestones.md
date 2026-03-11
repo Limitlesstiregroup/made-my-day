@@ -42,3 +42,4 @@
 - 185%: Connection persistence hardening now rejects conflicting `Connection: keep-alive, close` directives with HTTP 400 to prevent ambiguous hop-by-hop persistence negotiation through intermediaries ✅
 - 190%: Accept header duplication hardening now rejects duplicate raw `Accept` header lines with HTTP 400 (`invalid accept header`) before route handling to prevent intermediary/header-fold ambiguity across all endpoints ✅
 - 195%: Content-Length duplication hardening now rejects duplicate raw `Content-Length` header lines with HTTP 400 (`invalid content-length header`) before route handling to eliminate same-value duplicate framing ambiguity across intermediaries ✅
+- 200%: Transfer-Encoding hardening now rejects duplicate raw `Transfer-Encoding` header lines, comma-chained transfer-coding tokens, and non-`chunked` values with HTTP 400 (`invalid transfer-encoding header`) before route handling to reduce malformed body-framing ambiguity across intermediaries ✅
