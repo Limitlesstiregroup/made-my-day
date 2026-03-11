@@ -2325,6 +2325,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'transfer-encoding')) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });
     }
+    if (hasDuplicateRawHeader(req, 'accept-encoding')) {
+      return json(res, 400, { error: 'invalid accept-encoding header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });
