@@ -3,8 +3,11 @@ const crypto = require('crypto');
 const fs = require('fs');
 const net = require('net');
 const path = require('path');
+const { performance } = require('perf_hooks');
 const { URL } = require('url');
 const packageMeta = require('./package.json');
+
+let previousEventLoopUtilization = performance.eventLoopUtilization();
 
 const PORT = Number(process.env.PORT || 4300);
 const DATA_DIR = path.join(__dirname, 'data');
@@ -891,6 +894,8 @@ function getVersionSnapshot() {
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
   const resourceUsage = process.resourceUsage();
+  const eventLoopUtilizationSample = performance.eventLoopUtilization(previousEventLoopUtilization);
+  previousEventLoopUtilization = eventLoopUtilizationSample;
   return {
     service: 'made-my-day',
     version: packageMeta.version,
@@ -907,7 +912,16 @@ function getVersionSnapshot() {
     fsReadBytes: Number.isFinite(resourceUsage.fsRead) ? resourceUsage.fsRead : 0,
     fsWriteBytes: Number.isFinite(resourceUsage.fsWrite) ? resourceUsage.fsWrite : 0,
     voluntaryContextSwitches: Number.isFinite(resourceUsage.voluntaryContextSwitches) ? resourceUsage.voluntaryContextSwitches : 0,
-    involuntaryContextSwitches: Number.isFinite(resourceUsage.involuntaryContextSwitches) ? resourceUsage.involuntaryContextSwitches : 0
+    involuntaryContextSwitches: Number.isFinite(resourceUsage.involuntaryContextSwitches) ? resourceUsage.involuntaryContextSwitches : 0,
+    eventLoopUtilization: Number.isFinite(eventLoopUtilizationSample.utilization)
+      ? Number(eventLoopUtilizationSample.utilization.toFixed(6))
+      : 0,
+    eventLoopActiveMillis: Number.isFinite(eventLoopUtilizationSample.active)
+      ? Number(eventLoopUtilizationSample.active.toFixed(3))
+      : 0,
+    eventLoopIdleMillis: Number.isFinite(eventLoopUtilizationSample.idle)
+      ? Number(eventLoopUtilizationSample.idle.toFixed(3))
+      : 0
   };
 }
 

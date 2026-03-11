@@ -103,6 +103,13 @@ async function run() {
     ) {
       throw new Error('health version endpoint missing fs/context-switch telemetry payload');
     }
+    if (
+      typeof healthVersionJson?.eventLoopUtilization !== 'number'
+      || typeof healthVersionJson?.eventLoopActiveMillis !== 'number'
+      || typeof healthVersionJson?.eventLoopIdleMillis !== 'number'
+    ) {
+      throw new Error('health version endpoint missing event-loop telemetry payload');
+    }
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {

@@ -31,3 +31,4 @@
 - 130%: Health-details runtime guard expansion adds explicit capacity usage ratios (stories/comments/rate-limit/idempotency) for earlier saturation detection in GA incidents ✅
 - 135%: Health-version runtime telemetry now includes process CPU usage (`cpuUserMicros`, `cpuSystemMicros`) for faster saturation triage during GA incidents ✅
 - 140%: Health-version runtime telemetry now includes process resource pressure counters (`fsReadBytes`, `fsWriteBytes`, `voluntaryContextSwitches`, `involuntaryContextSwitches`) for faster incident saturation attribution ✅
+- 145%: Health-version runtime telemetry now includes event-loop pressure counters (`eventLoopUtilization`, `eventLoopActiveMillis`, `eventLoopIdleMillis`) for faster saturation triage under CPU-adjacent but non-CPU-bound incidents ✅
