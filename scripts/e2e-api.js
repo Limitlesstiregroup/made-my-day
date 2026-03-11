@@ -261,6 +261,19 @@ async function run() {
       throw new Error('expected 400 when duplicate origin headers are sent');
     }
 
+    const duplicateRefererHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Referer: https://made-my-day.app/posts/one',
+      'Referer: https://made-my-day.app/posts/two',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateRefererHeaderResponse)) {
+      throw new Error('expected 400 when duplicate referer headers are sent');
+    }
+
     const duplicateIfModifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
