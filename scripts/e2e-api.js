@@ -183,6 +183,19 @@ async function run() {
       throw new Error('expected 400 when duplicate Host headers are sent');
     }
 
+    const duplicateAcceptHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Accept: application/json',
+      'Accept: */*',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateAcceptHeaderResponse)) {
+      throw new Error('expected 400 when duplicate Accept headers are sent');
+    }
+
 const malformedRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
