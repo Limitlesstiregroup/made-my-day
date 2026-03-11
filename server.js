@@ -2256,12 +2256,14 @@ function hasAmbiguousConnectionPersistenceHeader(req) {
   return tokens.includes('keep-alive') && tokens.includes('close');
 }
 
-function hasAmbiguousConditionalCacheValidators(req) {
+function hasAmbiguousConditionalValidators(req) {
   const ifNoneMatch = req.headers['if-none-match'];
   const ifModifiedSince = req.headers['if-modified-since'];
+  const ifMatch = req.headers['if-match'];
   const hasIfNoneMatch = typeof ifNoneMatch === 'string' && ifNoneMatch.trim() !== '';
   const hasIfModifiedSince = typeof ifModifiedSince === 'string' && ifModifiedSince.trim() !== '';
-  return hasIfNoneMatch && hasIfModifiedSince;
+  const hasIfMatch = typeof ifMatch === 'string' && ifMatch.trim() !== '';
+  return (hasIfNoneMatch && hasIfModifiedSince) || (hasIfNoneMatch && hasIfMatch);
 }
 
 function hasTraceMethod(req) {
@@ -2384,8 +2386,8 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'if-range')) {
       return json(res, 400, { error: 'invalid if-range header' });
     }
-    if (hasAmbiguousConditionalCacheValidators(req)) {
-      return json(res, 400, { error: 'ambiguous conditional cache validators are not allowed' });
+    if (hasAmbiguousConditionalValidators(req)) {
+      return json(res, 400, { error: 'ambiguous conditional validators are not allowed' });
     }
     if (hasDuplicateRawHeader(req, 'cache-control')) {
       return json(res, 400, { error: 'invalid cache-control header' });
