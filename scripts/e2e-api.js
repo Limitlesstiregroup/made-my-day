@@ -95,6 +95,14 @@ async function run() {
     if (typeof healthVersionJson?.cpuUserMicros !== 'number' || typeof healthVersionJson?.cpuSystemMicros !== 'number') {
       throw new Error('health version endpoint missing cpuUserMicros/cpuSystemMicros payload');
     }
+    if (
+      typeof healthVersionJson?.fsReadBytes !== 'number'
+      || typeof healthVersionJson?.fsWriteBytes !== 'number'
+      || typeof healthVersionJson?.voluntaryContextSwitches !== 'number'
+      || typeof healthVersionJson?.involuntaryContextSwitches !== 'number'
+    ) {
+      throw new Error('health version endpoint missing fs/context-switch telemetry payload');
+    }
 
     const healthWrongMethod = await fetch(`${BASE}/api/health`, { method: 'POST' });
     if (healthWrongMethod.status !== 405) {

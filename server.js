@@ -890,6 +890,7 @@ function getVersionSnapshot() {
   const instanceId = getSafeIdentityValue(process.env.MADE_MY_DAY_INSTANCE_ID || process.env.HOSTNAME);
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+  const resourceUsage = process.resourceUsage();
   return {
     service: 'made-my-day',
     version: packageMeta.version,
@@ -902,7 +903,11 @@ function getVersionSnapshot() {
     memoryRssBytes: Number.isFinite(memoryUsage.rss) ? memoryUsage.rss : 0,
     heapUsedBytes: Number.isFinite(memoryUsage.heapUsed) ? memoryUsage.heapUsed : 0,
     cpuUserMicros: Number.isFinite(cpuUsage.user) ? cpuUsage.user : 0,
-    cpuSystemMicros: Number.isFinite(cpuUsage.system) ? cpuUsage.system : 0
+    cpuSystemMicros: Number.isFinite(cpuUsage.system) ? cpuUsage.system : 0,
+    fsReadBytes: Number.isFinite(resourceUsage.fsRead) ? resourceUsage.fsRead : 0,
+    fsWriteBytes: Number.isFinite(resourceUsage.fsWrite) ? resourceUsage.fsWrite : 0,
+    voluntaryContextSwitches: Number.isFinite(resourceUsage.voluntaryContextSwitches) ? resourceUsage.voluntaryContextSwitches : 0,
+    involuntaryContextSwitches: Number.isFinite(resourceUsage.involuntaryContextSwitches) ? resourceUsage.involuntaryContextSwitches : 0
   };
 }
 
