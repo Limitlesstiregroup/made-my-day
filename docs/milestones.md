@@ -37,3 +37,4 @@
 - 160%: Body-read safety-gap hardening now fails GA readiness when `REQUEST_TIMEOUT_MS` is less than 1000ms above `BODY_READ_TIMEOUT_MS`, preserving deterministic post-body processing headroom during load spikes ✅
 - 165%: Header-timeout safety-gap hardening now fails GA readiness when `REQUEST_TIMEOUT_MS` is less than 1000ms above `HEADERS_TIMEOUT_MS`, preserving deterministic response flush headroom during slow-header and keep-alive churn ✅
 - 170%: Content-Type duplication hardening now rejects duplicate `Content-Type` header lines on JSON mutation/admin POST APIs with HTTP 400 to prevent intermediary/header-fold ambiguity ✅
+- 175%: Content-Encoding duplication hardening now rejects duplicate/comma-joined `Content-Encoding` values on JSON mutation/admin POST APIs with HTTP 400 before body parsing to prevent intermediary/header-fold ambiguity ✅

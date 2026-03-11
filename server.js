@@ -1590,13 +1590,26 @@ function hasTransferEncodingHeader(rawHeader) {
   return String(rawHeader).trim().length > 0;
 }
 
-function hasUnsupportedContentEncoding(rawHeader) {
-  if (rawHeader == null) return false;
-  const values = Array.isArray(rawHeader)
+function parseContentEncodingHeader(rawHeader) {
+  if (rawHeader == null) return { invalid: false, unsupported: false };
+
+  const rawValues = Array.isArray(rawHeader)
     ? rawHeader.map((value) => String(value).trim()).filter(Boolean)
-    : String(rawHeader).split(',').map((value) => value.trim()).filter(Boolean);
-  if (values.length === 0) return false;
-  return values.some((value) => value.toLowerCase() !== 'identity');
+    : [String(rawHeader).trim()].filter(Boolean);
+  if (rawValues.length === 0) return { invalid: false, unsupported: false };
+
+  if (rawValues.length > 1) {
+    return { invalid: true, unsupported: false };
+  }
+
+  const encodingTokens = rawValues[0].split(',').map((value) => value.trim()).filter(Boolean);
+  if (encodingTokens.length === 0) return { invalid: false, unsupported: false };
+  if (encodingTokens.length > 1) return { invalid: true, unsupported: false };
+
+  return {
+    invalid: false,
+    unsupported: encodingTokens[0].toLowerCase() !== 'identity'
+  };
 }
 
 function readBody(req) {
@@ -1636,7 +1649,14 @@ function readBody(req) {
       fail(error);
       return;
     }
-    if (hasUnsupportedContentEncoding(req.headers['content-encoding'])) {
+    const contentEncodingStatus = parseContentEncodingHeader(req.headers['content-encoding']);
+    if (contentEncodingStatus.invalid) {
+      const error = new Error('invalid content-encoding header');
+      error.code = 'INVALID_CONTENT_ENCODING';
+      fail(error);
+      return;
+    }
+    if (contentEncodingStatus.unsupported) {
       const error = new Error('content-encoding not supported');
       error.code = 'UNSUPPORTED_CONTENT_ENCODING';
       fail(error);
@@ -1711,6 +1731,10 @@ function handleBodyReadError(res, error) {
   }
   if (error?.code === 'BODY_READ_TIMEOUT') {
     json(res, 408, { error: 'Request body read timeout.' });
+    return;
+  }
+  if (error?.code === 'INVALID_CONTENT_ENCODING') {
+    json(res, 400, { error: 'Invalid Content-Encoding header.' });
     return;
   }
   if (error?.code === 'UNSUPPORTED_CONTENT_ENCODING') {
