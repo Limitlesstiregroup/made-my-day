@@ -2181,6 +2181,16 @@ function hasConnectMethod(req) {
   return String(req.method || '').toUpperCase() === 'CONNECT';
 }
 
+function hasDisallowedBodyFramingOnSafeMethod(req) {
+  const method = String(req.method || '').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') return false;
+  const declaredContentLength = parseDeclaredContentLength(req.headers['content-length']);
+  if (declaredContentLength?.invalid) return true;
+  if (Number.isFinite(declaredContentLength?.value) && declaredContentLength.value > 0) return true;
+  if (hasTransferEncodingHeader(req.headers['transfer-encoding'])) return true;
+  return false;
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -2294,6 +2304,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTraceMethod(req) || hasConnectMethod(req)) {
       return json(res, 405, { error: 'TRACE/CONNECT methods are not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
+    }
+    if (hasDisallowedBodyFramingOnSafeMethod(req)) {
+      return json(res, 400, { error: 'request body is not allowed for this method' });
     }
     if (!TRUST_PROXY && hasAnyForwardingHeader(req)) {
       return json(res, 400, { error: 'forwarding headers require trusted proxy mode' });

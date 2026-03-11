@@ -32,3 +32,4 @@
 - 135%: Health-version runtime telemetry now includes process CPU usage (`cpuUserMicros`, `cpuSystemMicros`) for faster saturation triage during GA incidents ✅
 - 140%: Health-version runtime telemetry now includes process resource pressure counters (`fsReadBytes`, `fsWriteBytes`, `voluntaryContextSwitches`, `involuntaryContextSwitches`) for faster incident saturation attribution ✅
 - 145%: Health-version runtime telemetry now includes event-loop pressure counters (`eventLoopUtilization`, `eventLoopActiveMillis`, `eventLoopIdleMillis`) for faster saturation triage under CPU-adjacent but non-CPU-bound incidents ✅
+- 150%: Safe-method body-framing hardening rejects `GET`/`HEAD` requests carrying request-body framing (`Content-Length > 0` or any `Transfer-Encoding`) to reduce request-smuggling/cache ambiguity on safe routes ✅

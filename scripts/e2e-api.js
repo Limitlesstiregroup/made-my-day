@@ -656,6 +656,32 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when content-length header is malformed before route handling');
     }
 
+    const nonZeroContentLengthOnGetResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Length: 1',
+      'Connection: close',
+      '',
+      'x'
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(nonZeroContentLengthOnGetResponse)) {
+      throw new Error('expected 400 when GET request carries body framing before route handling');
+    }
+
+    const transferEncodingOnHeadResponse = await sendRawHttp([
+      'HEAD /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Transfer-Encoding: chunked',
+      'Connection: close',
+      '',
+      '0',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(transferEncodingOnHeadResponse)) {
+      throw new Error('expected 400 when HEAD request carries transfer-encoding before route handling');
+    }
+
     const oversizedHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `X-Oversized: ${'x'.repeat(20000)}`,
