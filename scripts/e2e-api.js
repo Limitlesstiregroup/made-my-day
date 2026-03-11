@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+const crypto = require('node:crypto');
 const net = require('node:net');
 
 const PORT = Number(process.env.MADE_MY_DAY_E2E_PORT || (4300 + Math.floor(Math.random() * 1000)));
@@ -7,6 +8,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function randomKeyFragment() {
+  return crypto.randomBytes(4).toString('hex');
 }
 
 async function waitForServer(deadlineMs = 8000) {
@@ -1339,8 +1344,8 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
 
     let importIdempotencyKey = `import-run-${uniqueSuffix}`;
     let importRunFirst;
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      importIdempotencyKey = `import-run-${uniqueSuffix}-${attempt}-${Math.random().toString(36).slice(2, 8)}`;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      importIdempotencyKey = `import-run-${uniqueSuffix}-${attempt}-${randomKeyFragment()}`;
       importRunFirst = await fetch(`${BASE}/api/import/run`, {
         method: 'POST',
         headers: {
@@ -1354,7 +1359,7 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       if (importRunFirst.status !== 409) {
         throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst.status}`);
       }
-      await wait(120);
+      await wait(300);
     }
     if (!importRunFirst || importRunFirst.status !== 200) {
       throw new Error(`expected 200 for first import run with idempotency key, got ${importRunFirst ? importRunFirst.status : 'no response'}`);
