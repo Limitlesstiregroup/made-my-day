@@ -46,3 +46,4 @@
 - 205%: Allowed-host DNS length hardening now rejects overlong hostnames (>253 chars) in `ALLOWED_HOSTS` GA readiness parsing to prevent invalid ingress policy entries from silently passing config validation ✅
 - 210%: Accept-Encoding duplication hardening now rejects duplicate raw `Accept-Encoding` header lines with HTTP 400 (`invalid accept-encoding header`) before route handling to prevent intermediary/header-fold ambiguity across proxies/CDNs ✅
 - 215%: Accept-Language duplication hardening now rejects duplicate raw `Accept-Language` header lines with HTTP 400 (`invalid accept-language header`) before route handling to prevent intermediary/header-fold ambiguity across proxies/CDNs ✅
+- 220%: Accept-Charset duplication hardening now rejects duplicate raw `Accept-Charset` header lines with HTTP 400 (`invalid accept-charset header`) before route handling to prevent intermediary/header-fold ambiguity across charset-negotiation paths ✅

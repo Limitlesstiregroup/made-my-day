@@ -209,6 +209,19 @@ async function run() {
       throw new Error('expected 400 when duplicate Accept-Language headers are sent');
     }
 
+    const duplicateAcceptCharsetHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Accept-Charset: utf-8',
+      'Accept-Charset: iso-8859-1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateAcceptCharsetHeaderResponse)) {
+      throw new Error('expected 400 when duplicate Accept-Charset headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
