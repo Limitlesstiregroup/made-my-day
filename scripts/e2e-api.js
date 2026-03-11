@@ -222,6 +222,19 @@ async function run() {
       throw new Error('expected 400 when duplicate Accept-Charset headers are sent');
     }
 
+    const duplicateCookieHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Cookie: session=abc123',
+      'Cookie: prefs=dark',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateCookieHeaderResponse)) {
+      throw new Error('expected 400 when duplicate cookie headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
