@@ -274,6 +274,19 @@ async function run() {
       throw new Error('expected 400 when duplicate referer headers are sent');
     }
 
+    const duplicateUserAgentHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'User-Agent: made-my-day-e2e/1',
+      'User-Agent: made-my-day-e2e/2',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateUserAgentHeaderResponse)) {
+      throw new Error('expected 400 when duplicate user-agent headers are sent');
+    }
+
     const duplicateIfModifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

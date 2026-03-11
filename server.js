@@ -2349,6 +2349,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'referer')) {
       return json(res, 400, { error: 'invalid referer header' });
     }
+    if (hasDuplicateRawHeader(req, 'user-agent')) {
+      return json(res, 400, { error: 'invalid user-agent header' });
+    }
     if (hasDuplicateRawHeader(req, 'if-none-match')) {
       return json(res, 400, { error: 'invalid if-none-match header' });
     }
