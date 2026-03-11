@@ -352,6 +352,19 @@ async function run() {
       throw new Error('expected 400 when duplicate pragma headers are sent');
     }
 
+    const duplicateExpiresHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Expires: Wed, 21 Oct 2015 07:28:00 GMT',
+      'Expires: Thu, 22 Oct 2015 07:28:00 GMT',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateExpiresHeaderResponse)) {
+      throw new Error('expected 400 when duplicate expires headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

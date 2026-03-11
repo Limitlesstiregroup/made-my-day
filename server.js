@@ -2370,6 +2370,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'pragma')) {
       return json(res, 400, { error: 'invalid pragma header' });
     }
+    if (hasDuplicateRawHeader(req, 'expires')) {
+      return json(res, 400, { error: 'invalid expires header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });
