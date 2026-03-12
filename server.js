@@ -2412,6 +2412,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'x-request-id')) {
       return json(res, 400, { error: 'invalid x-request-id header' });
     }
+    if (hasDuplicateRawHeader(req, 'sec-fetch-site')) {
+      return json(res, 400, { error: 'invalid sec-fetch-site header' });
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
