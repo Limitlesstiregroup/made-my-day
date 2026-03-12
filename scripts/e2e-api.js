@@ -915,6 +915,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when x-forwarded-ssl header is present');
     }
 
+    const xForwardedByHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-By: edge-proxy-01',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(xForwardedByHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-by header is present');
+    }
+
     const clientIpOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
