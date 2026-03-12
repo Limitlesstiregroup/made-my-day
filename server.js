@@ -2472,6 +2472,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'user-agent')) {
       return json(res, 400, { error: 'invalid user-agent header' });
     }
+    if (hasDuplicateRawHeader(req, 'date')) {
+      return json(res, 400, { error: 'invalid date header' });
+    }
     if (hasDuplicateRawHeader(req, 'authorization')) {
       return json(res, 400, { error: 'invalid authorization header' });
     }
