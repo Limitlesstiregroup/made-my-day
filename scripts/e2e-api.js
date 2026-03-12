@@ -650,6 +650,20 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when authorization header has comma-joined credentials');
     }
 
+    const ambiguousBodyFramingResponse = await sendRawHttp([
+      'POST /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Length: 0',
+      'Transfer-Encoding: chunked',
+      'Connection: close',
+      '',
+      '0',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(ambiguousBodyFramingResponse)) {
+      throw new Error('expected 400 when both content-length and transfer-encoding are present');
+    }
+
     const multiHopForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

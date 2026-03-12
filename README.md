@@ -54,6 +54,7 @@ Anonymous same-day positive story platform.
 - Graceful-drain hardening: once shutdown starts (`SIGTERM`/`SIGINT`), new requests fail fast with HTTP 503 + `Retry-After: 5` + `Connection: close` so load balancers/probes back off cleanly during GA rollouts
 - Content-Length hardening: duplicate raw `Content-Length` header lines are rejected with HTTP 400 (`invalid content-length header`), and conflicting/malformed multi-value `Content-Length` payload framing is rejected with HTTP 400
 - Transfer-Encoding hardening: duplicate raw `Transfer-Encoding` header lines, comma-chained encoding tokens, and non-`chunked` transfer-coding values are rejected with HTTP 400 (`invalid transfer-encoding header`) to reduce request-smuggling ambiguity from malformed body-framing directives
+- Body-framing ambiguity hardening: requests that send both `Content-Length` and `Transfer-Encoding` are rejected with HTTP 400 (`ambiguous request body framing is not allowed`) before route handling to prevent request-smuggling ambiguity across intermediaries
 - Content-Encoding hardening for JSON mutation/admin POST APIs: `Content-Encoding` must be omitted or `identity`; compressed/unsupported encodings are rejected with HTTP 415
 - Content-Encoding duplication hardening for JSON mutation/admin POST APIs: duplicate/comma-joined `Content-Encoding` values are rejected with HTTP 400 (`invalid content-encoding header`) to prevent intermediary/header-fold ambiguity
 - Authorization + Idempotency-Key duplication hardening: duplicate raw `Authorization` headers are rejected with HTTP 400 (`invalid authorization header`) before route handling across all endpoints, and duplicate raw `Idempotency-Key` headers on JSON mutation/admin POST APIs are rejected with HTTP 400 (`invalid idempotency-key header`) to prevent intermediary/header-fold ambiguity
@@ -167,6 +168,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 ## GA Milestone Status
 - 100%: Production handoff complete (`docs/milestones.md`)
 - 105% sustainment kickoff: incident replay fixture expansion for malformed intermediary traffic
+- 455% sustainment hardening: reject ambiguous `Content-Length` + `Transfer-Encoding` request framing before route handling
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.

@@ -2471,6 +2471,12 @@ function hasDisallowedBodyFramingOnSafeMethod(req) {
   return false;
 }
 
+function hasAmbiguousBodyFraming(req) {
+  const declaredContentLength = parseDeclaredContentLength(req.headers['content-length']);
+  if (declaredContentLength?.invalid || !Number.isFinite(declaredContentLength?.value)) return false;
+  return hasTransferEncodingHeader(req.headers['transfer-encoding']);
+}
+
 function getNormalizedHostHeader(req) {
   return String(req.headers.host || '').trim().toLowerCase();
 }
@@ -2613,6 +2619,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });
+    }
+    if (hasAmbiguousBodyFraming(req)) {
+      return json(res, 400, { error: 'ambiguous request body framing is not allowed' });
     }
     if (hasDuplicateRawHeader(req, 'x-request-id')) {
       return json(res, 400, { error: 'invalid x-request-id header' });
