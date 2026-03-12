@@ -852,6 +852,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when x-original-url header is present');
     }
 
+    const hostOverrideHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Original-Host: admin.internal',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(hostOverrideHeaderResponse)) {
+      throw new Error('expected 400 when x-original-host header is present');
+    }
+
     const teHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

@@ -30,6 +30,7 @@ Anonymous same-day positive story platform.
 - HTTP/2 cleartext-upgrade hardening: requests carrying `HTTP2-Settings` are rejected with HTTP 400 (`http2-settings header is not allowed`) to reduce unsupported h2c upgrade ambiguity through intermediaries
 - Proxy-hop traversal hardening: requests carrying `Max-Forwards` are rejected with HTTP 400 (`max-forwards header is not allowed`) to prevent intermediary hop-count probing against non-proxy endpoints
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse
+- Host-override header hardening: requests carrying `X-Original-Host` or `X-Host` are rejected with HTTP 400 (`host override headers are not allowed`) to prevent intermediary host-attribution override ambiguity
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
 - Delta-encoding negotiation hardening: requests carrying `A-IM` are rejected with HTTP 400 (`a-im header is not allowed`) to reduce unsupported instance-manipulation / delta-response negotiation ambiguity across intermediaries
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries
