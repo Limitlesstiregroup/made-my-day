@@ -2416,6 +2416,12 @@ function hasCdnLoopHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasAcceptDatetimeHeader(req) {
+  const value = req.headers['accept-datetime'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -2760,6 +2766,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasCdnLoopHeader(req)) {
       return json(res, 400, { error: 'cdn-loop header is not allowed' });
+    }
+    if (hasAcceptDatetimeHeader(req)) {
+      return json(res, 400, { error: 'accept-datetime header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

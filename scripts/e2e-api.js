@@ -1086,6 +1086,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when cdn-loop header is present');
     }
 
+    const acceptDatetimeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Accept-Datetime: Thu, 31 May 2007 20:35:00 GMT',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(acceptDatetimeHeaderResponse)) {
+      throw new Error('expected 400 when accept-datetime header is present');
+    }
+
     const conflictingConnectionHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
