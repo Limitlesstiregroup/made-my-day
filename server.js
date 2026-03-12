@@ -2329,6 +2329,12 @@ function hasPriorityHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasProxyStatusHeader(req) {
+  const value = req.headers['proxy-status'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -2583,6 +2589,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasPriorityHeader(req)) {
       return json(res, 400, { error: 'priority header is not allowed' });
+    }
+    if (hasProxyStatusHeader(req)) {
+      return json(res, 400, { error: 'proxy-status header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

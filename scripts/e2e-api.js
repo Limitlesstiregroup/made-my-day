@@ -840,6 +840,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when priority header is present');
     }
 
+    const proxyStatusHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Proxy-Status: error=http_protocol_error',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(proxyStatusHeaderResponse)) {
+      throw new Error('expected 400 when proxy-status header is present');
+    }
+
     const conflictingConnectionHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
