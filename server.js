@@ -1050,6 +1050,8 @@ function parseAuthorizationBearer(req) {
   if (!value.startsWith('Bearer ')) return { malformed: false, token: '' };
   const incoming = value.slice('Bearer '.length).trim();
   if (incoming.length === 0 || incoming.length > 1024) return { malformed: true, token: '' };
+  if (/\s/.test(incoming)) return { malformed: true, token: '' };
+  if (!/^[\x21-\x7E]+$/.test(incoming)) return { malformed: true, token: '' };
   return { malformed: false, token: incoming };
 }
 

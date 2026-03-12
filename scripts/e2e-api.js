@@ -1145,6 +1145,13 @@ const multiHopForwardedPrefixHeaderResponse = await sendRawHttp([
       throw new Error(`expected 400 for malformed authorization header, got ${malformedHealthDetails.status}`);
     }
 
+    const whitespaceBearerHealthDetails = await fetch(`${BASE}/api/health/details`, {
+      headers: { Authorization: 'Bearer admin_token_live_primary_1234 injected' }
+    });
+    if (whitespaceBearerHealthDetails.status !== 400) {
+      throw new Error(`expected 400 for bearer token containing whitespace, got ${whitespaceBearerHealthDetails.status}`);
+    }
+
     const duplicateAuthorizationHealthDetails = await sendRawHttp([
       `GET /api/health/details HTTP/1.1`,
       `Host: 127.0.0.1:${PORT}`,
