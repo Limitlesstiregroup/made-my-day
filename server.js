@@ -2306,6 +2306,12 @@ function hasForwardedServerHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasLegacyForwardedSslHeader(req) {
+  const value = req.headers['x-forwarded-ssl'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasClientIpOverrideHeader(req) {
   const hasValue = (value) => {
     if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2681,6 +2687,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasForwardedServerHeader(req)) {
       return json(res, 400, { error: 'x-forwarded-server header is not allowed' });
+    }
+    if (hasLegacyForwardedSslHeader(req)) {
+      return json(res, 400, { error: 'x-forwarded-ssl header is not allowed' });
     }
     if (hasClientIpOverrideHeader(req)) {
       return json(res, 400, { error: 'client ip override headers are not allowed' });

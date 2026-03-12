@@ -889,6 +889,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when x-original-host header is present');
     }
 
+    const xForwardedSslHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Ssl: on',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(xForwardedSslHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-ssl header is present');
+    }
+
     const clientIpOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
