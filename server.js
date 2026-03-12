@@ -2282,6 +2282,12 @@ function hasHostOverrideHeader(req) {
   return hasValue(originalHost) || hasValue(host);
 }
 
+function hasForwardedServerHeader(req) {
+  const value = req.headers['x-forwarded-server'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasAnyForwardingHeader(req) {
   return [
     'x-forwarded-for',
@@ -2627,6 +2633,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasHostOverrideHeader(req)) {
       return json(res, 400, { error: 'host override headers are not allowed' });
+    }
+    if (hasForwardedServerHeader(req)) {
+      return json(res, 400, { error: 'x-forwarded-server header is not allowed' });
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });
