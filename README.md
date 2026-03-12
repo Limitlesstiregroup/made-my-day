@@ -34,6 +34,7 @@ Anonymous same-day positive story platform.
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries
 - Content-Range header hardening: requests carrying `Content-Range` are rejected with HTTP 400 (`content-range header is not allowed`) to prevent partial-upload semantic confusion on non-range APIs
 - Range header hardening: requests carrying `Range` are rejected with HTTP 400 (`range header is not allowed`) to prevent unsupported partial-content request semantics from leaking through intermediary/proxy paths
+- `If-Range` header hardening: requests carrying `If-Range` are rejected with HTTP 400 (`if-range header is not allowed`) to prevent unsupported partial-content validator semantics from leaking through intermediary/proxy paths
 - Keep-Alive header hardening: requests carrying `Keep-Alive` are rejected with HTTP 400 (`keep-alive header is not allowed`) to reduce hop-by-hop timeout negotiation ambiguity through intermediaries
 - Priority header hardening: requests carrying HTTP priority hints (`Priority`) are rejected with HTTP 400 (`priority header is not allowed`) to reduce intermediary/proxy scheduling ambiguity on non-priority-aware endpoints
 - Proxy-Status header hardening: requests carrying intermediary diagnostic `Proxy-Status` headers are rejected with HTTP 400 (`proxy-status header is not allowed`) to reduce intermediary attribution confusion on origin-facing endpoints

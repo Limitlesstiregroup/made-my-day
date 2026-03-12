@@ -2319,6 +2319,11 @@ function hasRangeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasIfRangeHeader(req) {
+  const value = req.headers['if-range'];
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasKeepAliveHeader(req) {
   const value = req.headers['keep-alive'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2615,6 +2620,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasRangeHeader(req)) {
       return json(res, 400, { error: 'range header is not allowed' });
+    }
+    if (hasIfRangeHeader(req)) {
+      return json(res, 400, { error: 'if-range header is not allowed' });
     }
     if (hasKeepAliveHeader(req)) {
       return json(res, 400, { error: 'keep-alive header is not allowed' });
