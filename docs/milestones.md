@@ -75,3 +75,4 @@
 - 345%: Host header duplication hardening now rejects duplicate raw `Host` header lines with HTTP 400, reducing intermediary/header-fold ambiguity for upstream host attribution ✅
 - 350%: Date header duplication hardening now rejects duplicate raw `Date` header lines with HTTP 400 (`invalid date header`) before route handling to prevent intermediary/header-fold ambiguity in request timestamp attribution and cache diagnostics ✅
 - 355%: Connection header duplication hardening now rejects duplicate raw `Connection` header lines with HTTP 400 (`invalid connection header`) before route handling to prevent intermediary/header-fold ambiguity in hop-by-hop token parsing ✅
+- 360%: HTTP-date syntax hardening now rejects malformed `Date`, `If-Modified-Since`, `If-Unmodified-Since`, and `Expires` header values with HTTP 400 (`invalid ... header`) before route handling to prevent ambiguous conditional/cache timestamp parsing across intermediaries ✅

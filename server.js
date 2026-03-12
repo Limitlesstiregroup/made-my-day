@@ -2355,6 +2355,13 @@ function hasAmbiguousConnectionPersistenceHeader(req) {
   return tokens.includes('keep-alive') && tokens.includes('close');
 }
 
+function isMalformedHttpDateHeaderValue(value) {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim();
+  if (!normalized) return false;
+  return Number.isNaN(Date.parse(normalized));
+}
+
 function hasAmbiguousConditionalValidators(req) {
   const ifNoneMatch = req.headers['if-none-match'];
   const ifModifiedSince = req.headers['if-modified-since'];
@@ -2497,6 +2504,18 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasDuplicateRawHeader(req, 'if-range')) {
       return json(res, 400, { error: 'invalid if-range header' });
+    }
+    if (isMalformedHttpDateHeaderValue(req.headers.date)) {
+      return json(res, 400, { error: 'invalid date header' });
+    }
+    if (isMalformedHttpDateHeaderValue(req.headers['if-modified-since'])) {
+      return json(res, 400, { error: 'invalid if-modified-since header' });
+    }
+    if (isMalformedHttpDateHeaderValue(req.headers['if-unmodified-since'])) {
+      return json(res, 400, { error: 'invalid if-unmodified-since header' });
+    }
+    if (isMalformedHttpDateHeaderValue(req.headers.expires)) {
+      return json(res, 400, { error: 'invalid expires header' });
     }
     if (hasAmbiguousConditionalValidators(req)) {
       return json(res, 400, { error: 'ambiguous conditional validators are not allowed' });

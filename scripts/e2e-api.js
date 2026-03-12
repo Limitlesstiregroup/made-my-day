@@ -421,6 +421,54 @@ async function run() {
       throw new Error('expected 400 when duplicate if-range headers are sent');
     }
 
+    const malformedIfModifiedSinceHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Modified-Since: not-a-real-http-date',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedIfModifiedSinceHeaderResponse)) {
+      throw new Error('expected 400 when malformed if-modified-since header is sent');
+    }
+
+    const malformedIfUnmodifiedSinceHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Unmodified-Since: not-a-real-http-date',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedIfUnmodifiedSinceHeaderResponse)) {
+      throw new Error('expected 400 when malformed if-unmodified-since header is sent');
+    }
+
+    const malformedDateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Date: not-a-real-http-date',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedDateHeaderResponse)) {
+      throw new Error('expected 400 when malformed date header is sent');
+    }
+
+    const malformedExpiresHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Expires: not-a-real-http-date',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedExpiresHeaderResponse)) {
+      throw new Error('expected 400 when malformed expires header is sent');
+    }
+
     const duplicateCacheControlHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
