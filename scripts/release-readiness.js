@@ -69,6 +69,12 @@ function looksLikeOncallUrl(value) {
   return /:\/\//.test(String(value || ''));
 }
 
+function hasQuotedOncallWrapper(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return false;
+  return (trimmed.startsWith('\"') && trimmed.endsWith('\"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"));
+}
+
 function parseIntOrDefault(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
@@ -452,6 +458,9 @@ function evaluateReadiness(env = process.env) {
   if (looksLikeOncallUrl(oncallPrimary)) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be an owner handle/email/pager alias (URLs are not allowed)');
   }
+  if (hasQuotedOncallWrapper(oncallPrimary)) {
+    issues.push('MADE_MY_DAY_ONCALL_PRIMARY must not be wrapped in quotes');
+  }
   if (oncallPrimary.length > 128) {
     issues.push('MADE_MY_DAY_ONCALL_PRIMARY must be <= 128 characters');
   }
@@ -471,6 +480,9 @@ function evaluateReadiness(env = process.env) {
   }
   if (looksLikeOncallUrl(oncallSecondary)) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must be an owner handle/email/pager alias (URLs are not allowed)');
+  }
+  if (hasQuotedOncallWrapper(oncallSecondary)) {
+    issues.push('MADE_MY_DAY_ONCALL_SECONDARY must not be wrapped in quotes');
   }
   if (oncallSecondary.length > 128) {
     issues.push('MADE_MY_DAY_ONCALL_SECONDARY must be <= 128 characters');

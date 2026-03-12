@@ -238,6 +238,26 @@ try {
     'on-call owners with whitespace should fail release readiness'
   );
 
+  const quotedOncallIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: '"community-oncall"',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    quotedOncallIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not be wrapped in quotes'),
+    'quoted on-call owners should fail release readiness'
+  );
+
+  const quotedSecondaryOncallIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'community-oncall',
+    MADE_MY_DAY_ONCALL_SECONDARY: "'community-backup'",
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    quotedSecondaryOncallIssues.includes('MADE_MY_DAY_ONCALL_SECONDARY must not be wrapped in quotes'),
+    'quoted secondary on-call owners should fail release readiness'
+  );
+
   const oncallUrlIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: 'https://pager.mademyday.test/community',
     MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
