@@ -404,7 +404,7 @@ function isSecretFileWrongOwner(filePath) {
   }
 }
 
-const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password'];
+const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password', 'unset', 'notset'];
 const ROTATABLE_SECRET_KEYS = new Set(['MADE_MY_DAY_ADMIN_TOKEN']);
 
 function looksLikePlaceholderSecret(value) {
