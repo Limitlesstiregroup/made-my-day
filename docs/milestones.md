@@ -89,4 +89,5 @@
 - 415%: Release-readiness placeholder hardening now treats `na`/`n/a` as placeholder tokens for on-call ownership and admin token checks, preventing "N/A" handoff stubs from silently passing GA gates ✅
 - 420%: Release-readiness placeholder hardening now treats `redacted`/`masked` as placeholder tokens for on-call ownership and admin token checks, preventing scrubbed handoff placeholders from silently passing GA gates ✅
 - 425%: Release-readiness on-call ownership hardening now rejects primary/secondary on-call values wrapped in single/double quotes, preventing copy-pasted `.env` quoting artifacts from silently misrouting escalation ownership ✅
+- 430%: CDN loop attribution hardening now rejects `CDN-Loop` headers with HTTP 400 (`cdn-loop header is not allowed`) before route handling to prevent untrusted intermediary loop metadata from influencing origin request attribution ✅
 

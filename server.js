@@ -2376,6 +2376,12 @@ function hasProxyStatusHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasCdnLoopHeader(req) {
+  const value = req.headers['cdn-loop'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -2678,6 +2684,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasProxyStatusHeader(req)) {
       return json(res, 400, { error: 'proxy-status header is not allowed' });
+    }
+    if (hasCdnLoopHeader(req)) {
+      return json(res, 400, { error: 'cdn-loop header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });
