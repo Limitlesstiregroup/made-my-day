@@ -2441,6 +2441,18 @@ function isMalformedHttpDateHeaderValue(value) {
   return Number.isNaN(Date.parse(normalized));
 }
 
+function isValidEtagValidatorHeaderValue(value) {
+  if (typeof value !== 'string') return true;
+  const normalized = value.trim();
+  if (!normalized) return true;
+  if (normalized === '*') return true;
+
+  const etagTokenPattern = /^(?:W\/)?"[\x21\x23-\x7e\x80-\xff]*"$/;
+  const parts = normalized.split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (parts.length === 0) return false;
+  return parts.every((part) => part === '*' || etagTokenPattern.test(part));
+}
+
 function hasAmbiguousConditionalValidators(req) {
   const ifNoneMatch = req.headers['if-none-match'];
   const ifModifiedSince = req.headers['if-modified-since'];
@@ -2609,6 +2621,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (isMalformedHttpDateHeaderValue(req.headers.expires)) {
       return json(res, 400, { error: 'invalid expires header' });
+    }
+    if (!isValidEtagValidatorHeaderValue(req.headers['if-none-match'])) {
+      return json(res, 400, { error: 'invalid if-none-match header' });
+    }
+    if (!isValidEtagValidatorHeaderValue(req.headers['if-match'])) {
+      return json(res, 400, { error: 'invalid if-match header' });
     }
     if (hasAmbiguousConditionalValidators(req)) {
       return json(res, 400, { error: 'ambiguous conditional validators are not allowed' });

@@ -408,6 +408,30 @@ async function run() {
       throw new Error('expected 400 when duplicate if-match headers are sent');
     }
 
+    const malformedIfNoneMatchHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-None-Match: bad-etag-token',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedIfNoneMatchHeaderResponse)) {
+      throw new Error('expected 400 when malformed if-none-match header is sent');
+    }
+
+    const malformedIfMatchHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Match: bad-etag-token',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedIfMatchHeaderResponse)) {
+      throw new Error('expected 400 when malformed if-match header is sent');
+    }
+
     const duplicateIfUnmodifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
