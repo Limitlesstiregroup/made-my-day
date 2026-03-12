@@ -2306,6 +2306,21 @@ function hasForwardedServerHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasClientIpOverrideHeader(req) {
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return [
+    'x-client-ip',
+    'true-client-ip',
+    'x-real-ip',
+    'cf-connecting-ip',
+    'fastly-client-ip',
+    'fly-client-ip'
+  ].some((headerName) => hasValue(req.headers[headerName]));
+}
+
 function hasAnyForwardingHeader(req) {
   return [
     'x-forwarded-for',
@@ -2666,6 +2681,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasForwardedServerHeader(req)) {
       return json(res, 400, { error: 'x-forwarded-server header is not allowed' });
+    }
+    if (hasClientIpOverrideHeader(req)) {
+      return json(res, 400, { error: 'client ip override headers are not allowed' });
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });

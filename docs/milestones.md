@@ -92,3 +92,5 @@
 - 430%: CDN loop attribution hardening now rejects `CDN-Loop` headers with HTTP 400 (`cdn-loop header is not allowed`) before route handling to prevent untrusted intermediary loop metadata from influencing origin request attribution ✅
 
 - 435%: Alternative-service advertisement hardening now rejects `Alt-Svc` headers with HTTP 400 (`alt-svc header is not allowed`) before route handling to reduce unsupported edge-origin authority advertisement ambiguity across intermediary/proxy paths ✅
+
+- 440%: Edge client-IP provenance hardening now rejects `X-Client-IP`, `True-Client-IP`, `X-Real-IP`, `CF-Connecting-IP`, `Fastly-Client-IP`, and `Fly-Client-IP` headers with HTTP 400 (`client ip override headers are not allowed`) before route handling to prevent untrusted client-attribution spoofing from edge-only metadata ✅
