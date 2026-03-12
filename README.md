@@ -40,7 +40,7 @@ Anonymous same-day positive story platform.
 - Host header duplication hardening: duplicate raw `Host` header lines are rejected with HTTP 400 to reduce intermediary/header-fold ambiguity in upstream host attribution
 - Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
 - Connection persistence hardening: requests carrying conflicting `Connection: keep-alive, close` directives are rejected with HTTP 400 (`connection header contains conflicting persistence directives`) to prevent ambiguous persistence negotiation across intermediaries
-- HTTP verb hardening: `TRACE` and `CONNECT` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic and proxy-tunnel surface area
+- HTTP verb hardening: all non-`GET|HEAD|POST` methods are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to reduce unsupported verb exposure (including `TRACE`/`CONNECT`) and close reflective diagnostic/proxy-tunnel surface area
 - Safe-method body-framing hardening: `GET`/`HEAD` requests carrying non-zero `Content-Length` or any `Transfer-Encoding` are rejected with HTTP 400 (`request body is not allowed for this method`) to reduce request-smuggling and cache/proxy ambiguity on safe routes
 - Static asset method hardening: `/`, `/index.html`, `/app.js`, and `/styles.css` enforce `GET|HEAD` with HTTP 405 + `Allow` for non-safe methods
 - Graceful-drain hardening: once shutdown starts (`SIGTERM`/`SIGINT`), new requests fail fast with HTTP 503 + `Retry-After: 5` + `Connection: close` so load balancers/probes back off cleanly during GA rollouts

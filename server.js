@@ -2379,16 +2379,17 @@ function hasAmbiguousConditionalValidators(req) {
   );
 }
 
-function hasTraceMethod(req) {
-  return String(req.method || '').toUpperCase() === 'TRACE';
+function getNormalizedMethod(req) {
+  return String(req.method || '').toUpperCase();
 }
 
-function hasConnectMethod(req) {
-  return String(req.method || '').toUpperCase() === 'CONNECT';
+function hasDisallowedMethod(req) {
+  const method = getNormalizedMethod(req);
+  return method !== 'GET' && method !== 'HEAD' && method !== 'POST';
 }
 
 function hasDisallowedBodyFramingOnSafeMethod(req) {
-  const method = String(req.method || '').toUpperCase();
+  const method = getNormalizedMethod(req);
   if (method !== 'GET' && method !== 'HEAD') return false;
   const declaredContentLength = parseDeclaredContentLength(req.headers['content-length']);
   if (declaredContentLength?.invalid) return true;
@@ -2626,8 +2627,8 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasAmbiguousConnectionPersistenceHeader(req)) {
       return json(res, 400, { error: 'connection header contains conflicting persistence directives' });
     }
-    if (hasTraceMethod(req) || hasConnectMethod(req)) {
-      return json(res, 405, { error: 'TRACE/CONNECT methods are not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
+    if (hasDisallowedMethod(req)) {
+      return json(res, 405, { error: 'method is not allowed' }, { headers: { Allow: 'GET, HEAD, POST' } });
     }
     if (hasDisallowedBodyFramingOnSafeMethod(req)) {
       return json(res, 400, { error: 'request body is not allowed for this method' });
