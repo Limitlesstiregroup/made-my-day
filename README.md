@@ -35,6 +35,7 @@ Anonymous same-day positive story platform.
 - Content-Range header hardening: requests carrying `Content-Range` are rejected with HTTP 400 (`content-range header is not allowed`) to prevent partial-upload semantic confusion on non-range APIs
 - Range header hardening: requests carrying `Range` are rejected with HTTP 400 (`range header is not allowed`) to prevent unsupported partial-content request semantics from leaking through intermediary/proxy paths
 - Keep-Alive header hardening: requests carrying `Keep-Alive` are rejected with HTTP 400 (`keep-alive header is not allowed`) to reduce hop-by-hop timeout negotiation ambiguity through intermediaries
+- Priority header hardening: requests carrying HTTP priority hints (`Priority`) are rejected with HTTP 400 (`priority header is not allowed`) to reduce intermediary/proxy scheduling ambiguity on non-priority-aware endpoints
 - Connection header hardening: requests carrying `Connection` tokens beyond `keep-alive`/`close` are rejected with HTTP 400 (`connection header contains unsupported tokens`) to prevent hop-by-hop header confusion through intermediaries
 - Connection persistence hardening: requests carrying conflicting `Connection: keep-alive, close` directives are rejected with HTTP 400 (`connection header contains conflicting persistence directives`) to prevent ambiguous persistence negotiation across intermediaries
 - HTTP verb hardening: `TRACE` and `CONNECT` requests are rejected with HTTP 405 + `Allow` (`GET, HEAD, POST`) to close reflective diagnostic and proxy-tunnel surface area
