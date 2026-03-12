@@ -2301,6 +2301,12 @@ function hasTeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasAImHeader(req) {
+  const value = req.headers['a-im'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasTrailerHeader(req) {
   const value = req.headers.trailer;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2611,6 +2617,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTeHeader(req)) {
       return json(res, 400, { error: 'te header is not allowed' });
+    }
+    if (hasAImHeader(req)) {
+      return json(res, 400, { error: 'a-im header is not allowed' });
     }
     if (hasTrailerHeader(req)) {
       return json(res, 400, { error: 'trailer header is not allowed' });

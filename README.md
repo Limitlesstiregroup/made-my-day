@@ -31,6 +31,7 @@ Anonymous same-day positive story platform.
 - Proxy-hop traversal hardening: requests carrying `Max-Forwards` are rejected with HTTP 400 (`max-forwards header is not allowed`) to prevent intermediary hop-count probing against non-proxy endpoints
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse
 - TE header hardening: requests carrying `TE` are rejected with HTTP 400 (`te header is not allowed`) to reduce request-smuggling ambiguity from hop-by-hop transfer-coding negotiation
+- Delta-encoding negotiation hardening: requests carrying `A-IM` are rejected with HTTP 400 (`a-im header is not allowed`) to reduce unsupported instance-manipulation / delta-response negotiation ambiguity across intermediaries
 - Trailer header hardening: requests carrying `Trailer` are rejected with HTTP 400 (`trailer header is not allowed`) to reduce hop-by-hop metadata smuggling ambiguity across intermediaries
 - Content-Range header hardening: requests carrying `Content-Range` are rejected with HTTP 400 (`content-range header is not allowed`) to prevent partial-upload semantic confusion on non-range APIs
 - Range header hardening: requests carrying `Range` are rejected with HTTP 400 (`range header is not allowed`) to prevent unsupported partial-content request semantics from leaking through intermediary/proxy paths

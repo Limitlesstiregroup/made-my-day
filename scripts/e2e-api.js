@@ -864,6 +864,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when te header is present');
     }
 
+    const aImHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'A-IM: feed',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(aImHeaderResponse)) {
+      throw new Error('expected 400 when a-im header is present');
+    }
+
     const trailerHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
