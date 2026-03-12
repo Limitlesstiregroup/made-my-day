@@ -84,4 +84,5 @@
 - 390%: Forwarded-server provenance hardening now rejects `X-Forwarded-Server` headers with HTTP 400 (`x-forwarded-server header is not allowed`) before route handling to prevent intermediary server-identity spoofing via untrusted forwarding metadata ✅
 - 395%: Release-readiness placeholder hardening now treats `unset`/`notset` as placeholder values for on-call ownership and admin token checks, preventing silent GA drift from defaulted config stubs ✅
 - 400%: Release-readiness placeholder hardening now also treats `null`/`none` as placeholder values for on-call ownership and admin token checks, preventing silent GA drift from null-sentinel config stubs ✅
+- 405%: Release-readiness placeholder hardening now rejects wrapped placeholder tokens (for example `<ONCALL_PRIMARY>` / `${ONCALL_PRIMARY}`) for on-call ownership and admin token checks, preventing templated config stubs from silently passing GA gates ✅
 

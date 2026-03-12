@@ -407,16 +407,22 @@ function isSecretFileWrongOwner(filePath) {
 const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password', 'unset', 'notset', 'null', 'none'];
 const ROTATABLE_SECRET_KEYS = new Set(['MADE_MY_DAY_ADMIN_TOKEN']);
 
+function looksLikeWrappedPlaceholder(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return false;
+  return /^<[^<>]{1,128}>$/.test(trimmed) || /^\$\{[^{}]{1,128}\}$/.test(trimmed);
+}
+
 function looksLikePlaceholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return PLACEHOLDER_TOKENS.some((token) => normalized.includes(token));
+  return looksLikeWrappedPlaceholder(normalized) || PLACEHOLDER_TOKENS.some((token) => normalized.includes(token));
 }
 
 function looksLikePlaceholderToken(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return PLACEHOLDER_TOKENS.includes(normalized);
+  return looksLikeWrappedPlaceholder(normalized) || PLACEHOLDER_TOKENS.includes(normalized);
 }
 
 function hasUnsafeSecretWhitespace(value) {

@@ -29,22 +29,28 @@ function getIssueCodes(issues = []) {
   return codes;
 }
 
+function looksLikeWrappedPlaceholder(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return false;
+  return /^<[^<>]{1,128}>$/.test(trimmed) || /^\$\{[^{}]{1,128}\}$/.test(trimmed);
+}
+
 function placeholderSecret(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return [...PLACEHOLDER_TOKENS].some((t) => normalized.includes(t));
+  return looksLikeWrappedPlaceholder(normalized) || [...PLACEHOLDER_TOKENS].some((t) => normalized.includes(t));
 }
 
 function placeholderToken(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return PLACEHOLDER_TOKENS.has(normalized);
+  return looksLikeWrappedPlaceholder(normalized) || PLACEHOLDER_TOKENS.has(normalized);
 }
 
 function placeholderTokenLoose(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return false;
-  return [...PLACEHOLDER_TOKENS].some((token) => normalized.includes(token));
+  return looksLikeWrappedPlaceholder(normalized) || [...PLACEHOLDER_TOKENS].some((token) => normalized.includes(token));
 }
 
 function hasUnsafeSecretWhitespace(value) {
