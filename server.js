@@ -2649,6 +2649,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasAltUsedHeader(req)) {
       return json(res, 400, { error: 'alt-used header is not allowed' });
     }
+    if (hasAltSvcHeader(req)) {
+      return json(res, 400, { error: 'alt-svc header is not allowed' });
+    }
     if (hasHttp2SettingsHeader(req)) {
       return json(res, 400, { error: 'http2-settings header is not allowed' });
     }

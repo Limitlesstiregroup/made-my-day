@@ -829,6 +829,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when alt-used header is present');
     }
 
+    const altSvcHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Alt-Svc: h3=":443"; ma=86400',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(altSvcHeaderResponse)) {
+      throw new Error('expected 400 when alt-svc header is present');
+    }
+
     const http2SettingsHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
