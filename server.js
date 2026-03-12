@@ -2644,6 +2644,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       const forwarded = req.headers.forwarded;
       const forwardedHost = req.headers['x-forwarded-host'];
       const forwardedProto = req.headers['x-forwarded-proto'];
+      const hasForwardedFor = typeof forwardedFor === 'string' && forwardedFor.trim() !== '';
+      const hasForwarded = typeof forwarded === 'string' && forwarded.trim() !== '';
+      if (hasForwardedFor && hasForwarded) {
+        return json(res, 400, { error: 'ambiguous forwarding provenance headers are not allowed' });
+      }
       const forwardedPort = req.headers['x-forwarded-port'];
       const forwardedPrefix = req.headers['x-forwarded-prefix'];
       const forwardedServer = req.headers['x-forwarded-server'];
