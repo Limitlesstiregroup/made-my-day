@@ -165,6 +165,16 @@ try {
     'placeholder on-call owner should fail release readiness'
   );
 
+  const tbaOncallPlaceholderIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'tba',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbooks.mademyday.test/escalation'
+  });
+  assert.ok(
+    tbaOncallPlaceholderIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value'),
+    'tba placeholder on-call owner should fail release readiness'
+  );
+
   const unsetOncallPlaceholderIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: 'unset',
     MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
