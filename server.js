@@ -2434,7 +2434,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       return json(res, 400, { error: 'host header is required for http/1.1 requests' });
     }
     if (hasDuplicateHostHeader(req)) {
-      return json(res, 400, { error: 'Duplicate Host headers are not allowed' });
+      return json(res, 400, { error: 'invalid host header' });
     }
     if (hasDuplicateRawHeader(req, 'accept')) {
       return json(res, 400, { error: 'invalid accept header' });

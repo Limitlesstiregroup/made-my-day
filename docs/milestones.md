@@ -72,3 +72,4 @@
 - 330%: Speculative-navigation metadata hardening now rejects duplicate raw `Sec-Purpose` header lines with HTTP 400 (`invalid sec-purpose header`) before route handling to prevent intermediary/header-fold ambiguity in prefetch/prerender attribution ✅
 - 335%: HTTP priority hint hardening now rejects `Priority` headers with HTTP 400 (`priority header is not allowed`) before route handling to reduce intermediary/proxy scheduling ambiguity on non-priority-aware endpoints ✅
 - 340%: Proxy-Status header hardening now rejects intermediary diagnostic `Proxy-Status` headers with HTTP 400 (`proxy-status header is not allowed`) before route handling to reduce intermediary attribution confusion on origin-facing endpoints ✅
+- 345%: Host header duplication hardening now rejects duplicate raw `Host` header lines with HTTP 400, reducing intermediary/header-fold ambiguity for upstream host attribution ✅
