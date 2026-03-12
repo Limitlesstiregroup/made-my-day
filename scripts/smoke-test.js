@@ -207,6 +207,17 @@ try {
     'wrapped placeholder on-call owner should fail release readiness'
   );
 
+  const redactedOncallPlaceholderIssues = evaluateReadiness({
+    MADE_MY_DAY_ONCALL_PRIMARY: 'redacted',
+    MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',
+    MADE_MY_DAY_ESCALATION_DOC_URL: 'https://runbook.mademyday.test/incidents',
+    MADE_MY_DAY_ADMIN_TOKEN: 'admin_token_live_1234'
+  });
+  assert.ok(
+    redactedOncallPlaceholderIssues.includes('MADE_MY_DAY_ONCALL_PRIMARY must not be a placeholder value'),
+    'redacted placeholder on-call owner should fail release readiness'
+  );
+
   const oncallControlCharIssues = evaluateReadiness({
     MADE_MY_DAY_ONCALL_PRIMARY: 'community\noncall',
     MADE_MY_DAY_ONCALL_SECONDARY: 'community-backup',

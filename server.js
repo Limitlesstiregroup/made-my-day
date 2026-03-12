@@ -404,7 +404,7 @@ function isSecretFileWrongOwner(filePath) {
   }
 }
 
-const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'todo', 'tbd', 'unknown', 'default', 'password', 'unset', 'notset', 'null', 'none', 'na', 'n/a'];
+const PLACEHOLDER_TOKENS = ['changeme', 'change-me', 'replace-me', 'replace_this', 'placeholder', 'example', 'sample', 'dummy', 'test', 'todo', 'tbd', 'tba', 'unknown', 'default', 'password', 'unset', 'notset', 'null', 'none', 'na', 'n/a', 'redacted', 'masked'];
 const ROTATABLE_SECRET_KEYS = new Set(['MADE_MY_DAY_ADMIN_TOKEN']);
 
 function looksLikeWrappedPlaceholder(value) {
