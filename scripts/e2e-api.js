@@ -461,6 +461,58 @@ async function run() {
       throw new Error('expected 400 when duplicate x-request-id headers are sent');
     }
 
+    const duplicateSecFetchSiteHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-Fetch-Site: same-origin',
+      'Sec-Fetch-Site: cross-site',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecFetchSiteHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-fetch-site headers are sent');
+    }
+
+    const duplicateSecFetchModeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-Fetch-Mode: navigate',
+      'Sec-Fetch-Mode: cors',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecFetchModeHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-fetch-mode headers are sent');
+    }
+
+    const duplicateSecFetchDestHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-Fetch-Dest: document',
+      'Sec-Fetch-Dest: empty',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecFetchDestHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-fetch-dest headers are sent');
+    }
+
+    const duplicateSecFetchUserHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-Fetch-User: ?1',
+      'Sec-Fetch-User: ?0',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecFetchUserHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-fetch-user headers are sent');
+    }
+
     const duplicateMatchingContentLengthHeaderResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

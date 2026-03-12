@@ -6,3 +6,7 @@
 .env.*
 !.env.example
 .secrets/
+
+# Runtime state artifacts
+/data/mutation-rate-limit-state.json
+/data/mutation-rate-limit-state.json.bak

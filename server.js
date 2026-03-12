@@ -2500,6 +2500,15 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'sec-fetch-site')) {
       return json(res, 400, { error: 'invalid sec-fetch-site header' });
     }
+    if (hasDuplicateRawHeader(req, 'sec-fetch-mode')) {
+      return json(res, 400, { error: 'invalid sec-fetch-mode header' });
+    }
+    if (hasDuplicateRawHeader(req, 'sec-fetch-dest')) {
+      return json(res, 400, { error: 'invalid sec-fetch-dest header' });
+    }
+    if (hasDuplicateRawHeader(req, 'sec-fetch-user')) {
+      return json(res, 400, { error: 'invalid sec-fetch-user header' });
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
