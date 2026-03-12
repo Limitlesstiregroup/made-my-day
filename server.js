@@ -175,6 +175,13 @@ const engagementIdempotencyCache = new Map();
 const IDEMPOTENCY_CACHE_FILE = String(process.env.IDEMPOTENCY_CACHE_FILE || path.join(DATA_DIR, 'idempotency-cache.json'));
 const IDEMPOTENCY_CACHE_BACKUP_FILE = `${IDEMPOTENCY_CACHE_FILE}.bak`;
 const IDEMPOTENCY_CACHE_SCHEMA_VERSION = 2;
+const RATE_LIMIT_STATE_FILE = String(process.env.RATE_LIMIT_STATE_FILE || path.join(DATA_DIR, 'mutation-rate-limit-state.json'));
+const RATE_LIMIT_STATE_BACKUP_FILE = `${RATE_LIMIT_STATE_FILE}.bak`;
+const RATE_LIMIT_STATE_SCHEMA_VERSION = 1;
+const RATE_LIMIT_STATE_FLUSH_INTERVAL_MS = Number.isFinite(Number(process.env.RATE_LIMIT_STATE_FLUSH_INTERVAL_MS))
+  ? Math.floor(Math.max(5_000, Math.min(Number(process.env.RATE_LIMIT_STATE_FLUSH_INTERVAL_MS), 300_000)))
+  : 30_000;
+let rateLimitStateDirty = false;
 let lastImportRun = null;
 let importRunPromise = null;
 let hallOfFameRunPromise = null;
@@ -244,6 +251,76 @@ function loadIdempotencyCaches() {
       const backupParsed = JSON.parse(fs.readFileSync(IDEMPOTENCY_CACHE_BACKUP_FILE, 'utf8'));
       const restoredBackup = restoreIdempotencyCaches(backupParsed);
       if (restoredBackup.needsMigration) saveIdempotencyCaches();
+    }
+  } catch {
+    // best-effort persistence only
+  }
+}
+
+function normalizeMutationRateLimitEntry(entry, now = Date.now()) {
+  if (!Array.isArray(entry) || entry.length !== 2) return null;
+  const [key, values] = entry;
+  if (typeof key !== 'string' || !key || !Array.isArray(values)) return null;
+  const timestamps = values
+    .filter((value) => Number.isFinite(value))
+    .map((value) => Math.floor(value))
+    .filter((value) => value > 0 && now - value <= SAFE_RATE_LIMIT_WINDOW_MS);
+  if (timestamps.length === 0) return null;
+  return [key, timestamps];
+}
+
+function restoreMutationRateLimitState(parsed) {
+  if (!parsed || typeof parsed !== 'object') return false;
+  const schemaVersion = Number(parsed.schemaVersion || 1);
+  const entries = Array.isArray(parsed.entries) ? parsed.entries : [];
+  const now = Date.now();
+
+  mutationLog.clear();
+  mutationLogOrder.length = 0;
+
+  for (const rawEntry of entries) {
+    const normalized = normalizeMutationRateLimitEntry(rawEntry, now);
+    if (!normalized) continue;
+    const [key, timestamps] = normalized;
+    mutationLog.set(key, timestamps);
+    mutationLogOrder.push(key);
+  }
+
+  if (schemaVersion < RATE_LIMIT_STATE_SCHEMA_VERSION) {
+    rateLimitStateDirty = true;
+  }
+
+  return mutationLog.size > 0;
+}
+
+function saveMutationRateLimitState({ force = false } = {}) {
+  if (!force && !rateLimitStateDirty) return;
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const payload = {
+      schemaVersion: RATE_LIMIT_STATE_SCHEMA_VERSION,
+      entries: [...mutationLog.entries()]
+    };
+    const tmpSuffix = `${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const tmpFile = `${RATE_LIMIT_STATE_FILE}.${tmpSuffix}.tmp`;
+    fs.writeFileSync(tmpFile, JSON.stringify(payload, null, 2));
+    fs.renameSync(tmpFile, RATE_LIMIT_STATE_FILE);
+    fs.copyFileSync(RATE_LIMIT_STATE_FILE, RATE_LIMIT_STATE_BACKUP_FILE);
+    rateLimitStateDirty = false;
+  } catch {
+    // best-effort persistence only
+  }
+}
+
+function loadMutationRateLimitState() {
+  try {
+    if (fs.existsSync(RATE_LIMIT_STATE_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(RATE_LIMIT_STATE_FILE, 'utf8'));
+      if (restoreMutationRateLimitState(parsed)) return;
+    }
+    if (fs.existsSync(RATE_LIMIT_STATE_BACKUP_FILE)) {
+      const backupParsed = JSON.parse(fs.readFileSync(RATE_LIMIT_STATE_BACKUP_FILE, 'utf8'));
+      restoreMutationRateLimitState(backupParsed);
     }
   } catch {
     // best-effort persistence only
@@ -1529,19 +1606,27 @@ function getRateLimitState(req) {
   const freshForIp = (mutationLog.get(ip) || []).filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
   freshForIp.push(now);
   mutationLog.set(ip, freshForIp);
+  rateLimitStateDirty = true;
   if (!hadIp) mutationLogOrder.push(ip);
 
   // prune stale keys to avoid unbounded memory growth under spray traffic
   for (const [key, timestamps] of mutationLog.entries()) {
     const live = timestamps.filter((ts) => now - ts <= SAFE_RATE_LIMIT_WINDOW_MS);
-    if (live.length === 0) mutationLog.delete(key);
-    else if (live.length !== timestamps.length) mutationLog.set(key, live);
+    if (live.length === 0) {
+      mutationLog.delete(key);
+      rateLimitStateDirty = true;
+    } else if (live.length !== timestamps.length) {
+      mutationLog.set(key, live);
+      rateLimitStateDirty = true;
+    }
   }
 
   while (mutationLog.size > SAFE_RATE_LIMIT_MAX_KEYS && mutationLogOrder.length) {
     const oldest = mutationLogOrder.shift();
     if (!oldest) continue;
-    mutationLog.delete(oldest);
+    if (mutationLog.delete(oldest)) {
+      rateLimitStateDirty = true;
+    }
   }
 
   const oldestTimestamp = freshForIp[0] || now;
@@ -3246,6 +3331,14 @@ if (shouldEnforceLiveReadiness(process.env) && !startupReadiness.ready) {
 }
 
 loadIdempotencyCaches();
+loadMutationRateLimitState();
+
+const rateLimitStateFlushInterval = setInterval(() => {
+  saveMutationRateLimitState();
+}, RATE_LIMIT_STATE_FLUSH_INTERVAL_MS);
+if (typeof rateLimitStateFlushInterval.unref === 'function') {
+  rateLimitStateFlushInterval.unref();
+}
 
 server.listen(PORT, () => {
   console.log(`made-my-day running on http://localhost:${PORT}`);
@@ -3263,7 +3356,9 @@ function shutdown(signal, exitCode = 0) {
   clearInterval(importInterval);
   clearTimeout(winnerBootTimeout);
   clearInterval(winnerInterval);
+  clearInterval(rateLimitStateFlushInterval);
   saveIdempotencyCaches();
+  saveMutationRateLimitState({ force: true });
 
   if (typeof server.closeIdleConnections === 'function') {
     server.closeIdleConnections();
@@ -3288,7 +3383,13 @@ function handleFatalError(type, error) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('beforeExit', () => saveIdempotencyCaches());
-process.on('exit', () => saveIdempotencyCaches());
+process.on('beforeExit', () => {
+  saveIdempotencyCaches();
+  saveMutationRateLimitState({ force: true });
+});
+process.on('exit', () => {
+  saveIdempotencyCaches();
+  saveMutationRateLimitState({ force: true });
+});
 process.on('unhandledRejection', (reason) => handleFatalError('unhandledRejection', reason));
 process.on('uncaughtException', (error) => handleFatalError('uncaughtException', error));
