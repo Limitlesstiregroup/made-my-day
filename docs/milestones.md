@@ -95,3 +95,4 @@
 
 - 440%: Edge client-IP provenance hardening now rejects `X-Client-IP`, `True-Client-IP`, `X-Real-IP`, `CF-Connecting-IP`, `Fastly-Client-IP`, and `Fly-Client-IP` headers with HTTP 400 (`client ip override headers are not allowed`) before route handling to prevent untrusted client-attribution spoofing from edge-only metadata ✅
 - 445%: Legacy proto-override hardening now rejects `X-Forwarded-Ssl` headers with HTTP 400 (`x-forwarded-ssl header is not allowed`) before route handling to prevent intermediary TLS-attribution spoofing via deprecated forwarding metadata ✅
+- 450%: Forwarded client-IP override hardening now rejects `X-Forwarded-Client-IP` headers with HTTP 400 (`client ip override headers are not allowed`) before route handling to prevent untrusted upstream client-attribution spoofing via non-standard forwarding metadata ✅

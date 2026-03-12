@@ -2321,6 +2321,7 @@ function hasClientIpOverrideHeader(req) {
     'x-client-ip',
     'true-client-ip',
     'x-real-ip',
+    'x-forwarded-client-ip',
     'cf-connecting-ip',
     'fastly-client-ip',
     'fly-client-ip'

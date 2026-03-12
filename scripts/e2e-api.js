@@ -913,6 +913,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when edge client ip override headers are present');
     }
 
+    const forwardedClientIpOverrideHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Client-IP: 203.0.113.45',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(forwardedClientIpOverrideHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-client-ip header is present');
+    }
+
     const teHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
