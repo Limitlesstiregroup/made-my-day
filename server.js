@@ -2500,6 +2500,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'accept-language')) {
       return json(res, 400, { error: 'invalid accept-language header' });
     }
+    if (hasDuplicateRawHeader(req, 'content-language')) {
+      return json(res, 400, { error: 'invalid content-language header' });
+    }
     if (hasDuplicateRawHeader(req, 'accept-charset')) {
       return json(res, 400, { error: 'invalid accept-charset header' });
     }

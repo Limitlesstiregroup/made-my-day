@@ -213,6 +213,19 @@ async function run() {
       throw new Error('expected 400 when duplicate Accept-Language headers are sent');
     }
 
+    const duplicateContentLanguageHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Content-Language: en-US',
+      'Content-Language: en',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateContentLanguageHeaderResponse)) {
+      throw new Error('expected 400 when duplicate Content-Language headers are sent');
+    }
+
     const duplicateAcceptCharsetHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
