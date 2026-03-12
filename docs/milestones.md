@@ -86,4 +86,5 @@
 - 400%: Release-readiness placeholder hardening now also treats `null`/`none` as placeholder values for on-call ownership and admin token checks, preventing silent GA drift from null-sentinel config stubs ✅
 - 405%: Release-readiness placeholder hardening now rejects wrapped placeholder tokens (for example `<ONCALL_PRIMARY>` / `${ONCALL_PRIMARY}`) for on-call ownership and admin token checks, preventing templated config stubs from silently passing GA gates ✅
 - 410%: Release-readiness placeholder hardening now treats `tba` as a placeholder token for on-call ownership and admin token checks, preventing deferred handoff stubs from silently passing GA gates ✅
+- 415%: Release-readiness placeholder hardening now treats `na`/`n/a` as placeholder tokens for on-call ownership and admin token checks, preventing "N/A" handoff stubs from silently passing GA gates ✅
 
