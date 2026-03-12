@@ -2491,6 +2491,10 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'authorization')) {
       return json(res, 400, { error: 'invalid authorization header' });
     }
+    const parsedAuthorizationHeader = parseAuthorizationBearer(req);
+    if (parsedAuthorizationHeader.malformed) {
+      return json(res, 400, { error: 'invalid authorization header' });
+    }
     if (hasDuplicateRawHeader(req, 'if-none-match')) {
       return json(res, 400, { error: 'invalid if-none-match header' });
     }

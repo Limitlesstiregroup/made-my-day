@@ -625,6 +625,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when multi-hop forwarding headers are sent while TRUST_PROXY=true');
     }
 
+    const malformedAuthorizationHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Authorization: Bearer legit_token, Basic Zm9vOmJhcg==',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedAuthorizationHeaderResponse)) {
+      throw new Error('expected 400 when authorization header has comma-joined credentials');
+    }
+
     const multiHopForwardedHostHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
