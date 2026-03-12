@@ -689,6 +689,21 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when duplicate x-forwarded-host headers are sent while TRUST_PROXY=true');
     }
 
+    const mismatchedForwardedHostHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Forwarded-Host: app.mademyday.app',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(mismatchedForwardedHostHeaderResponse)) {
+      throw new Error('expected 400 when x-forwarded-host mismatches host while TRUST_PROXY=true');
+    }
+    if (!/"error"\s*:\s*"x-forwarded-host must match host header"/.test(mismatchedForwardedHostHeaderResponse)) {
+      throw new Error('expected canonical mismatch error when x-forwarded-host differs from host while TRUST_PROXY=true');
+    }
+
     const methodOverrideHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

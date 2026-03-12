@@ -2794,6 +2794,13 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       if (typeof forwardedHost === 'string' && forwardedHost.trim() !== '' && !isValidIncomingHostHeader(forwardedHost.trim().toLowerCase())) {
         return json(res, 400, { error: 'invalid x-forwarded-host header' });
       }
+      if (typeof forwardedHost === 'string' && forwardedHost.trim() !== '') {
+        const normalizedForwardedHost = forwardedHost.trim().toLowerCase();
+        const normalizedHostHeader = getNormalizedHostHeader(req);
+        if (normalizedHostHeader && normalizedForwardedHost !== normalizedHostHeader) {
+          return json(res, 400, { error: 'x-forwarded-host must match host header' });
+        }
+      }
       if (typeof forwardedProto === 'string' && forwardedProto.trim() !== '' && !/^https?$/i.test(forwardedProto.trim())) {
         return json(res, 400, { error: 'invalid x-forwarded-proto header' });
       }
