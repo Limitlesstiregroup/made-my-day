@@ -2746,11 +2746,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDisallowedBodyFramingOnSafeMethod(req)) {
       return json(res, 400, { error: 'request body is not allowed for this method' });
     }
+    if (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port') || hasDuplicateRawHeader(req, 'x-forwarded-prefix') || hasDuplicateRawHeader(req, 'x-forwarded-server')) {
+      return json(res, 400, { error: 'duplicate forwarding headers are not allowed' });
+    }
     if (!TRUST_PROXY && hasAnyForwardingHeader(req)) {
       return json(res, 400, { error: 'forwarding headers require trusted proxy mode' });
-    }
-    if (TRUST_PROXY && (hasDuplicateRawHeader(req, 'x-forwarded-for') || hasDuplicateRawHeader(req, 'forwarded') || hasDuplicateRawHeader(req, 'x-forwarded-host') || hasDuplicateRawHeader(req, 'x-forwarded-proto') || hasDuplicateRawHeader(req, 'x-forwarded-port') || hasDuplicateRawHeader(req, 'x-forwarded-prefix') || hasDuplicateRawHeader(req, 'x-forwarded-server'))) {
-      return json(res, 400, { error: 'Duplicate forwarding headers are not allowed' });
     }
     if (TRUST_PROXY) {
       const forwardedFor = req.headers['x-forwarded-for'];
