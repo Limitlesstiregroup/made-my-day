@@ -616,6 +616,7 @@ function evaluateReadiness(env = process.env) {
   validateIntegerEnv(env.MAX_HEADER_BYTES, 'MAX_HEADER_BYTES', issues);
   validateIntegerEnv(env.MAX_HEADERS_COUNT, 'MAX_HEADERS_COUNT', issues);
   validateIntegerEnv(env.BODY_READ_TIMEOUT_MS, 'BODY_READ_TIMEOUT_MS', issues);
+  validateIntegerEnv(env.SHUTDOWN_GRACE_MS, 'SHUTDOWN_GRACE_MS', issues);
 
   const importTimeout = parseIntOrDefault(env.IMPORT_TIMEOUT_MS, 10000);
   if (importTimeout < 1000 || importTimeout > 60000) {
@@ -717,6 +718,10 @@ function evaluateReadiness(env = process.env) {
   const shutdownGraceMs = parseIntOrDefault(env.SHUTDOWN_GRACE_MS, 10_000);
   if (shutdownGraceMs < 1_000 || shutdownGraceMs > 120_000) {
     issues.push('SHUTDOWN_GRACE_MS must be between 1000 and 120000');
+  }
+
+  if (!isUnset(env.SHUTDOWN_GRACE_MS) && shutdownGraceMs < requestTimeoutMs) {
+    issues.push('SHUTDOWN_GRACE_MS must be greater than or equal to REQUEST_TIMEOUT_MS when explicitly set');
   }
 
   if (headersTimeoutMs > requestTimeoutMs) {
