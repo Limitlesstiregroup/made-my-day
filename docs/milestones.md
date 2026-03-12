@@ -74,3 +74,4 @@
 - 340%: Proxy-Status header hardening now rejects intermediary diagnostic `Proxy-Status` headers with HTTP 400 (`proxy-status header is not allowed`) before route handling to reduce intermediary attribution confusion on origin-facing endpoints ✅
 - 345%: Host header duplication hardening now rejects duplicate raw `Host` header lines with HTTP 400, reducing intermediary/header-fold ambiguity for upstream host attribution ✅
 - 350%: Date header duplication hardening now rejects duplicate raw `Date` header lines with HTTP 400 (`invalid date header`) before route handling to prevent intermediary/header-fold ambiguity in request timestamp attribution and cache diagnostics ✅
+- 355%: Connection header duplication hardening now rejects duplicate raw `Connection` header lines with HTTP 400 (`invalid connection header`) before route handling to prevent intermediary/header-fold ambiguity in hop-by-hop token parsing ✅
