@@ -2262,6 +2262,12 @@ function hasAltUsedHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasAltSvcHeader(req) {
+  const value = req.headers['alt-svc'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasHttp2SettingsHeader(req) {
   const value = req.headers['http2-settings'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');

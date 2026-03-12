@@ -27,6 +27,7 @@ Anonymous same-day positive story platform.
 - Proxy-chain disclosure hardening: requests carrying `Via` are rejected with HTTP 400 (`via header is not allowed`) to reduce ambiguous intermediary attribution from untrusted upstream hops
 - TLS 0-RTT replay hardening: requests carrying `Early-Data` are rejected with HTTP 400 (`early-data header is not allowed`) to avoid replay-prone side effects on non-idempotent flows
 - Alternative-service routing hardening: requests carrying `Alt-Used` are rejected with HTTP 400 (`alt-used header is not allowed`) to reduce ambiguous upstream authority overrides through intermediaries
+- Alternative-service advertisement hardening: requests carrying `Alt-Svc` are rejected with HTTP 400 (`alt-svc header is not allowed`) to reduce unsupported edge-origin authority advertisement ambiguity through intermediaries
 - HTTP/2 cleartext-upgrade hardening: requests carrying `HTTP2-Settings` are rejected with HTTP 400 (`http2-settings header is not allowed`) to reduce unsupported h2c upgrade ambiguity through intermediaries
 - Proxy-hop traversal hardening: requests carrying `Max-Forwards` are rejected with HTTP 400 (`max-forwards header is not allowed`) to prevent intermediary hop-count probing against non-proxy endpoints
 - Path-override header hardening: requests carrying `X-Original-URL` or `X-Rewrite-URL` are rejected with HTTP 400 (`path override headers are not allowed`) to prevent intermediary path-rewrite header abuse

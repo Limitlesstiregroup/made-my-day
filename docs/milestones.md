@@ -91,3 +91,4 @@
 - 425%: Release-readiness on-call ownership hardening now rejects primary/secondary on-call values wrapped in single/double quotes, preventing copy-pasted `.env` quoting artifacts from silently misrouting escalation ownership ✅
 - 430%: CDN loop attribution hardening now rejects `CDN-Loop` headers with HTTP 400 (`cdn-loop header is not allowed`) before route handling to prevent untrusted intermediary loop metadata from influencing origin request attribution ✅
 
+- 435%: Alternative-service advertisement hardening now rejects `Alt-Svc` headers with HTTP 400 (`alt-svc header is not allowed`) before route handling to reduce unsupported edge-origin authority advertisement ambiguity across intermediary/proxy paths ✅
