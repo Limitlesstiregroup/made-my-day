@@ -513,6 +513,19 @@ async function run() {
       throw new Error('expected 400 when duplicate sec-fetch-user headers are sent');
     }
 
+    const duplicateSecPurposeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-Purpose: prefetch',
+      'Sec-Purpose: prefetch;prerender',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecPurposeHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-purpose headers are sent');
+    }
+
     const duplicateMatchingContentLengthHeaderResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

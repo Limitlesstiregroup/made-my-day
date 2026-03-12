@@ -2509,6 +2509,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'sec-fetch-user')) {
       return json(res, 400, { error: 'invalid sec-fetch-user header' });
     }
+    if (hasDuplicateRawHeader(req, 'sec-purpose')) {
+      return json(res, 400, { error: 'invalid sec-purpose header' });
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
