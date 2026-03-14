@@ -623,6 +623,46 @@ async function run() {
       throw new Error('expected 400 when duplicate sec-purpose headers are sent');
     }
 
+    // Sec-CH-UA client hints duplication hardening tests
+    const duplicateSecChUaHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-UA: "Chromium";v="122"',
+      'Sec-CH-UA: "Chromium";v="123"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChUaHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-ua headers are sent');
+    }
+
+    const duplicateSecChUaPlatformHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-UA-Platform: "Linux"',
+      'Sec-CH-UA-Platform: "Windows"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChUaPlatformHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-ua-platform headers are sent');
+    }
+
+    const duplicateSecChUaMobileHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-UA-Mobile: ?0',
+      'Sec-CH-UA-Mobile: ?1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChUaMobileHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-ua-mobile headers are sent');
+    }
+
     const duplicateMatchingContentLengthHeaderResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

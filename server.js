@@ -2671,6 +2671,23 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'sec-purpose')) {
       return json(res, 400, { error: 'invalid sec-purpose header' });
     }
+    // Sec-CH-UA client hints duplication hardening
+    const clientHintsHeaders = [
+      'sec-ch-ua',
+      'sec-ch-ua-arch',
+      'sec-ch-ua-bitness',
+      'sec-ch-ua-full-version-list',
+      'sec-ch-ua-mobile',
+      'sec-ch-ua-model',
+      'sec-ch-ua-platform',
+      'sec-ch-ua-platform-version',
+      'sec-ch-ua-wow64'
+    ];
+    for (const chHeader of clientHintsHeaders) {
+      if (hasDuplicateRawHeader(req, chHeader)) {
+        return json(res, 400, { error: 'invalid sec-ch-ua header' });
+      }
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
