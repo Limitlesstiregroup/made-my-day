@@ -2720,6 +2720,13 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'rtt')) {
       return json(res, 400, { error: 'invalid rtt header' });
     }
+    // CORS preflight header duplication hardening
+    if (hasDuplicateRawHeader(req, 'access-control-request-method')) {
+      return json(res, 400, { error: 'invalid access-control-request-method header' });
+    }
+    if (hasDuplicateRawHeader(req, 'access-control-request-headers')) {
+      return json(res, 400, { error: 'invalid access-control-request-headers header' });
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
