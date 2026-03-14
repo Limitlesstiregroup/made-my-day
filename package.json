@@ -15,5 +15,8 @@
     "ga:verify": "npm run build && npm run lint && npm test",
     "ga:gate": "npm run ga:verify && npm run release:check",
     "ga:gate:local": "bash -lc 'npm run ga:verify && set -a; . ./.env.ga.local; set +a; npm run release:check'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0"
   }
 }

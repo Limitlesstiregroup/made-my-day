@@ -6,6 +6,7 @@ const path = require('path');
 const { performance, monitorEventLoopDelay } = require('perf_hooks');
 const { URL } = require('url');
 const packageMeta = require('./package.json');
+const dbAdapter = require('./db-adapter');
 
 let previousEventLoopUtilization = performance.eventLoopUtilization();
 const eventLoopDelayHistogram = monitorEventLoopDelay({ resolution: 20 });
@@ -1006,6 +1007,7 @@ function getVersionSnapshot() {
   const resourceUsage = process.resourceUsage();
   const eventLoopUtilizationSample = performance.eventLoopUtilization(previousEventLoopUtilization);
   previousEventLoopUtilization = eventLoopUtilizationSample;
+  const dbHealth = dbAdapter.getDbHealth();
   return {
     service: 'made-my-day',
     version: packageMeta.version,
@@ -1040,7 +1042,15 @@ function getVersionSnapshot() {
       : 0,
     eventLoopDelayMaxMillis: Number.isFinite(eventLoopDelayHistogram.max)
       ? Number((eventLoopDelayHistogram.max / 1e6).toFixed(3))
-      : 0
+      : 0,
+    db: {
+      type: dbHealth.type,
+      healthy: dbHealth.healthy,
+      ...(dbHealth.path ? { path: dbHealth.path } : {}),
+      ...(dbHealth.counts ? { counts: dbHealth.counts } : {}),
+      ...(dbHealth.fileSize !== undefined ? { fileSizeBytes: dbHealth.fileSize } : {}),
+      ...(dbHealth.error ? { error: dbHealth.error } : {})
+    }
   };
 }
 
@@ -1109,27 +1119,11 @@ function ensureStore() {
 }
 
 function emptyStore() {
-  return { stories: [], comments: [], hallOfFame: [], pendingWinner: null, giftCards: [], idempotencyKeys: [] };
+  return dbAdapter.emptyStore();
 }
 
 function loadStore() {
-  ensureStore();
-  let store;
-  try {
-    store = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
-  } catch {
-    // Recover from partial/corrupted writes and keep a bounded forensics snapshot set.
-    snapshotCorruptStoreFile(STORE_FILE);
-    store = emptyStore();
-    writeStoreFileAtomically(store);
-  }
-  if (!Array.isArray(store.stories)) store.stories = [];
-  if (!Array.isArray(store.comments)) store.comments = [];
-  if (!Array.isArray(store.hallOfFame)) store.hallOfFame = [];
-  if (!Array.isArray(store.giftCards)) store.giftCards = [];
-  if (!Array.isArray(store.idempotencyKeys)) store.idempotencyKeys = [];
-  if (!Object.prototype.hasOwnProperty.call(store, 'pendingWinner')) store.pendingWinner = null;
-  return store;
+  return dbAdapter.loadStore();
 }
 
 function clampLimit(value, fallback) {
@@ -1299,11 +1293,7 @@ function saveStore(store) {
     }),
     clampLimit(MAX_IDEMPOTENCY_KEYS, 5000)
   );
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmpSuffix = `${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-  const tmpFile = `${STORE_FILE}.${tmpSuffix}.tmp`;
-  fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2));
-  fs.renameSync(tmpFile, STORE_FILE);
+  dbAdapter.saveStore(store);
 }
 
 function securityHeaders() {
@@ -3703,6 +3693,7 @@ function shutdown(signal, exitCode = 0) {
   clearInterval(rateLimitStateFlushInterval);
   saveIdempotencyCaches();
   saveMutationRateLimitState({ force: true });
+  dbAdapter.shutdown();
 
   if (typeof server.closeIdleConnections === 'function') {
     server.closeIdleConnections();
