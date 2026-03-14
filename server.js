@@ -2688,6 +2688,38 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
         return json(res, 400, { error: 'invalid sec-ch-ua header' });
       }
     }
+    // Device-Memory client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'device-memory')) {
+      return json(res, 400, { error: 'invalid device-memory header' });
+    }
+    // Viewport-Width client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'viewport-width')) {
+      return json(res, 400, { error: 'invalid viewport-width header' });
+    }
+    // DPR (Device Pixel Ratio) client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'dpr')) {
+      return json(res, 400, { error: 'invalid dpr header' });
+    }
+    // Width client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'width')) {
+      return json(res, 400, { error: 'invalid width header' });
+    }
+    // Save-Data client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'save-data')) {
+      return json(res, 400, { error: 'invalid save-data header' });
+    }
+    // Downlink client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'downlink')) {
+      return json(res, 400, { error: 'invalid downlink header' });
+    }
+    // ECT (Effective Connection Type) client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'ect')) {
+      return json(res, 400, { error: 'invalid ect header' });
+    }
+    // RTT (Round-Trip Time) client hints duplication hardening
+    if (hasDuplicateRawHeader(req, 'rtt')) {
+      return json(res, 400, { error: 'invalid rtt header' });
+    }
     if (hasMethodOverrideHeader(req)) {
       return json(res, 400, { error: 'x-http-method-override header is not allowed' });
     }
