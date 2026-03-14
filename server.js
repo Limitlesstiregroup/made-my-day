@@ -2422,6 +2422,30 @@ function hasAcceptDatetimeHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasWarningHeader(req) {
+  const value = req.headers.warning;
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function hasMimeVersionHeader(req) {
+  const value = req.headers['mime-version'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function hasSurrogateCapabilityHeader(req) {
+  const value = req.headers['surrogate-capability'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function hasSurrogateControlHeader(req) {
+  const value = req.headers['surrogate-control'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -2825,6 +2849,18 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasAcceptDatetimeHeader(req)) {
       return json(res, 400, { error: 'accept-datetime header is not allowed' });
+    }
+    if (hasWarningHeader(req)) {
+      return json(res, 400, { error: 'warning header is not allowed' });
+    }
+    if (hasMimeVersionHeader(req)) {
+      return json(res, 400, { error: 'mime-version header is not allowed' });
+    }
+    if (hasSurrogateCapabilityHeader(req)) {
+      return json(res, 400, { error: 'surrogate-capability header is not allowed' });
+    }
+    if (hasSurrogateControlHeader(req)) {
+      return json(res, 400, { error: 'surrogate-control header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });
