@@ -2446,6 +2446,33 @@ function hasSurrogateControlHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasProxyMethodOverrideHeader(req) {
+  const forwardedMethod = req.headers['x-forwarded-method'];
+  const originalMethod = req.headers['x-original-method'];
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return hasValue(forwardedMethod) || hasValue(originalMethod);
+}
+
+function hasNginxInternalHeader(req) {
+  return [
+    'x-accel-redirect',
+    'x-accel-expires',
+    'x-accel-charset',
+    'x-accel-limit-rate',
+    'x-accel-buffering',
+    'x-sendfile',
+    'x-request-start',
+    'x-queue-start'
+  ].some((headerName) => {
+    const value = req.headers[headerName];
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  });
+}
+
 function parseConnectionHeaderTokens(req) {
   const value = req.headers.connection;
   const raw = Array.isArray(value) ? value.join(',') : value;
@@ -2861,6 +2888,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasSurrogateControlHeader(req)) {
       return json(res, 400, { error: 'surrogate-control header is not allowed' });
+    }
+    if (hasProxyMethodOverrideHeader(req)) {
+      return json(res, 400, { error: 'proxy method override headers are not allowed' });
+    }
+    if (hasNginxInternalHeader(req)) {
+      return json(res, 400, { error: 'nginx internal headers are not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

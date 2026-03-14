@@ -183,6 +183,8 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 100%: Production handoff complete (`docs/milestones.md`)
 - 105% sustainment kickoff: incident replay fixture expansion for malformed intermediary traffic
 - 455% sustainment hardening: reject ambiguous `Content-Length` + `Transfer-Encoding` request framing before route handling
+- 555% sustainment hardening: reject proxy method override headers (`X-Forwarded-Method`, `X-Original-Method`) to prevent intermediary method-tunneling bypasses
+- 560% sustainment hardening: reject nginx internal headers (`X-Accel-*`, `X-Sendfile`, `X-Request-Start`, `X-Queue-Start`) to prevent internal routing/instrumentation override attacks
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
