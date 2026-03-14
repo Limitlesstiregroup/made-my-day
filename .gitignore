@@ -10,3 +10,6 @@
 # Runtime state artifacts
 /data/mutation-rate-limit-state.json
 /data/mutation-rate-limit-state.json.bak
+
+# Dependencies
+node_modules/
