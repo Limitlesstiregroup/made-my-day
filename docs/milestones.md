@@ -127,3 +127,5 @@
 
 - 595%: Preference client-hints duplication hardening now also rejects duplicate raw `Sec-CH-Prefers-Color-Scheme`, `Sec-CH-Prefers-Reduced-Motion`, `Sec-CH-Prefers-Reduced-Transparency`, `Sec-CH-Prefers-Contrast`, and `Sec-CH-Forced-Colors` header lines with HTTP 400 (`invalid sec-ch-ua header`) before route handling to prevent intermediary/header-fold ambiguity in user preference hints attribution ✅
 - 600%: Global Privacy Control hardening now rejects duplicate raw `Sec-GPC` header lines with HTTP 400 (`invalid sec-gpc header`) before route handling to prevent intermediary/header-fold ambiguity in privacy preference attribution ✅
+
+- 605%: Do Not Track (DNT) duplication hardening now rejects duplicate raw `DNT` header lines with HTTP 400 (`invalid dnt header`) before route handling to prevent intermediary/header-fold ambiguity in client privacy-preference attribution ✅
