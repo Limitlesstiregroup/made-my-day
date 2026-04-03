@@ -2280,6 +2280,17 @@ function hasPathOverrideHeader(req) {
   return hasValue(originalUrl) || hasValue(rewriteUrl);
 }
 
+function hasForwardedPathOverrideHeader(req) {
+  const forwardedUri = req.headers['x-forwarded-uri'];
+  const forwardedPath = req.headers['x-forwarded-path'];
+  const originalUri = req.headers['x-original-uri'];
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return hasValue(forwardedUri) || hasValue(forwardedPath) || hasValue(originalUri);
+}
+
 function hasHostOverrideHeader(req) {
   const originalHost = req.headers['x-original-host'];
   const host = req.headers['x-host'];
@@ -2450,6 +2461,33 @@ function hasCloudTraceContextHeader(req) {
   const value = req.headers['x-cloud-trace-context'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
   return typeof value === 'string' && value.trim() !== '';
+}
+
+function hasTraceContextHeader(req) {
+  const traceparent = req.headers.traceparent;
+  const tracestate = req.headers.tracestate;
+  const b3 = req.headers.b3;
+  const xB3TraceId = req.headers['x-b3-traceid'];
+  const xB3SpanId = req.headers['x-b3-spanid'];
+  const xB3ParentSpanId = req.headers['x-b3-parentspanid'];
+  const xB3Sampled = req.headers['x-b3-sampled'];
+  const xB3Flags = req.headers['x-b3-flags'];
+  const xOtSpanContext = req.headers['x-ot-span-context'];
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return (
+    hasValue(traceparent)
+    || hasValue(tracestate)
+    || hasValue(b3)
+    || hasValue(xB3TraceId)
+    || hasValue(xB3SpanId)
+    || hasValue(xB3ParentSpanId)
+    || hasValue(xB3Sampled)
+    || hasValue(xB3Flags)
+    || hasValue(xOtSpanContext)
+  );
 }
 
 function hasNginxInternalHeader(req) {
@@ -2896,6 +2934,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasCloudTraceContextHeader(req)) {
       return json(res, 400, { error: 'x-cloud-trace-context header is not allowed' });
+    }
+    if (hasTraceContextHeader(req)) {
+      return json(res, 400, { error: 'trace context headers are not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

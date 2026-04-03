@@ -828,6 +828,30 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when x-cloud-trace-context header is present');
     }
 
+    const traceparentHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(traceparentHeaderResponse)) {
+      throw new Error('expected 400 when traceparent header is present');
+    }
+
+    const b3HeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'b3: 4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(b3HeaderResponse)) {
+      throw new Error('expected 400 when b3 header is present');
+    }
+
     const traceMethodResponse = await sendRawHttp([
       'TRACE /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
