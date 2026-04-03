@@ -186,7 +186,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 455% sustainment hardening: reject ambiguous `Content-Length` + `Transfer-Encoding` request framing before route handling
 - 555% sustainment hardening: reject proxy method override headers (`X-Forwarded-Method`, `X-Original-Method`) to prevent intermediary method-tunneling bypasses
 - 560% sustainment hardening: reject nginx internal headers (`X-Accel-*`, `X-Sendfile`, `X-Request-Start`, `X-Queue-Start`) to prevent internal routing/instrumentation override attacks
-- 580% sustainment hardening: reject distributed trace-context headers (`traceparent`, `tracestate`, `b3`, `x-b3-*`, `x-ot-span-context`) to prevent untrusted upstream trace metadata from influencing origin attribution
+- 580% sustainment hardening: reject distributed trace-context headers (`traceparent`, `tracestate`, `b3`, `baggage`, `x-b3-*`, `x-ot-span-context`) to prevent untrusted upstream trace metadata from influencing origin attribution
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.

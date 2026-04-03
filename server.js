@@ -2475,6 +2475,7 @@ function hasTraceContextHeader(req) {
   const traceparent = req.headers.traceparent;
   const tracestate = req.headers.tracestate;
   const b3 = req.headers.b3;
+  const baggage = req.headers.baggage;
   const xB3TraceId = req.headers['x-b3-traceid'];
   const xB3SpanId = req.headers['x-b3-spanid'];
   const xB3ParentSpanId = req.headers['x-b3-parentspanid'];
@@ -2489,6 +2490,7 @@ function hasTraceContextHeader(req) {
     hasValue(traceparent)
     || hasValue(tracestate)
     || hasValue(b3)
+    || hasValue(baggage)
     || hasValue(xB3TraceId)
     || hasValue(xB3SpanId)
     || hasValue(xB3ParentSpanId)

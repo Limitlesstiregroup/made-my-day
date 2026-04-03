@@ -840,6 +840,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when traceparent header is present');
     }
 
+    const baggageHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'baggage: userId=alice,serverNode=DF%2028,isProduction=false',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(baggageHeaderResponse)) {
+      throw new Error('expected 400 when baggage header is present');
+    }
+
     const b3HeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
