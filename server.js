@@ -2490,6 +2490,7 @@ function hasTraceContextHeader(req) {
   const xB3Sampled = req.headers['x-b3-sampled'];
   const xB3Flags = req.headers['x-b3-flags'];
   const xOtSpanContext = req.headers['x-ot-span-context'];
+  const xAmznTraceId = req.headers['x-amzn-trace-id'];
   const hasValue = (value) => {
     if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
     return typeof value === 'string' && value.trim() !== '';
@@ -2505,6 +2506,7 @@ function hasTraceContextHeader(req) {
     || hasValue(xB3Sampled)
     || hasValue(xB3Flags)
     || hasValue(xOtSpanContext)
+    || hasValue(xAmznTraceId)
   );
 }
 
