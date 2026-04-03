@@ -864,6 +864,30 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when b3 header is present');
     }
 
+    const signatureHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4120',
+      'Signature: sig1=:"MEUCIQDexample"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(signatureHeaderResponse)) {
+      throw new Error('expected 400 when signature header is present');
+    }
+
+    const signatureInputHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      'Host: 127.0.0.1:4120',
+      'Signature-Input: sig1=("@method" "@target-uri")',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(signatureInputHeaderResponse)) {
+      throw new Error('expected 400 when signature-input header is present');
+    }
+
     const traceMethodResponse = await sendRawHttp([
       'TRACE /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
