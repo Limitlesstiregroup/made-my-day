@@ -2569,6 +2569,7 @@ function isValidIfRangeHeaderValue(value) {
   if (Array.isArray(value)) return false;
   const normalized = String(value).trim();
   if (!normalized) return true;
+  if (normalized === '*') return false;
   if (isValidEtagValidatorHeaderValue(normalized)) return true;
   return !isMalformedHttpDateHeaderValue(normalized);
 }
