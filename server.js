@@ -2446,6 +2446,12 @@ function hasProxyMethodOverrideHeader(req) {
   return hasValue(forwardedMethod) || hasValue(originalMethod);
 }
 
+function hasCloudTraceContextHeader(req) {
+  const value = req.headers['x-cloud-trace-context'];
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 function hasNginxInternalHeader(req) {
   return [
     'x-accel-redirect',
@@ -2887,6 +2893,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasNginxInternalHeader(req)) {
       return json(res, 400, { error: 'nginx internal headers are not allowed' });
+    }
+    if (hasCloudTraceContextHeader(req)) {
+      return json(res, 400, { error: 'x-cloud-trace-context header is not allowed' });
     }
     if (hasUnsupportedConnectionHeader(req)) {
       return json(res, 400, { error: 'connection header contains unsupported tokens' });

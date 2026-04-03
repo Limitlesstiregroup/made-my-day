@@ -816,6 +816,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when websocket handshake headers are present');
     }
 
+    const cloudTraceContextHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'X-Cloud-Trace-Context: 105445aa7843bc8bf206b120001000/1;o=1',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(cloudTraceContextHeaderResponse)) {
+      throw new Error('expected 400 when x-cloud-trace-context header is present');
+    }
+
     const traceMethodResponse = await sendRawHttp([
       'TRACE /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
