@@ -2822,6 +2822,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasHostOverrideHeader(req)) {
       return json(res, 400, { error: 'host override headers are not allowed' });
     }
+    if (hasForwardedPathOverrideHeader(req)) {
+      return json(res, 400, { error: 'forwarded path override headers are not allowed' });
+    }
     if (hasForwardedServerHeader(req)) {
       return json(res, 400, { error: 'x-forwarded-server header is not allowed' });
     }
