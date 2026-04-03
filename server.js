@@ -2376,6 +2376,14 @@ function hasTrailerHeader(req) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+function hasDigestNegotiationHeaders(req) {
+  const hasValue = (value) => {
+    if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
+    return typeof value === 'string' && value.trim() !== '';
+  };
+  return ['digest', 'want-digest', 'content-digest', 'repr-digest'].some((headerName) => hasValue(req.headers[headerName]));
+}
+
 function hasContentRangeHeader(req) {
   const value = req.headers['content-range'];
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -2889,6 +2897,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     }
     if (hasTrailerHeader(req)) {
       return json(res, 400, { error: 'trailer header is not allowed' });
+    }
+    if (hasDigestNegotiationHeaders(req)) {
+      return json(res, 400, { error: 'digest negotiation headers are not allowed' });
     }
     if (hasContentRangeHeader(req)) {
       return json(res, 400, { error: 'content-range header is not allowed' });
