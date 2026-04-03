@@ -675,6 +675,32 @@ async function run() {
       throw new Error('expected 400 when duplicate sec-ch-ua-mobile headers are sent');
     }
 
+    const duplicateSecChPrefersColorSchemeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-Prefers-Color-Scheme: light',
+      'Sec-CH-Prefers-Color-Scheme: dark',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChPrefersColorSchemeHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-prefers-color-scheme headers are sent');
+    }
+
+    const duplicateSecChPrefersReducedMotionHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-Prefers-Reduced-Motion: no-preference',
+      'Sec-CH-Prefers-Reduced-Motion: reduce',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChPrefersReducedMotionHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-prefers-reduced-motion headers are sent');
+    }
+
     const duplicateMatchingContentLengthHeaderResponse = await sendRawHttp([
       'POST /api/stories HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
