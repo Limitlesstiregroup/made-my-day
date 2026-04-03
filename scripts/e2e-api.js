@@ -1212,6 +1212,19 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when keep-alive header is present');
     }
 
+    const secGpcDuplicateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-GPC: 1',
+      'Sec-GPC: 0',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(secGpcDuplicateHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-gpc headers are present');
+    }
+
     const priorityHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

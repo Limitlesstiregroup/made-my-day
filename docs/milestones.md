@@ -126,3 +126,4 @@
 - 590%: HTTP Message Signatures provenance hardening now rejects `Signature` and `Signature-Input` headers with HTTP 400 (`http message signatures headers are not allowed`) before route handling to prevent untrusted signature metadata from influencing origin authorization/provenance attribution ✅
 
 - 595%: Preference client-hints duplication hardening now also rejects duplicate raw `Sec-CH-Prefers-Color-Scheme`, `Sec-CH-Prefers-Reduced-Motion`, `Sec-CH-Prefers-Reduced-Transparency`, `Sec-CH-Prefers-Contrast`, and `Sec-CH-Forced-Colors` header lines with HTTP 400 (`invalid sec-ch-ua header`) before route handling to prevent intermediary/header-fold ambiguity in user preference hints attribution ✅
+- 600%: Global Privacy Control hardening now rejects duplicate raw `Sec-GPC` header lines with HTTP 400 (`invalid sec-gpc header`) before route handling to prevent intermediary/header-fold ambiguity in privacy preference attribution ✅

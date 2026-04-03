@@ -2842,6 +2842,10 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'rtt')) {
       return json(res, 400, { error: 'invalid rtt header' });
     }
+    // Sec-GPC (Global Privacy Control) duplication hardening
+    if (hasDuplicateRawHeader(req, 'sec-gpc')) {
+      return json(res, 400, { error: 'invalid sec-gpc header' });
+    }
     // CORS preflight header duplication hardening
     if (hasDuplicateRawHeader(req, 'access-control-request-method')) {
       return json(res, 400, { error: 'invalid access-control-request-method header' });
