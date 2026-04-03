@@ -2562,6 +2562,15 @@ function isValidEtagValidatorHeaderValue(value) {
   return parts.every((part) => part === '*' || etagTokenPattern.test(part));
 }
 
+function isValidIfRangeHeaderValue(value) {
+  if (value === undefined || value === null) return true;
+  if (Array.isArray(value)) return false;
+  const normalized = String(value).trim();
+  if (!normalized) return true;
+  if (isValidEtagValidatorHeaderValue(normalized)) return true;
+  return !isMalformedHttpDateHeaderValue(normalized);
+}
+
 function hasAmbiguousConditionalValidators(req) {
   const ifNoneMatch = req.headers['if-none-match'];
   const ifModifiedSince = req.headers['if-modified-since'];
@@ -2717,6 +2726,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       return json(res, 400, { error: 'invalid if-unmodified-since header' });
     }
     if (hasDuplicateRawHeader(req, 'if-range')) {
+      return json(res, 400, { error: 'invalid if-range header' });
+    }
+    if (!isValidIfRangeHeaderValue(req.headers['if-range'])) {
       return json(res, 400, { error: 'invalid if-range header' });
     }
     if (isMalformedHttpDateHeaderValue(req.headers.date)) {

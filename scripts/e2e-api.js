@@ -458,6 +458,18 @@ async function run() {
       throw new Error('expected 400 when duplicate if-range headers are sent');
     }
 
+    const malformedIfRangeHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'If-Range: not-a-valid-http-date-or-etag',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(malformedIfRangeHeaderResponse)) {
+      throw new Error('expected 400 when malformed if-range header is sent');
+    }
+
     const malformedIfModifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
