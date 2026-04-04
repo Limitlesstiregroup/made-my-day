@@ -726,6 +726,20 @@ async function run() {
       throw new Error('expected 400 when duplicate sec-ch-ua-mobile headers are sent');
     }
 
+
+    const secChUaFormFactorsDuplicateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-UA-Form-Factors: "Desktop"',
+      'Sec-CH-UA-Form-Factors: "Mobile"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(secChUaFormFactorsDuplicateHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-ua-form-factors headers are present');
+    }
+
     const duplicateSecChPrefersColorSchemeHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

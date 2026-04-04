@@ -2820,6 +2820,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       'sec-ch-ua-platform',
       'sec-ch-ua-platform-version',
       'sec-ch-ua-wow64',
+    'sec-ch-ua-form-factors',
       'sec-ch-prefers-color-scheme',
       'sec-ch-prefers-reduced-motion',
       'sec-ch-prefers-reduced-transparency',

@@ -137,3 +137,5 @@
 - 630%: Accept-CH duplication hardening now rejects duplicate raw `Accept-CH` header lines with HTTP 400 (`invalid accept-ch header`) before route handling to prevent intermediary/header-fold ambiguity in client-hints opt-in negotiation metadata ✅
 
 - 635%: Critical-CH duplication hardening now rejects duplicate raw `Critical-CH` header lines with HTTP 400 (`invalid critical-ch header`) before route handling to prevent intermediary/header-fold ambiguity in client-hints criticality negotiation metadata ✅
+
+- 640%: Sec-CH-UA form-factors client hints duplication hardening now rejects duplicate raw `Sec-CH-UA-Form-Factors` header lines with HTTP 400 (`invalid sec-ch-ua header`) before route handling to prevent intermediary/header-fold ambiguity in UA form-factor client hints attribution ✅
