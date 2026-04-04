@@ -2694,6 +2694,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'accept-ranges')) {
       return json(res, 400, { error: 'invalid accept-ranges header' });
     }
+    if (hasDuplicateRawHeader(req, 'accept-ch')) {
+      return json(res, 400, { error: 'invalid accept-ch header' });
+    }
     if (hasDuplicateRawHeader(req, 'cookie')) {
       return json(res, 400, { error: 'invalid cookie header' });
     }
