@@ -133,3 +133,4 @@
 - 615%: Accept-Patch duplication hardening now rejects duplicate raw `Accept-Patch` header lines with HTTP 400 (`invalid accept-patch header`) before route handling to prevent intermediary/header-fold ambiguity in patch-capability negotiation metadata ✅
 
 - 620%: Accept-Ranges duplication hardening now rejects duplicate raw `Accept-Ranges` header lines with HTTP 400 (`invalid accept-ranges header`) before route handling to prevent intermediary/header-fold ambiguity in range-capability negotiation metadata ✅
+- 625%: Content-Language duplication hardening now rejects duplicate raw `Content-Language` header lines with HTTP 400 (`invalid content-language header`) before route handling to prevent intermediary/header-fold ambiguity in response-language negotiation metadata ✅
