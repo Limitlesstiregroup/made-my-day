@@ -86,6 +86,7 @@ Anonymous same-day positive story platform.
 - Accept-header duplication hardening: duplicate raw `Accept` header lines are rejected with HTTP 400 (`invalid accept header`) before route handling to prevent intermediary/header-fold ambiguity across all endpoints
 - Accept-Encoding duplication hardening: duplicate raw `Accept-Encoding` header lines are rejected with HTTP 400 (`invalid accept-encoding header`) before route handling to prevent intermediary/header-fold ambiguity across proxies/CDNs
 - Accept-Language duplication hardening: duplicate raw `Accept-Language` header lines are rejected with HTTP 400 (`invalid accept-language header`) before route handling to prevent intermediary/header-fold ambiguity across proxies/CDNs
+- Accept-Ranges duplication hardening: duplicate raw `Accept-Ranges` header lines are rejected with HTTP 400 (`invalid accept-ranges header`) before route handling to prevent intermediary/header-fold ambiguity in range-capability metadata
 - Content-Language duplication hardening: duplicate raw `Content-Language` header lines are rejected with HTTP 400 (`invalid content-language header`) before route handling to prevent intermediary/header-fold ambiguity in response-language negotiation metadata
 - Accept-Charset duplication hardening: duplicate raw `Accept-Charset` header lines are rejected with HTTP 400 (`invalid accept-charset header`) before route handling to prevent intermediary/header-fold ambiguity across charset negotiation paths
 - Cookie duplication hardening: duplicate raw `Cookie` header lines are rejected with HTTP 400 (`invalid cookie header`) before route handling to prevent intermediary/header-fold ambiguity in session/auth attribution
@@ -193,6 +194,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 560% sustainment hardening: reject nginx internal headers (`X-Accel-*`, `X-Sendfile`, `X-Request-Start`, `X-Queue-Start`) to prevent internal routing/instrumentation override attacks
 - 585% sustainment hardening: reject distributed trace-context headers (`traceparent`, `tracestate`, `b3`, `baggage`, `x-b3-*`, `x-ot-span-context`, `x-amzn-trace-id`) to prevent untrusted upstream trace metadata from influencing origin attribution
 - 610% sustainment hardening: reject duplicate raw `Accept-Post` header lines with HTTP 400 (`invalid accept-post header`) to prevent intermediary/header-fold ambiguity in capability-negotiation metadata
+- 635% sustainment hardening: reject duplicate raw `Accept-Ranges` header lines with HTTP 400 (`invalid accept-ranges header`) to prevent intermediary/header-fold ambiguity in range-capability metadata
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
