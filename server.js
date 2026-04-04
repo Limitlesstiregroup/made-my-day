@@ -2183,6 +2183,12 @@ function hasLegacyMethodOverrideHeader(req) {
   });
 }
 
+function hasMethodOverrideQueryParameters(parsedUrl) {
+  if (!parsedUrl?.searchParams) return false;
+  const overrideParams = ['_method', 'method', 'x-http-method-override', 'x-method-override'];
+  return overrideParams.some((name) => parsedUrl.searchParams.has(name));
+}
+
 function hasExpectHeader(req) {
   const value = req.headers.expect;
   if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
@@ -3132,6 +3138,11 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       return json(res, 414, {
         error: 'Request query too long',
         maxQueryChars: MAX_QUERY_CHARS
+      });
+    }
+    if (hasMethodOverrideQueryParameters(u)) {
+      return json(res, 400, {
+        error: 'query method override parameters are not allowed'
       });
     }
 
