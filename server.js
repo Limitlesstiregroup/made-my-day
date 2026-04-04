@@ -2732,6 +2732,12 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'etag')) {
       return json(res, 400, { error: 'invalid etag header' });
     }
+    if (hasDuplicateRawHeader(req, 'traceparent')) {
+      return json(res, 400, { error: 'invalid traceparent header' });
+    }
+    if (hasDuplicateRawHeader(req, 'tracestate')) {
+      return json(res, 400, { error: 'invalid tracestate header' });
+    }
     if (hasDuplicateRawHeader(req, 'authorization')) {
       return json(res, 400, { error: 'invalid authorization header' });
     }
