@@ -52,6 +52,7 @@ Anonymous same-day positive story platform.
 - Sec-CH-UA client hints duplication hardening: duplicate raw `Sec-CH-UA`, `Sec-CH-UA-Arch`, `Sec-CH-UA-Bitness`, `Sec-CH-UA-Full-Version-List`, `Sec-CH-UA-Mobile`, `Sec-CH-UA-Model`, `Sec-CH-UA-Platform`, `Sec-CH-UA-Platform-Version`, and `Sec-CH-UA-WoW64`, `Sec-CH-Prefers-Color-Scheme`, `Sec-CH-Prefers-Reduced-Motion`, `Sec-CH-Prefers-Reduced-Transparency`, `Sec-CH-Prefers-Contrast`, and `Sec-CH-Forced-Colors` header lines are rejected with HTTP 400 (`invalid sec-ch-ua header`) to prevent intermediary/header-fold ambiguity in user-agent client hints attribution
 - Sec-GPC (Global Privacy Control) duplication hardening: duplicate raw `Sec-GPC` header lines are rejected with HTTP 400 (`invalid sec-gpc header`) to prevent intermediary/header-fold ambiguity in privacy-preference attribution
 - DNT (Do Not Track) duplication hardening: duplicate raw `DNT` header lines are rejected with HTTP 400 (`invalid dnt header`) to prevent intermediary/header-fold ambiguity in client privacy-preference attribution
+- Accept-Post duplication hardening: duplicate raw `Accept-Post` header lines are rejected with HTTP 400 (`invalid accept-post header`) before route handling to prevent intermediary/header-fold ambiguity in capability-negotiation metadata
 - Device-Memory client hints duplication hardening: duplicate raw `Device-Memory` header lines are rejected with HTTP 400 (`invalid device-memory header`) to prevent intermediary/header-fold ambiguity in device memory client hints attribution
 - Viewport-Width client hints duplication hardening: duplicate raw `Viewport-Width` header lines are rejected with HTTP 400 (`invalid viewport-width header`) to prevent intermediary/header-fold ambiguity in viewport width client hints attribution
 - DPR (Device Pixel Ratio) client hints duplication hardening: duplicate raw `DPR` header lines are rejected with HTTP 400 (`invalid dpr header`) to prevent intermediary/header-fold ambiguity in device pixel ratio client hints attribution
@@ -190,6 +191,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 555% sustainment hardening: reject proxy method override headers (`X-Forwarded-Method`, `X-Original-Method`) to prevent intermediary method-tunneling bypasses
 - 560% sustainment hardening: reject nginx internal headers (`X-Accel-*`, `X-Sendfile`, `X-Request-Start`, `X-Queue-Start`) to prevent internal routing/instrumentation override attacks
 - 585% sustainment hardening: reject distributed trace-context headers (`traceparent`, `tracestate`, `b3`, `baggage`, `x-b3-*`, `x-ot-span-context`, `x-amzn-trace-id`) to prevent untrusted upstream trace metadata from influencing origin attribution
+- 610% sustainment hardening: reject duplicate raw `Accept-Post` header lines with HTTP 400 (`invalid accept-post header`) to prevent intermediary/header-fold ambiguity in capability-negotiation metadata
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.

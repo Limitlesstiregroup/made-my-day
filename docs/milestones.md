@@ -129,3 +129,4 @@
 - 600%: Global Privacy Control hardening now rejects duplicate raw `Sec-GPC` header lines with HTTP 400 (`invalid sec-gpc header`) before route handling to prevent intermediary/header-fold ambiguity in privacy preference attribution ✅
 
 - 605%: Do Not Track (DNT) duplication hardening now rejects duplicate raw `DNT` header lines with HTTP 400 (`invalid dnt header`) before route handling to prevent intermediary/header-fold ambiguity in client privacy-preference attribution ✅
+- 610%: Accept-Post duplication hardening now rejects duplicate raw `Accept-Post` header lines with HTTP 400 (`invalid accept-post header`) before route handling to prevent intermediary/header-fold ambiguity in capability-negotiation metadata ✅

@@ -2850,6 +2850,10 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'dnt')) {
       return json(res, 400, { error: 'invalid dnt header' });
     }
+    // Accept-Post duplication hardening
+    if (hasDuplicateRawHeader(req, 'accept-post')) {
+      return json(res, 400, { error: 'invalid accept-post header' });
+    }
     // CORS preflight header duplication hardening
     if (hasDuplicateRawHeader(req, 'access-control-request-method')) {
       return json(res, 400, { error: 'invalid access-control-request-method header' });
