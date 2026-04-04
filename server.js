@@ -2892,6 +2892,10 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'accept-patch')) {
       return json(res, 400, { error: 'invalid accept-patch header' });
     }
+    // Accept-CH-Lifetime duplication hardening
+    if (hasDuplicateRawHeader(req, 'accept-ch-lifetime')) {
+      return json(res, 400, { error: 'invalid accept-ch-lifetime header' });
+    }
     // CORS preflight header duplication hardening
     if (hasDuplicateRawHeader(req, 'access-control-request-method')) {
       return json(res, 400, { error: 'invalid access-control-request-method header' });

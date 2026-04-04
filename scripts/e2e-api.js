@@ -1341,6 +1341,19 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when duplicate accept-patch headers are present');
     }
 
+    const acceptChLifetimeDuplicateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Accept-CH-Lifetime: 86400',
+      'Accept-CH-Lifetime: 60',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(acceptChLifetimeDuplicateHeaderResponse)) {
+      throw new Error('expected 400 when duplicate accept-ch-lifetime headers are present');
+    }
+
     const acceptRangesDuplicateHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

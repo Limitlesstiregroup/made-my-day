@@ -56,6 +56,7 @@ Anonymous same-day positive story platform.
 - DNT (Do Not Track) duplication hardening: duplicate raw `DNT` header lines are rejected with HTTP 400 (`invalid dnt header`) to prevent intermediary/header-fold ambiguity in client privacy-preference attribution
 - Accept-Post duplication hardening: duplicate raw `Accept-Post` header lines are rejected with HTTP 400 (`invalid accept-post header`) before route handling to prevent intermediary/header-fold ambiguity in capability-negotiation metadata
 - Accept-Patch duplication hardening: duplicate raw `Accept-Patch` header lines are rejected with HTTP 400 (`invalid accept-patch header`) before route handling to prevent intermediary/header-fold ambiguity in patch-capability negotiation metadata
+- Accept-CH-Lifetime duplication hardening: duplicate raw `Accept-CH-Lifetime` header lines are rejected with HTTP 400 (`invalid accept-ch-lifetime header`) before route handling to prevent intermediary/header-fold ambiguity in client-hints lifetime negotiation metadata
 - Device-Memory client hints duplication hardening: duplicate raw `Device-Memory` header lines are rejected with HTTP 400 (`invalid device-memory header`) to prevent intermediary/header-fold ambiguity in device memory client hints attribution
 - Viewport-Width client hints duplication hardening: duplicate raw `Viewport-Width` header lines are rejected with HTTP 400 (`invalid viewport-width header`) to prevent intermediary/header-fold ambiguity in viewport width client hints attribution
 - DPR (Device Pixel Ratio) client hints duplication hardening: duplicate raw `DPR` header lines are rejected with HTTP 400 (`invalid dpr header`) to prevent intermediary/header-fold ambiguity in device pixel ratio client hints attribution
@@ -203,6 +204,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 620% sustainment hardening: reject duplicate raw `Accept-Ranges` header lines with HTTP 400 (`invalid accept-ranges header`) to prevent intermediary/header-fold ambiguity in range-capability metadata
 - 625% sustainment hardening: reject duplicate raw `Content-Language` header lines with HTTP 400 (`invalid content-language header`) to prevent intermediary/header-fold ambiguity in response-language negotiation metadata
 - 630% sustainment hardening: reject duplicate raw `ETag` header lines with HTTP 400 (`invalid etag header`) to prevent intermediary/header-fold ambiguity in entity-validator attribution
+- 635% sustainment hardening: reject duplicate raw `Accept-CH-Lifetime` header lines with HTTP 400 (`invalid accept-ch-lifetime header`) to prevent intermediary/header-fold ambiguity in client-hints lifetime negotiation metadata
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
