@@ -2776,6 +2776,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'expires')) {
       return json(res, 400, { error: 'invalid expires header' });
     }
+    if (hasDuplicateRawHeader(req, 'surrogate-control')) {
+      return json(res, 400, { error: 'invalid surrogate-control header' });
+    }
     const parsedTransferEncoding = parseTransferEncodingHeader(req.headers['transfer-encoding']);
     if (parsedTransferEncoding.invalid) {
       return json(res, 400, { error: 'invalid transfer-encoding header' });

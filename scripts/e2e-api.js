@@ -595,6 +595,19 @@ async function run() {
       throw new Error('expected 400 when duplicate expires headers are sent');
     }
 
+    const duplicateSurrogateControlHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Surrogate-Control: max-age=60',
+      'Surrogate-Control: no-store',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSurrogateControlHeaderResponse)) {
+      throw new Error('expected 400 when duplicate surrogate-control headers are sent');
+    }
+
     const duplicateRequestIdHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
