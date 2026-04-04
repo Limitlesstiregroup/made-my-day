@@ -2387,7 +2387,7 @@ function hasDigestNegotiationHeaders(req) {
     if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim() !== '');
     return typeof value === 'string' && value.trim() !== '';
   };
-  return ['digest', 'want-digest', 'content-digest', 'repr-digest'].some((headerName) => hasValue(req.headers[headerName]));
+  return ['digest', 'want-digest', 'content-digest', 'repr-digest', 'want-content-digest'].some((headerName) => hasValue(req.headers[headerName]));
 }
 
 function hasHttpMessageSignaturesHeaders(req) {

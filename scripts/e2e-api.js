@@ -1253,6 +1253,18 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when digest header is present');
     }
 
+    const wantContentDigestHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Want-Content-Digest: sha-256',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(wantContentDigestHeaderResponse)) {
+      throw new Error('expected 400 when want-content-digest header is present');
+    }
+
     const rangeHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
