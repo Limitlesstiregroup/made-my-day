@@ -135,3 +135,5 @@
 - 620%: Accept-Ranges duplication hardening now rejects duplicate raw `Accept-Ranges` header lines with HTTP 400 (`invalid accept-ranges header`) before route handling to prevent intermediary/header-fold ambiguity in range-capability negotiation metadata ✅
 - 625%: Content-Language duplication hardening now rejects duplicate raw `Content-Language` header lines with HTTP 400 (`invalid content-language header`) before route handling to prevent intermediary/header-fold ambiguity in response-language negotiation metadata ✅
 - 630%: Accept-CH duplication hardening now rejects duplicate raw `Accept-CH` header lines with HTTP 400 (`invalid accept-ch header`) before route handling to prevent intermediary/header-fold ambiguity in client-hints opt-in negotiation metadata ✅
+
+- 635%: Critical-CH duplication hardening now rejects duplicate raw `Critical-CH` header lines with HTTP 400 (`invalid critical-ch header`) before route handling to prevent intermediary/header-fold ambiguity in client-hints criticality negotiation metadata ✅

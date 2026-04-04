@@ -1328,6 +1328,20 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when duplicate accept-ch headers are present');
     }
 
+
+    const criticalChDuplicateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Critical-CH: Sec-CH-UA-Platform',
+      'Critical-CH: Sec-CH-UA-Arch',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(criticalChDuplicateHeaderResponse)) {
+      throw new Error('expected 400 when duplicate critical-ch headers are present');
+    }
+
     const priorityHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
