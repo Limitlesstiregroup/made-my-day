@@ -1263,6 +1263,19 @@ const malformedRequestIdHeaderResponse = await sendRawHttp([
       throw new Error('expected 400 when duplicate accept-patch headers are present');
     }
 
+    const acceptRangesDuplicateHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Accept-Ranges: bytes',
+      'Accept-Ranges: none',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(acceptRangesDuplicateHeaderResponse)) {
+      throw new Error('expected 400 when duplicate accept-ranges headers are present');
+    }
+
     const priorityHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,
