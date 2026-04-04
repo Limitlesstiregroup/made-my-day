@@ -2718,6 +2718,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'connection')) {
       return json(res, 400, { error: 'invalid connection header' });
     }
+    if (hasDuplicateRawHeader(req, 'etag')) {
+      return json(res, 400, { error: 'invalid etag header' });
+    }
     if (hasDuplicateRawHeader(req, 'authorization')) {
       return json(res, 400, { error: 'invalid authorization header' });
     }

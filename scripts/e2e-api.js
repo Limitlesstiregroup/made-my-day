@@ -356,6 +356,19 @@ async function run() {
       throw new Error('expected 400 when duplicate date headers are sent');
     }
 
+    const duplicateEtagHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'ETag: "one"',
+      'ETag: "two"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateEtagHeaderResponse)) {
+      throw new Error('expected 400 when duplicate etag headers are sent');
+    }
+
     const duplicateIfModifiedSinceHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

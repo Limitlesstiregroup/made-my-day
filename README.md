@@ -96,6 +96,7 @@ Anonymous same-day positive story platform.
 - Server-Timing header hardening: duplicate raw `Server-Timing` header lines are rejected with HTTP 400 (`invalid server-timing header`) before route handling to prevent intermediary/header-fold ambiguity in performance telemetry attribution
 - Date header hardening: duplicate raw `Date` header lines are rejected with HTTP 400 (`invalid date header`) before route handling to prevent intermediary/header-fold ambiguity in request timestamp attribution and cache diagnostics
 - Connection header duplication hardening: duplicate raw `Connection` header lines are rejected with HTTP 400 (`invalid connection header`) before route handling to prevent intermediary/header-fold ambiguity in hop-by-hop token parsing
+- ETag header duplication hardening: duplicate raw `ETag` header lines are rejected with HTTP 400 (`invalid etag header`) before route handling to prevent intermediary/header-fold ambiguity in entity-validator attribution
 - HTTP-date syntax hardening: malformed `Date`, `If-Modified-Since`, `If-Unmodified-Since`, or `Expires` header values are rejected with HTTP 400 (`invalid ... header`) before route handling to prevent ambiguous conditional/cache timestamp parsing across intermediaries
 - Conditional-cache header hardening: duplicate raw `If-None-Match` header lines are rejected with HTTP 400 (`invalid if-none-match header`) before route handling to prevent ambiguous conditional cache validators across intermediaries
 - Last-modified validator hardening: duplicate raw `If-Modified-Since` header lines are rejected with HTTP 400 (`invalid if-modified-since header`) before route handling to prevent ambiguous conditional cache revalidation across intermediaries
@@ -197,6 +198,7 @@ Detailed runbook: `docs/DEPLOYMENT.md`
 - 610% sustainment hardening: reject duplicate raw `Accept-Post` header lines with HTTP 400 (`invalid accept-post header`) to prevent intermediary/header-fold ambiguity in capability-negotiation metadata
 - 620% sustainment hardening: reject duplicate raw `Accept-Ranges` header lines with HTTP 400 (`invalid accept-ranges header`) to prevent intermediary/header-fold ambiguity in range-capability metadata
 - 625% sustainment hardening: reject duplicate raw `Content-Language` header lines with HTTP 400 (`invalid content-language header`) to prevent intermediary/header-fold ambiguity in response-language negotiation metadata
+- 630% sustainment hardening: reject duplicate raw `ETag` header lines with HTTP 400 (`invalid etag header`) to prevent intermediary/header-fold ambiguity in entity-validator attribution
 
 ## Configuration
 - `IMPORT_TIMEOUT_MS` (default `10000`, min `1000`, max `60000`) bounds external source fetch time for hourly imports.
