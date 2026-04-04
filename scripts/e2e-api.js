@@ -330,6 +330,19 @@ async function run() {
       throw new Error('expected 400 when duplicate user-agent headers are sent');
     }
 
+    const duplicateServerTimingHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Server-Timing: edge;dur=1',
+      'Server-Timing: origin;dur=2',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateServerTimingHeaderResponse)) {
+      throw new Error('expected 400 when duplicate server-timing headers are sent');
+    }
+
     const duplicateDateHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
       `Host: 127.0.0.1:${PORT}`,

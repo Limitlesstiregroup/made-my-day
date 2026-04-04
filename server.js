@@ -2712,6 +2712,9 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
     if (hasDuplicateRawHeader(req, 'date')) {
       return json(res, 400, { error: 'invalid date header' });
     }
+    if (hasDuplicateRawHeader(req, 'server-timing')) {
+      return json(res, 400, { error: 'invalid server-timing header' });
+    }
     if (hasDuplicateRawHeader(req, 'connection')) {
       return json(res, 400, { error: 'invalid connection header' });
     }
