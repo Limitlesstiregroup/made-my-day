@@ -2827,6 +2827,7 @@ const server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, async (req
       'sec-ch-ua-arch',
       'sec-ch-ua-bitness',
       'sec-ch-ua-full-version-list',
+      'sec-ch-ua-full-version',
       'sec-ch-ua-mobile',
       'sec-ch-ua-model',
       'sec-ch-ua-platform',

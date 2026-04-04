@@ -726,6 +726,19 @@ async function run() {
       throw new Error('expected 400 when duplicate sec-ch-ua-mobile headers are sent');
     }
 
+    const duplicateSecChUaFullVersionHeaderResponse = await sendRawHttp([
+      'GET /api/health HTTP/1.1',
+      `Host: 127.0.0.1:${PORT}`,
+      'Sec-CH-UA-Full-Version: "122.0.6261.57"',
+      'Sec-CH-UA-Full-Version: "123.0.6312.10"',
+      'Connection: close',
+      '',
+      ''
+    ].join('\r\n'));
+    if (!/^HTTP\/1\.1 400 /.test(duplicateSecChUaFullVersionHeaderResponse)) {
+      throw new Error('expected 400 when duplicate sec-ch-ua-full-version headers are sent');
+    }
+
 
     const secChUaFormFactorsDuplicateHeaderResponse = await sendRawHttp([
       'GET /api/health HTTP/1.1',
